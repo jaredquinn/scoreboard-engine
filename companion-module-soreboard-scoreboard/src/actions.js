@@ -114,7 +114,6 @@ module.exports = {
 					{ type: 'textinput', id: 'text', label: 'New Text', default: '' }
 				],
 				callback: async (event) => {
-					// Use the 'Value' variant of the update payload for text
 					await self.sendUpdate(event.options.widget_id, event.options.text)
 				},
 			},

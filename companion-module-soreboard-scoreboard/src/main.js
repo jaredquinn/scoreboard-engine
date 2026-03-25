@@ -8,20 +8,16 @@ const { GetVariableDefinitions, GetVariableValues } = require('./variables');
 class ScoreboardModule extends InstanceBase {
 	constructor(internal) {
 		super(internal);
-		this.widgets = {}; // Cache for dynamic discovery
+		this.widgets = {};
 	}
 
 	async init(config) {
 		this.config = config;
 		this.updateStatus(InstanceStatus.Connecting);
 
-		// 1. Initial discovery of widgets from Rust API
 		await this.discoverWidgets();
 
-		// 2. Start Real-time SSE
 		this.initSSE();
-
-		// 3. Define everything else
 		this.updateActions();
 		this.updateFeedbacks();
 	}
@@ -50,7 +46,6 @@ class ScoreboardModule extends InstanceBase {
 			const response = await fetch(`http://${this.config.host}:${this.config.port}/widgets`);
 			this.widgets = await response.json();
 			
-			// Dynamically set variables based on what the API returned
 			this.setVariableDefinitions(GetVariableDefinitions(this.widgets));
 			this.setVariableValues(GetVariableValues(this.widgets));
 			
