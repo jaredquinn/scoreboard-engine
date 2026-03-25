@@ -1,0 +1,27 @@
+{
+	"$schema": "../node_modules/@companion-module/base/assets/manifest.schema.json",
+	"id": "scoreboard-scoreboard",
+	"name": "scoreboard",
+	"shortname": "scoreboard",
+	"description": "The scoreboard api",
+	"version": "0.0.0",
+	"license": "MIT",
+	"repository": "",
+	"bugs": "",
+	"maintainers": [
+		{
+			"name": "Jared Quinn",
+			"email": "jaredquinn@gmail.com"
+		}
+	],
+	"runtime": {
+		"type": "node22",
+		"api": "nodejs-ipc",
+		"apiVersion": "0.0.0",
+		"entrypoint": "../src/main.js"
+	},
+	"legacyIds": [],
+	"manufacturer": "Jared Quinn",
+	"products": ["The Scoreboard"],
+	"keywords": []
+}
