@@ -64,22 +64,22 @@ Here is an example configuration file showing all available widgets and options
         <id>home_score</id>
         <type>Counter</type>
         <initial_value>0</initial_value>
-	<increments>
-		<value>4</value>
-		<value>2</value>
-		<value>1</value>
-	</increments>
+        <increments>
+            <value>4</value>
+            <value>2</value>
+            <value>1</value>
+        </increments>
     </widget>
 
     <widget>
         <id>away_score</id>
         <type>Counter</type>
         <initial_value>0</initial_value>
-	<increments>
-		<value>4</value>
-		<value>2</value>
-		<value>1</value>
-	</increments>
+        <increments>
+            <value>4</value>
+            <value>2</value>
+            <value>1</value>
+        </increments>
     </widget>
 
     <widget>
@@ -95,7 +95,7 @@ Here is an example configuration file showing all available widgets and options
         <id>period</id>
         <type>MappedList</type>
         <initial_index>0</initial_index>
-	<options>
+        <options>
             <option>1ST HALF</option>
             <option>HALFTIME</option>
             <option>2ND HALF</option>
@@ -107,9 +107,9 @@ Here is an example configuration file showing all available widgets and options
         <id>tackle_count</id>
         <type>MappedList</type>
         <initial_index>0</initial_index>
-	<options>
+        <options>
             <option>ZERO</option>
-	    <option>1ST</option>
+            <option>1ST</option>
             <option>2ND</option>
             <option>3RD</option>
             <option>4TH</option>
