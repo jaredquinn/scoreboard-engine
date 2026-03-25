@@ -1,4 +1,4 @@
-# 🏟️ Scoreboard Engine v0.2
+# 𖣘  Scoreboard Engine v0.2
 
 A high-performance, real-time scoreboard backend built with **Rust**, **Axum**, and **Tokio**. 
 
