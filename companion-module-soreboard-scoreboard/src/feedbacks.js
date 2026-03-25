@@ -29,7 +29,7 @@ module.exports = {
 				},
 			},
 
-			// --- TEXT MATCH FEEDBACK (NEW) ---
+			// --- TEXT MATCH FEEDBACK  ---
 			text_match: {
 				type: 'boolean',
 				name: 'Text: Style On Match',
@@ -45,7 +45,7 @@ module.exports = {
 				},
 			},
 
-			// --- LIST INDEX FEEDBACK (NEW) ---
+			// --- LIST INDEX FEEDBACK ---
 			list_index_match: {
 				type: 'boolean',
 				name: 'List: Style On Specific Item',

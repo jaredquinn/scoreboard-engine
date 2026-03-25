@@ -389,7 +389,6 @@ async fn main() {
 
             if changed {
                 let _ = timer_state.tx.send(snapshot.clone());
-
                 let current_path = timer_state.save_path.read().unwrap().clone();
                 tokio::spawn(async move {
                     save_to_disk(snapshot, &current_path).await;
