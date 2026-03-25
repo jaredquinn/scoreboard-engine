@@ -1,7 +1,8 @@
 # 🏟️ Scoreboard Engine v0.2
 
-A high-performance, real-time scoreboard backend built with **Rust**, **Axum**, and **Tokio**. Designed for live broadcast environments where reliability is critical.
+A high-performance, real-time scoreboard backend built with **Rust**, **Axum**, and **Tokio**. 
 
+Note: This was my 'learn rust in a weekend' project, and while solid and reliable should not be considered production ready.
 ---
 
 ## 🚀 Key Features
