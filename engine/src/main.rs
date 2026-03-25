@@ -38,6 +38,9 @@ use tokio::io::AsyncWriteExt;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 
+use clap::Parser;
+use std::net::SocketAddr;
+
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod ax_res {
@@ -71,10 +74,20 @@ pub enum UpdatePayload {
     Value(serde_json::Value),
 }
 
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    #[arg(short, long, default_value = "config.xml")]
+    config: String,
+    #[arg(short, long, default_value_t = 3000)]
+    port: u16,
+}
+
 pub struct ScoreboardState {
     pub data: RwLock<HashMap<String, WidgetValue>>,
     pub tx: broadcast::Sender<HashMap<String, WidgetValue>>,
     pub save_path: RwLock<String>,
+    pub config_path: String,
 }
 
 
@@ -98,9 +111,9 @@ async fn save_to_disk(data: HashMap<String, WidgetValue>, path: &str) {
 fn load_config(path: &str) -> (HashMap<String, WidgetValue>, String) {
     let mut data = HashMap::new();
 
-    eprintln!("⚙️ Reading Configration file {}", path);
+    eprintln!("📁 Reading Configration file {}", path);
     let xml_content = std::fs::read_to_string(path).unwrap_or_else(|_| {
-        eprintln!("Warning: Could not read {}, using empty config.", path);
+        eprintln!("⚠️ Warning: Could not read {}, using empty config.", path);
         "<ScoreboardConfig></ScoreboardConfig>".to_string()
     });
 
@@ -196,7 +209,7 @@ fn load_config(path: &str) -> (HashMap<String, WidgetValue>, String) {
             _ => continue, // Skip unknown types
         };
 
-        eprintln!("⚙️ Setting up widget {}:{}", w_type, id);
+        eprintln!("🥅 Setting up widget {}:{}", w_type, id);
         data.insert(id, val);
     }
 
@@ -304,7 +317,7 @@ async fn universal_update(
 
 
 async fn reset_all(State(state): State<Arc<ScoreboardState>>) -> Json<bool> {
-    let (new_widgets, new_path) = load_config("config.xml");
+    let (new_widgets, new_path) = load_config(&state.config_path);
     {
         let mut data = state.data.write().unwrap_or_else(|e| e.into_inner());
         *data = new_widgets.clone();
@@ -336,6 +349,23 @@ async fn sse_handler(
     Sse::new(stream).keep_alive(axum::response::sse::KeepAlive::new())
 }
 
+fn print_listening_urls(port: u16) {
+    println!("🎯 Scoreboard Engine is live!");
+    println!("---------------------------------------");
+    println!("Local:            http://localhost:{}", port);
+
+    if let Ok(interfaces) = get_if_addrs::get_if_addrs() {
+        for interface in interfaces {
+            if !interface.is_loopback() {
+                if let std::net::IpAddr::V4(ipv4) = interface.ip() {
+                    println!("On your network:  http://{}:{}", ipv4, port);
+                }
+            }
+        }
+    }
+    println!("---------------------------------------");
+}
+
 // --- MAIN ---
 #[tokio::main]
 async fn main() {
@@ -344,9 +374,12 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let (xml_widgets, persistence_path) = load_config("config.xml");
+    let args = Args::parse();
+    println!("Loading config from: {}", args.config);
+    let (xml_widgets, persistence_path) = load_config(&args.config);
 
     let initial_data = if let Ok(content) = std::fs::read_to_string(&persistence_path) {
+        eprintln!("📁 Restoring persistence data from {}", persistence_path);
         serde_json::from_str(&content).unwrap_or(xml_widgets)
     } else {
         xml_widgets
@@ -357,7 +390,8 @@ async fn main() {
     let state = Arc::new(ScoreboardState { 
         data: RwLock::new(initial_data), 
         tx,
-        save_path: RwLock::new(persistence_path) 
+        save_path: RwLock::new(persistence_path),
+        config_path: args.config.clone()
     });
 
 
@@ -410,8 +444,12 @@ async fn main() {
         .layer(CorsLayer::permissive())
         .with_state(state);
 
-    eprintln!("🏃 running server...");
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    let addr = SocketAddr::from(([0, 0, 0, 0], args.port));
+    print_listening_urls(args.port);
+
+    println!("🏃 Running HTTP Server.  Press Ctrl-C to shutdown.");
+    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+
     axum::serve(listener, app).await.unwrap();
 }
 
