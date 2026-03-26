@@ -21,6 +21,7 @@ module.exports = {
 				const timeStr = new Date(data.seconds * 1000).toISOString().substr(11, 8);
 				values[id] = timeStr;
 				values[`${id}_running`] = data.running ? 'RUN' : 'STOP';
+				values[`${id}_formatted`] = data.formatted_time;
 			} else if (type === 'MappedList') {
 				const [idx, options] = data;
 				values[id] = options[idx] || '---';

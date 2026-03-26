@@ -15,7 +15,6 @@ class ScoreboardModule extends InstanceBase {
 		this.config = config;
 		this.updateStatus(InstanceStatus.Connecting);
 
-		await this.discoverWidgets();
 
 		this.initSSE();
 		this.updateActions();
@@ -56,10 +55,17 @@ class ScoreboardModule extends InstanceBase {
 	}
 
 	initSSE() {
-		if (this.sse) this.sse.close();
+		if (this.sse) { this.sse.close(); this.sse = null; }
+		if (this.reconnectTimer) { clearTimeout(this.reconnectTimer); this.reconnectTimer = null; }
 
 		const url = `http://${this.config.host}:${this.config.port}/events`;
 		this.sse = new EventSource(url);
+
+		this.sse.onopen = () => {
+			this.log('info', 'Scoreboard SSE Connected');
+			this.updateStatus(InstanceStatus.Ok);
+			this.discoverWidgets();
+		}
 
 		this.sse.onmessage = (event) => {
 			try {
@@ -74,6 +80,9 @@ class ScoreboardModule extends InstanceBase {
 
 		this.sse.onerror = () => {
 			this.updateStatus(InstanceStatus.Disconnected, 'SSE Lost');
+			this.log('error', 'Scoreboard SSE Lost. Retrying in 1s...');
+			if(this.eventSource) { this.eventSource.close(); this.eventSource = null; }
+			this.reconnectTimer = setTimeout(() => { this.initSSE(); }, 1000);
 		};
 	}
 
