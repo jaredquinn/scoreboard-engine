@@ -39,21 +39,8 @@
             <option>1ST HALF</option>
             <option>HALFTIME</option>
             <option>2ND HALF</option>
-            <option>FULLTIME</option>
-        </options>
-    </widget>
-
-    <widget>
-        <id>tackle_count</id>
-        <type>MappedList</type>
-        <initial_index>0</initial_index>
-	<options>
-            <option>ZERO</option>
-	    <option>1ST</option>
-            <option>2ND</option>
-            <option>3RD</option>
-            <option>4TH</option>
-            <option>5TH</option>
+	    <option>FULLTIME</option>
+	    <option>OVERTIME</option>
         </options>
     </widget>
 

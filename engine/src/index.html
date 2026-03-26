@@ -271,12 +271,10 @@
                 innerContent += `<button class="btn-reset-card" onclick="updateWidget('${id}', {action:'reset'})">RESET TO 0</button>`;
             } 
 	    else if (type === "Timer") {
-		    const { seconds, running, initial_seconds, min_value, max_value, is_down } = data;
+		    const { initial_seconds, value, formatted_time, running, is_down, seconds, min_value, max_value } = data;
 		    
-		    const timeStr = new Date(seconds * 1000).toISOString().substr(11, 8);
-
 		    innerContent += `
-			<div class="value timer-display">${timeStr}</div>
+			<div class="value timer-display">${formatted_time}</div>
 			
 			<div style="font-size: 0.7rem; color: ${is_down ? '#f87171' : '#60a5fa'}; margin-bottom: 10px;">
 			    ${is_down ? 'COUNT DOWN' : 'COUNT UP'}

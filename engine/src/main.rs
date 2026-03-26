@@ -56,12 +56,14 @@ pub enum WidgetValue {
         increments: Vec<i64> 
     },
     Timer { 
+        formatted_time: String,
         seconds: i64, 
         running: bool, 
         initial_seconds: i64,
         is_down: bool,
         min_value: i64,
         max_value: i64,
+        format: String,
     },
     MappedList(usize, Vec<String>),
     StaticText(String),
@@ -181,13 +183,21 @@ fn load_config(path: &str) -> (HashMap<String, WidgetValue>, String) {
                     .and_then(|n| n.text()?.parse().ok())
                     .unwrap_or(3600);
 
+                let fmt = node.children()
+                    .find(|n| n.has_tag_name("format"))
+                    .and_then(|n| n.text())
+                    .unwrap_or("mm:ss") // Default to mm:ss
+                    .to_string();
+
                 WidgetValue::Timer {
                     seconds: secs,
                     initial_seconds: secs, // Store the reset point
+                    formatted_time: format_timer(secs, &fmt),
                     running: false,
                     is_down: down,
                     min_value: min,
-                    max_value: max
+                    max_value: max,
+                    format: fmt,
                 }
             }
             "MappedList" => {
@@ -214,6 +224,36 @@ fn load_config(path: &str) -> (HashMap<String, WidgetValue>, String) {
     }
 
     (data, save_file)
+}
+
+fn format_timer(total_seconds: i64, format: &str) -> String {
+    let abs_secs = total_seconds.abs();
+    let sign = if total_seconds < 0 { "-" } else { "" };
+
+    match format {
+        "hh:mm:ss" => {
+            let h = abs_secs / 3600;
+            let m = (abs_secs % 3600) / 60;
+            let s = abs_secs % 60;
+            format!("{}{:02}:{:02}:{:02}", sign, h, m, s)
+        }
+        "mm:ss" => {
+            // mm is NOT limited to 60 here
+            let m = abs_secs / 60;
+            let s = abs_secs % 60;
+            format!("{}{:02}:{:02}", sign, m, s)
+        }
+        "ss" => {
+            // Just raw seconds, supports large numbers
+            format!("{}{}", sign, abs_secs)
+        }
+        _ => {
+            // Fallback to standard mm:ss if format is unknown
+            let m = abs_secs / 60;
+            let s = abs_secs % 60;
+            format!("{:02}:{:02}", m, s)
+        }
+    }
 }
 
 // --- HANDLERS ---
@@ -406,8 +446,8 @@ async fn main() {
             {
                 let mut data = timer_state.data.write().unwrap();
                 for val in data.values_mut() {
-                    //if let WidgetValue::Timer { seconds, running, initial_seconds, is_down, min_value, max_value } = val {
-                    if let WidgetValue::Timer { seconds, running, is_down, min_value, max_value, .. } = val {
+                    //if let WidgetValue::Timer { seconds, formatted_time, running, initial_seconds, is_down, min_value, max_value } = val {
+                    if let WidgetValue::Timer { seconds, running, is_down, min_value, max_value, format, formatted_time, .. } = val {
                         if *running {
                             if *is_down {
                                 if *seconds > *min_value { *seconds -= 1; } else { *running = false; }
@@ -415,6 +455,9 @@ async fn main() {
                                 if *seconds < *max_value { *seconds += 1; } else { *running = false; }
                             }
                             changed = true;
+                            if changed {
+                                *formatted_time = format_timer(*seconds, &format);
+                            }
                         }
                     }
                 }
