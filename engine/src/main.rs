@@ -454,10 +454,8 @@ async fn main() {
                             } else {
                                 if *seconds < *max_value { *seconds += 1; } else { *running = false; }
                             }
+                            *formatted_time = format_timer(*seconds, &format);
                             changed = true;
-                            if changed {
-                                *formatted_time = format_timer(*seconds, &format);
-                            }
                         }
                     }
                 }
