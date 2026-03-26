@@ -5,6 +5,7 @@ module.exports = {
 			defs.push({ variableId: id, name: id.replace(/_/g, ' ') });
 			if (widgets[id].type === 'Timer') {
 				defs.push({ variableId: `${id}_running`, name: `${id} Status` });
+				defs.push({ variableId: `${id}_raw`, name: `${id} Raw Value` });
 			}
 		}
 		return defs;
@@ -18,10 +19,10 @@ module.exports = {
 			if (type === 'Counter') {
 				values[id] = data.value;
 			} else if (type === 'Timer') {
-				const timeStr = new Date(data.seconds * 1000).toISOString().substr(11, 8);
-				values[id] = timeStr;
 				values[`${id}_running`] = data.running ? 'RUN' : 'STOP';
-				values[`${id}_formatted`] = data.formatted_time;
+				values[`${id}_raw`] = data.seconds;
+				values[id] = data.formatted_time;
+				//this.log('info', data);
 			} else if (type === 'MappedList') {
 				const [idx, options] = data;
 				values[id] = options[idx] || '---';

@@ -1,7 +1,7 @@
 {
 	"$schema": "../node_modules/@companion-module/base/assets/manifest.schema.json",
 	"id": "scoreboard-scoreboard",
-	"name": "scoreboard",
+	"name": "scoreboard-scoreboard",
 	"shortname": "scoreboard",
 	"description": "The scoreboard api",
 	"version": "0.0.0",
@@ -20,7 +20,7 @@
 		"apiVersion": "0.0.0",
 		"entrypoint": "../src/main.js"
 	},
-	"legacyIds": [],
+	"legacyIds": [ "scoreboard-scoreboardapi" ],
 	"manufacturer": "Jared Quinn",
 	"products": ["The Scoreboard"],
 	"keywords": []

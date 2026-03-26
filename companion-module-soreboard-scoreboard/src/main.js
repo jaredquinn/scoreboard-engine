@@ -15,8 +15,10 @@ class ScoreboardModule extends InstanceBase {
 		this.config = config;
 		this.updateStatus(InstanceStatus.Connecting);
 
+		await this.discoverWidgets();
 
 		this.initSSE();
+
 		this.updateActions();
 		this.updateFeedbacks();
 	}
@@ -64,7 +66,6 @@ class ScoreboardModule extends InstanceBase {
 		this.sse.onopen = () => {
 			this.log('info', 'Scoreboard SSE Connected');
 			this.updateStatus(InstanceStatus.Ok);
-			this.discoverWidgets();
 		}
 
 		this.sse.onmessage = (event) => {
