@@ -1,5 +1,13 @@
+<!-- Example Scoreboard Configuration for Rugby League 
+
+     * Home & Away Scores with 4,2,1 shortcuts in dashboard
+     * Home & Away Names
+     * Match Clock
+     * Tackle count
+     * Period
+-->
 <ScoreboardConfig>
-    <persistence_file>match_data_final.json</persistence_file>
+    <persistence_file>rugbyleague.json</persistence_file>
     <widget>
         <id>home_score</id>
         <type>Counter</type>
@@ -28,7 +36,7 @@
         <initial_seconds>0</initial_seconds>
         <is_down>false</is_down>
         <min_value>0</min_value>
-        <max_value>3600</max_value>
+        <max_value>2700</max_value>
     </widget>
 
     <widget>
