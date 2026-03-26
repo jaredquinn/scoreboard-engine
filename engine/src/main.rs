@@ -96,9 +96,11 @@ pub struct ScoreboardState {
 // --- PERSISTENCE & LOGGING ---
 async fn log_event(widget_id: String, action: String, value: String) {
     let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S");
+    let con_line = format!("[{}] ID: {:<12} | Action: {:<10} | Val: {}", timestamp, widget_id, action, value);
+    eprintln!("{}", con_line);
+
     let log_line = format!("[{}] ID: {:<12} | Action: {:<10} | Val: {}\n", timestamp, widget_id, action, value);
     if let Ok(mut file) = OpenOptions::new().create(true).append(true).open("match_log.txt").await {
-        eprintln!("{}", log_line);
         let _ = file.write_all(log_line.as_bytes()).await;
     }
 }
@@ -445,7 +447,7 @@ async fn main() {
             
             {
                 let mut data = timer_state.data.write().unwrap();
-                for val in data.values_mut() {
+                for (id, val) in data.iter_mut() {
                     //if let WidgetValue::Timer { seconds, formatted_time, running, initial_seconds, is_down, min_value, max_value } = val {
                     if let WidgetValue::Timer { seconds, running, is_down, min_value, max_value, format, formatted_time, .. } = val {
                         if *running {
@@ -456,6 +458,10 @@ async fn main() {
                             }
                             *formatted_time = format_timer(*seconds, &format);
                             changed = true;
+
+                            let display_val = formatted_time.clone();
+                            let id_clone = id.clone();
+                            tokio::spawn(log_event(id_clone, "TICK".to_string(), display_val));
                         }
                     }
                 }
