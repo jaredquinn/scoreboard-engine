@@ -72,7 +72,7 @@ pub enum WidgetValue {
 #[derive(Deserialize, Debug)]
 #[serde(untagged)]
 pub enum UpdatePayload {
-    Action { action: String, amount: Option<i64>, value: Option<i64> },
+    Action { action: String, amount: Option<i64>, value: Option<serde_json::Value>, },
     Value(serde_json::Value),
 }
 
@@ -228,6 +228,28 @@ fn load_config(path: &str) -> (HashMap<String, WidgetValue>, String) {
     (data, save_file)
 }
 
+fn parse_time_string(input: &str) -> Option<i64> {
+    if let Ok(raw_seconds) = input.parse::<i64>() {
+        return Some(raw_seconds);
+    }
+
+    let parts: Vec<&str> = input.split(':').collect();
+    match parts.len() {
+        2 => { // mm:ss
+            let m = parts[0].parse::<i64>().ok()?;
+            let s = parts[1].parse::<i64>().ok()?;
+            Some((m * 60) + s)
+        }
+        3 => { // hh:mm:ss
+            let h = parts[0].parse::<i64>().ok()?;
+            let m = parts[1].parse::<i64>().ok()?;
+            let s = parts[2].parse::<i64>().ok()?;
+            Some((h * 3600) + (m * 60) + s)
+        }
+        _ => None,
+    }
+}
+
 fn format_timer(total_seconds: i64, format: &str) -> String {
     let abs_secs = total_seconds.abs();
     let sign = if total_seconds < 0 { "-" } else { "" };
@@ -309,14 +331,39 @@ async fn universal_update(
                 (WidgetValue::Timer { seconds, running, min_value, max_value, initial_seconds, .. },
                  UpdatePayload::Action { action, amount, value }) => {
 
-                    let opt = value.or(amount).unwrap_or(0);
                     match action.as_str() {
+                            "set_initial" | "set_min" | "set_max" | "set_current" => {
+                                if let Some(val_json) = value {
+                                    let val_str = match val_json {
+                                        serde_json::Value::String(s) => s.clone(),
+                                        serde_json::Value::Number(n) => n.to_string(),
+                                        _ => "".to_string(),
+                                    };
+                                    if let Some(parsed_secs) = parse_time_string(&val_str) {
+                                        match action.as_str() {
+                                            "set_initial" => {
+                                                *initial_seconds = parsed_secs;
+                                                *seconds = parsed_secs;
+                                            },
+                                            "set_min" => *min_value = parsed_secs,
+                                            "set_max" => *max_value = parsed_secs,
+                                            "set_current" => *seconds = parsed_secs,
+                                            _ => {}
+                                        }
+                                        tokio::spawn(log_event(
+                                            id.to_string(),
+                                            action.clone(),
+                                            format!("Set to {}s", parsed_secs)
+                                        ));
+                                    }
+                                }
+                            } 
                             "start" => { *running = true; success = true; }
                             "stop" => { *running = false; success = true; }
                             "reset" => { *seconds = *initial_seconds; *running = false; success = true; }
-                            "set_initial" => { *initial_seconds = opt; *seconds = opt; success = true; }
-                            "set_min" => { *min_value = opt; success = true; }
-                            "set_max" => { *max_value = opt; success = true; }
+                            //"set_initial" => { *initial_seconds = opt; *seconds = opt; success = true; }
+                            //"set_min" => { *min_value = opt; success = true; }
+                            //"set_max" => { *max_value = opt; success = true; }
                             "increment" => { *seconds += amount.unwrap_or(1); success = true; }
                             "decrement" => { *seconds -= amount.unwrap_or(1); success = true; }
                             _ => {}
@@ -330,7 +377,7 @@ async fn universal_update(
                     match action.as_str() {
                         "next" => { *idx = (*idx + 1) % options.len(); success = true; }
                         "prev" => { *idx = if *idx == 0 { options.len() - 1 } else { *idx - 1 }; success = true; }
-                        "reset" => { *idx = 0; success = true; } // THE NEW LINE
+                        "reset" => { *idx = 0; success = true; } 
                         _ => {}
                     }
                     log_val = options.get(*idx).cloned().unwrap_or_default();
@@ -417,7 +464,6 @@ async fn main() {
         .init();
 
     let args = Args::parse();
-    println!("Loading config from: {}", args.config);
     let (xml_widgets, persistence_path) = load_config(&args.config);
 
     let initial_data = if let Ok(content) = std::fs::read_to_string(&persistence_path) {

@@ -296,17 +296,17 @@
 				<div class="bound-item">
 				    <span>MIN</span>
 				    <strong>${min_value}s</strong>
-				    <button style="display: inline-block;" class="btn-reset-card" onclick="let v=prompt('Min Seconds:', ${min_value}); if(v) updateWidget('${id}', {action:'set_min', value:parseInt(v)})">EDIT</button>
+				    <button style="display: inline-block;" class="btn-reset-card" onclick="let v=prompt('Min Seconds:', ${min_value}); if(v) updateWidget('${id}', {action:'set_min', value:v})">EDIT</button>
 				</div>
 				<div class="bound-item">
 				    <span>INITIAL</span>
 				    <strong>${initial_seconds}s</strong>
-				    <button style="display: inline-block;" class="btn-reset-card" onclick="let v=prompt('Initial Seconds:', ${initial_seconds}); console.log(v); if(v) updateWidget('${id}', {action:'set_initial', value:parseInt(v)})">EDIT</button>
+				    <button style="display: inline-block;" class="btn-reset-card" onclick="let v=prompt('Initial Seconds:', ${initial_seconds}); console.log(v); if(v) updateWidget('${id}', {action:'set_initial', value:v})">EDIT</button>
 				</div>
 				<div class="bound-item">
 				    <span>MAX</span>
 				    <strong>${max_value}s</strong>
-				    <button style="display: inline-block;" class="btn-reset-card" onclick="let v=prompt('Max Seconds:', ${max_value}); if(v) updateWidget('${id}', {action:'set_max', value:parseInt(v)})">EDIT</button>
+				    <button style="display: inline-block;" class="btn-reset-card" onclick="let v=prompt('Max Seconds:', ${max_value}); if(v) updateWidget('${id}', {action:'set_max', value:v})">EDIT</button>
 				</div>
 			    </div>
 			</div>
