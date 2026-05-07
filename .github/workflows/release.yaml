@@ -40,7 +40,7 @@ jobs:
         with:
           # (required) Binary names (non-extension portion of filename) to build and upload (whitespace or comma separated list).
           # Note that glob pattern is not supported yet.
-          bin: scoreboard-engine,scoreboard-engine.exe
+          bin: scoreboard-engine
           include: README.md,engine/README.md,engine/CHANGELOG.md,engine/config.xml
           # (optional) Target triple, default is host triple.
           # This is optional but it is recommended that this always be set to
