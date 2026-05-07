@@ -299,12 +299,23 @@ async fn get_flat(State(state): State<Arc<ScoreboardState>>) -> Json<Vec<IndexMa
     let mut flat = IndexMap::new();
     for (id, val) in data.iter() {
         let json_val = match val {
-            WidgetValue::Counter { value, .. } => serde_json::Value::from(*value),
             WidgetValue::Timer { seconds, .. } => serde_json::Value::from(*seconds),
+            WidgetValue::Counter { value, .. } => serde_json::Value::from(*value),
             WidgetValue::StaticText(s) => serde_json::Value::String(s.clone()),
             WidgetValue::MappedList(i, opt) => serde_json::Value::String(opt.get(*i).cloned().unwrap_or_default()),
         };
+
         flat.insert(id.clone(), json_val);
+
+        let display_val = match val {
+            WidgetValue::Timer { formatted_time, .. } => serde_json::Value::String(formatted_time.clone()),
+            WidgetValue::Counter { .. } => serde_json::Value::String(String::new()),
+            WidgetValue::StaticText(_s) => serde_json::Value::String(String::new()),
+            WidgetValue::MappedList(_i, _opt) => serde_json::Value::String(String::new()),
+        };
+        if display_val.clone() != serde_json::Value::String(String::new()) {
+            flat.insert(format!("formatted_{}", id.clone()), display_val.clone());
+        };
     }
     flat.insert("_last_updated".into(), serde_json::Value::String(Local::now().format("%H:%M:%S").to_string()));
     
