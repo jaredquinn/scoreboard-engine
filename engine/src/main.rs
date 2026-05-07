@@ -19,7 +19,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use std::{collections::HashMap, sync::{Arc, RwLock}, time::Duration};
+use std::{sync::{Arc, RwLock}, time::Duration};
+use indexmap::IndexMap;
 
 use axum::{
     extract::{Path, State},
@@ -86,8 +87,8 @@ struct Args {
 }
 
 pub struct ScoreboardState {
-    pub data: RwLock<HashMap<String, WidgetValue>>,
-    pub tx: broadcast::Sender<HashMap<String, WidgetValue>>,
+    pub data: RwLock<IndexMap<String, WidgetValue>>,
+    pub tx: broadcast::Sender<IndexMap<String, WidgetValue>>,
     pub save_path: RwLock<String>,
     pub config_path: String,
 }
@@ -105,15 +106,15 @@ async fn log_event(widget_id: String, action: String, value: String) {
     }
 }
 
-async fn save_to_disk(data: HashMap<String, WidgetValue>, path: &str) {
+async fn save_to_disk(data: IndexMap<String, WidgetValue>, path: &str) {
     if let Ok(json) = serde_json::to_string_pretty(&data) {
         let _ = tokio::fs::write(path, json).await;
     }
 }
 
 
-fn load_config(path: &str) -> (HashMap<String, WidgetValue>, String) {
-    let mut data = HashMap::new();
+fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
+    let mut data = IndexMap::new();
 
     eprintln!("📁 Reading Configration file {}", path);
     let xml_content = std::fs::read_to_string(path).unwrap_or_else(|_| {
@@ -288,14 +289,14 @@ async fn serve_index() -> Html<&'static str> {
 // The handler function
 async fn get_all(
     State(state): State<Arc<ScoreboardState>>
-) -> Json<HashMap<String, WidgetValue>> {
+) -> Json<IndexMap<String, WidgetValue>> {
     let data = state.data.read().unwrap_or_else(|e| e.into_inner());
     Json(data.clone())
 }
 
-async fn get_flat(State(state): State<Arc<ScoreboardState>>) -> Json<HashMap<String, serde_json::Value>> {
+async fn get_flat(State(state): State<Arc<ScoreboardState>>) -> Json<Vec<IndexMap<String, serde_json::Value>>> {
     let data = state.data.read().unwrap();
-    let mut flat = HashMap::new();
+    let mut flat = IndexMap::new();
     for (id, val) in data.iter() {
         let json_val = match val {
             WidgetValue::Counter { value, .. } => serde_json::Value::from(*value),
@@ -306,7 +307,9 @@ async fn get_flat(State(state): State<Arc<ScoreboardState>>) -> Json<HashMap<Str
         flat.insert(id.clone(), json_val);
     }
     flat.insert("_last_updated".into(), serde_json::Value::String(Local::now().format("%H:%M:%S").to_string()));
-    Json(flat)
+    
+
+    Json(vec![flat,])
 }
 
 #[axum::debug_handler]
@@ -489,7 +492,7 @@ async fn main() {
         loop {
             interval.tick().await;
             let mut changed = false;
-            let mut snapshot = HashMap::new();
+            let mut snapshot = IndexMap::new();
             
             {
                 let mut data = timer_state.data.write().unwrap();
