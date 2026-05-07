@@ -11,7 +11,13 @@
 * Text (set)
 * List (set, next, prev)
 
+# Quickstart
 
-**Refer to the README file in each directory for instructions on how to build/use**
+* Download the latest version from the [Github repository releases](https://github.com/jaredquinn/scoreboard-engine/releases).
+* Extract the archive
+* Edit the config.xml to match your requirements.
+* Start scoreboard-engine (or scoreboard-engine.exe on windows)
+
+**Refer to the README file in each directory for instructions on how to build and run**
 
 
