@@ -473,10 +473,9 @@ fn print_listening_urls(port: u16) {
 // --- MAIN ---
 #[tokio::main]
 async fn main() {
-    tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "tower_http=debug,axum::rejection=trace".into()))
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    println!("⭐ Scoreboard Engine 0.3");
+    println!("");
+
 
     let args = Args::parse();
     let (xml_widgets, persistence_path) = load_config(&args.config);
@@ -488,6 +487,10 @@ async fn main() {
         xml_widgets
     };
 
+    let addr = SocketAddr::from(([0, 0, 0, 0], args.port));
+    print_listening_urls(args.port);
+
+
     let (tx, _rx) = broadcast::channel(16);
 
     let state = Arc::new(ScoreboardState { 
@@ -496,6 +499,11 @@ async fn main() {
         save_path: RwLock::new(persistence_path),
         config_path: args.config.clone()
     });
+
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "tower_http=debug,axum::rejection=trace".into()))
+        .with(tracing_subscriber::fmt::layer())
+        .init();
 
 
     let timer_state = Arc::clone(&state);
@@ -552,12 +560,9 @@ async fn main() {
         .layer(CorsLayer::permissive())
         .with_state(state);
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], args.port));
-    print_listening_urls(args.port);
-
-    println!("🏃 Running HTTP Server.  Press Ctrl-C to shutdown.");
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
 
+    println!("🏃 Running HTTP Server.  Press Ctrl-C to shutdown.");
     axum::serve(listener, app).await.unwrap();
 }
 
