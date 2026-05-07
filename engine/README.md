@@ -43,7 +43,7 @@ Starting the scoreboard from the compiled source code:
 | `/events` | `GET` | *None* | Opens the **SSE (Server-Sent Events)** stream for real-time state broadcasting. |
 | `/reset` | `POST` | *None* | Reloads specified `config.xml`, clears persistence, and broadcasts the **fresh state**. |
 | `/widgets` | `GET` | *None* | Returns **all current widget states** as a JSON object.  Contains all widgets, values and metadata.|
-| `/widgets/flat` | `GET` | *None* | Returns **key and value only** as a JSON object for each widget.|
+| `/widgets/flat` | `GET` | *None* | Returns **key and value only** as list containing a JSON object for each widget.|
 | `/widgets/:id/update` | `POST` | `{"action": "increment", "amount": 1}` | **Counter**: Increases/decreases value by `amount` (use negative numbers for dec). |
 | `/widgets/:id/update` | `POST` | `{"action": "start"}` / `{"action": "stop"}` | **Timer**: Toggles the background ticker for the specified ID. |
 | `/widgets/:id/update` | `POST` | `{"action": "reset"}` | **Timer**: Reverts to `initial_seconds`. **List**: Resets index to `0`. |
@@ -52,6 +52,8 @@ Starting the scoreboard from the compiled source code:
 | `/widgets/:id/update` | `POST` | `{"action": "set_max", "value": 3600}` | **Timer**: Updates the maximum bound (Ceiling). |
 | `/widgets/:id/update` | `POST` | `{"action": "next"}` / `{"action": "prev"}` | **MappedList**: Navigates the options array. |
 | `/widgets/:id/update` | `POST` | `"New Text Content"` | **StaticText**: Directly replaces the string value (Raw JSON string). |
+
+/widgets/flat is designed for use in consumers like vMix Data Sources.
 
 ## Config Example
 
