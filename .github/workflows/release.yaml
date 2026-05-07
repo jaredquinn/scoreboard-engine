@@ -1,3 +1,4 @@
+
 name: Release
 
 permissions:
@@ -56,3 +57,4 @@ jobs:
           # [default value: windows]
           # [possible values: all, unix, windows, none]
           zip: windows
+
