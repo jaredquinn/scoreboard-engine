@@ -3,6 +3,10 @@
 A high-performance, real-time scoreboard backend built with **Rust**, **Axum**, and **Tokio**. 
 
 Note: This was my 'learn rust in a weekend' project, and while solid and reliable should not be considered production ready.
+
+
+If you find this useful - buy me a [Ko-Fi](https://ko-fi.com/vk2way).
+
 ---
 
 ## 🚀 Key Features
