@@ -306,7 +306,8 @@ async fn get_flat(State(state): State<Arc<ScoreboardState>>) -> Json<Vec<IndexMa
         };
 
         flat.insert(id.clone(), json_val);
-
+        
+        // There's got to be a cleaner way to do this, but for now it will do!
         let display_val = match val {
             WidgetValue::Timer { formatted_time, .. } => serde_json::Value::String(formatted_time.clone()),
             WidgetValue::Counter { .. } => serde_json::Value::String(String::new()),
