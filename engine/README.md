@@ -19,6 +19,11 @@ If you find this useful - buy me a [Ko-Fi](https://ko-fi.com/vk2way).
 If you are not interested in building from the rust source code; you can follow the quickstart guide
 in the top level [README](/README.md).
 
+## 🚀 Future Plans
+
+* Calculated fields
+* Event Actions (on timer stop, perform any action)
+
 ---
 
 ## 🛠️ Build from Source
