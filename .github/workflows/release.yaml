@@ -100,7 +100,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ZIP_NAME="companion-module-scoreboard-scoreboard-${{ steps.get_version.outputs.pkg_version }}.zip"
+          ZIP_NAME="scoreboard-scoreboard-${{ steps.get_version.outputs.pkg_version }}.tgz"
           echo "Uploading $ZIP_NAME to release ${{ steps.get_release.outputs.tag }}..."
           gh release upload ${{ steps.get_release.outputs.tag }} "$ZIP_NAME" --clobber
 
