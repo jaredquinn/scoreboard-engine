@@ -1,4 +1,4 @@
-# 𖣘  Scoreboard Engine v0.2
+# 𖣘  Scoreboard Engine
 
 A high-performance, real-time scoreboard backend built with **Rust**, **Axum**, and **Tokio**. 
 
@@ -9,7 +9,7 @@ If you find this useful - buy me a [Ko-Fi](https://ko-fi.com/vk2way).
 
 ---
 
-## 🚀 Key Features
+## 🔑 Key Features
 
 * **Single-Binary**: The HTML dashboard is baked directly into the executable`.
 * **Disaster Recovery**: Live state is persisted on every change and tick.
