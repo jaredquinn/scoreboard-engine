@@ -54,6 +54,8 @@ pub enum WidgetValue {
     Counter {
         value: i64,
         increments: Vec<i64>,
+        #[serde(rename = "dashboard-ui", default = "default_true")]
+        dashboard_ui: bool,
     },
     Timer {
         formatted_time: String,
@@ -64,22 +66,40 @@ pub enum WidgetValue {
         min_value: i64,
         max_value: i64,
         format: String,
+        #[serde(rename = "dashboard-ui", default = "default_true")]
+        dashboard_ui: bool,
     },
-    MappedList(usize, Vec<String>),
-    StaticText(String),
+    MappedList {
+        index: usize,
+        options: Vec<String>,
+        #[serde(rename = "dashboard-ui", default = "default_true")]
+        dashboard_ui: bool,
+    },
+    StaticText {
+        content: String,
+        #[serde(rename = "dashboard-ui", default = "default_true")]
+        dashboard_ui: bool,
+    },
 }
 
-// Trait defining the shared "class" behaviors for widgets
+// Helper function to handle serde defaults to true
+fn default_true() -> bool {
+    true
+}
+
+// Trait defining the shared behaviors for widgets
 pub trait Widget {
     fn update(&mut self, payload: UpdatePayload) -> (bool, String);
     fn tick(&mut self) -> (bool, String);
     fn to_value(&self) -> WidgetValue;
+    fn is_visible(&self) -> bool;
 }
 
-// Counter 
+// Counter
 pub struct CounterWidget {
     pub value: i64,
     pub increments: Vec<i64>,
+    pub dashboard_ui: bool,
 }
 
 impl Widget for CounterWidget {
@@ -107,18 +127,23 @@ impl Widget for CounterWidget {
     }
 
     fn tick(&mut self) -> (bool, String) {
-        (false, String::new()) // Counters don't update on timer ticks
+        (false, String::new())
+    }
+
+    fn is_visible(&self) -> bool {
+        self.dashboard_ui
     }
 
     fn to_value(&self) -> WidgetValue {
         WidgetValue::Counter {
             value: self.value,
             increments: self.increments.clone(),
+            dashboard_ui: self.dashboard_ui,
         }
     }
 }
 
-// Timer 
+// Timer
 pub struct TimerWidget {
     pub seconds: i64,
     pub initial_seconds: i64,
@@ -128,6 +153,7 @@ pub struct TimerWidget {
     pub min_value: i64,
     pub max_value: i64,
     pub format: String,
+    pub dashboard_ui: bool,
 }
 
 impl Widget for TimerWidget {
@@ -189,6 +215,10 @@ impl Widget for TimerWidget {
         }
     }
 
+    fn is_visible(&self) -> bool {
+        self.dashboard_ui
+    }
+
     fn to_value(&self) -> WidgetValue {
         WidgetValue::Timer {
             formatted_time: self.formatted_time.clone(),
@@ -199,6 +229,7 @@ impl Widget for TimerWidget {
             min_value: self.min_value,
             max_value: self.max_value,
             format: self.format.clone(),
+            dashboard_ui: self.dashboard_ui,
         }
     }
 }
@@ -207,6 +238,7 @@ impl Widget for TimerWidget {
 pub struct MappedListWidget {
     pub index: usize,
     pub options: Vec<String>,
+    pub dashboard_ui: bool,
 }
 
 impl Widget for MappedListWidget {
@@ -252,14 +284,23 @@ impl Widget for MappedListWidget {
         (false, String::new())
     }
 
+    fn is_visible(&self) -> bool {
+        self.dashboard_ui
+    }
+
     fn to_value(&self) -> WidgetValue {
-        WidgetValue::MappedList(self.index, self.options.clone())
+        WidgetValue::MappedList {
+            index: self.index,
+            options: self.options.clone(),
+            dashboard_ui: self.dashboard_ui,
+        }
     }
 }
 
 // StaticText
 pub struct StaticTextWidget {
     pub content: String,
+    pub dashboard_ui: bool,
 }
 
 impl Widget for StaticTextWidget {
@@ -281,17 +322,25 @@ impl Widget for StaticTextWidget {
         (false, String::new())
     }
 
+    fn is_visible(&self) -> bool {
+        self.dashboard_ui
+    }
+
     fn to_value(&self) -> WidgetValue {
-        WidgetValue::StaticText(self.content.clone())
+        WidgetValue::StaticText {
+            content: self.content.clone(),
+            dashboard_ui: self.dashboard_ui,
+        }
     }
 }
 
-// Helper factory to dynamically instantiate a widget from its data representation
+// Helper factory to dynamically instantiate widget from its data representation
 fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
     match value {
-        WidgetValue::Counter { value, increments } => Box::new(CounterWidget {
+        WidgetValue::Counter { value, increments, dashboard_ui } => Box::new(CounterWidget {
             value: *value,
             increments: increments.clone(),
+            dashboard_ui: *dashboard_ui,
         }),
         WidgetValue::Timer {
             seconds,
@@ -302,6 +351,7 @@ fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
             min_value,
             max_value,
             format,
+            dashboard_ui,
         } => Box::new(TimerWidget {
             seconds: *seconds,
             initial_seconds: *initial_seconds,
@@ -311,13 +361,16 @@ fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
             min_value: *min_value,
             max_value: *max_value,
             format: format.clone(),
+            dashboard_ui: *dashboard_ui,
         }),
-        WidgetValue::MappedList(index, options) => Box::new(MappedListWidget {
+        WidgetValue::MappedList { index, options, dashboard_ui } => Box::new(MappedListWidget {
             index: *index,
             options: options.clone(),
+            dashboard_ui: *dashboard_ui,
         }),
-        WidgetValue::StaticText(content) => Box::new(StaticTextWidget {
+        WidgetValue::StaticText { content, dashboard_ui } => Box::new(StaticTextWidget {
             content: content.clone(),
+            dashboard_ui: *dashboard_ui,
         }),
     }
 }
@@ -406,6 +459,13 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
             .and_then(|n| n.text())
             .unwrap_or("");
 
+        // Parse dashboard-ui flag from XML; defaults to true if omitted or not "false"
+        let dashboard_ui = node.children()
+            .find(|n| n.has_tag_name("dashboard-ui"))
+            .and_then(|n| n.text())
+            .map(|t| t.trim().to_lowercase() != "false")
+            .unwrap_or(true);
+
         let val = match w_type {
             "Counter" => {
                 let initial = node.children()
@@ -423,6 +483,7 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
                 WidgetValue::Counter {
                     value: initial,
                     increments: final_increments,
+                    dashboard_ui,
                 }
             }
             "Timer" => {
@@ -458,6 +519,7 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
                     min_value: min,
                     max_value: max,
                     format: fmt,
+                    dashboard_ui,
                 }
             }
             "MappedList" => {
@@ -466,7 +528,7 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
                     .filter_map(|n| n.text())
                     .map(|s| s.to_string())
                     .collect();
-                WidgetValue::MappedList(0, options)
+                WidgetValue::MappedList { index: 0, options, dashboard_ui }
             }
             "StaticText" => {
                 let content = node.children()
@@ -474,12 +536,12 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
                     .and_then(|n| n.text())
                     .unwrap_or("")
                     .to_string();
-                WidgetValue::StaticText(content)
+                WidgetValue::StaticText { content, dashboard_ui }
             }
             _ => continue,
         };
 
-        eprintln!("🥅 Setting up widget {}:{}", w_type, id);
+        eprintln!("🥅 Setting up widget {}:{} (UI Visible: {})", w_type, id, dashboard_ui);
         data.insert(id, val);
     }
 
@@ -530,9 +592,14 @@ async fn serve_index() -> Html<&'static str> {
     Html(include_str!("index.html"))
 }
 
+// Returns ONLY widgets where dashboard_ui == true so frontend hides flagged widgets automatically
 async fn get_all(State(state): State<Arc<ScoreboardState>>) -> Json<IndexMap<String, WidgetValue>> {
     let data = state.data.read().unwrap();
-    Json(data.clone())
+    let filtered_data: IndexMap<String, WidgetValue> = data.iter()
+        .map(|(k, v)| (k.clone(), v.clone()))
+        .collect();
+
+    Json(filtered_data)
 }
 
 async fn get_flat(State(state): State<Arc<ScoreboardState>>) -> Json<IndexMap<String, serde_json::Value>> {
@@ -543,11 +610,11 @@ async fn get_flat(State(state): State<Arc<ScoreboardState>>) -> Json<IndexMap<St
         let v = match val {
             WidgetValue::Counter { value, .. } => serde_json::Value::from(*value),
             WidgetValue::Timer { formatted_time, .. } => serde_json::Value::from(formatted_time.clone()),
-            WidgetValue::MappedList(idx, options) => {
-                let s = options.get(*idx).cloned().unwrap_or_default();
+            WidgetValue::MappedList { index, options, .. } => {
+                let s = options.get(*index).cloned().unwrap_or_default();
                 serde_json::Value::from(s)
             }
-            WidgetValue::StaticText(content) => serde_json::Value::from(content.clone()),
+            WidgetValue::StaticText { content, .. } => serde_json::Value::from(content.clone()),
         };
         flat.insert(id.clone(), v);
     }
@@ -562,12 +629,10 @@ async fn universal_update(
     let (success, log_val, current_data) = {
         let mut data = state.data.write().unwrap();
         if let Some(val) = data.get_mut(&id) {
-            // Instantiate our object-oriented wrapper
             let mut widget_obj = create_widget(val);
             let (success, log_val) = widget_obj.update(payload);
-            
+
             if success {
-                // Save the mutated state back into the serialization mapping
                 *val = widget_obj.to_value();
                 (true, log_val, data.clone())
             } else {
@@ -615,7 +680,12 @@ async fn sse_handler(
     let mut rx = state.tx.subscribe();
     let stream = async_stream::stream! {
         while let Ok(data) = rx.recv().await {
-            if let Ok(json) = serde_json::to_string(&data) {
+            // Filter SSE payload to only include dashboard visible elements for the UI
+            let filtered_data: IndexMap<String, WidgetValue> = data.iter()
+                .map(|(k, v)| (k.clone(), v.clone()))
+                .collect();
+
+            if let Ok(json) = serde_json::to_string(&filtered_data) {
                 yield Ok(Event::default().data(json));
             }
         }
@@ -682,14 +752,13 @@ async fn main() {
             {
                 let mut data = timer_state.data.write().unwrap();
                 for (id, val) in data.iter_mut() {
-                    // Create object interface to utilize encapsulated tick routines
                     let mut widget_obj = create_widget(val);
                     let (ticked, display_val) = widget_obj.tick();
-                    
+
                     if ticked {
                         *val = widget_obj.to_value();
                         changed = true;
-                        
+
                         let id_clone = id.clone();
                         tokio::spawn(log_event(id_clone, "TICK".to_string(), display_val));
                     }

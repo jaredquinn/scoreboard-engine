@@ -132,6 +132,7 @@
 	    font-size: 0.8rem;
 	    color: var(--accent);
 	}
+	.card-hidden { display: none; }
 
 	.btn-small {
 	    padding: 0.3rem 0.6rem;
@@ -247,15 +248,19 @@
             const container = document.getElementById('widgets-container');
             if (!container) return;
 
+            const { type, data } = widget;
+
             let card = document.getElementById(`card-${id}`);
             if (!card) {
                 card = document.createElement('div');
                 card.id = `card-${id}`;
                 card.className = 'card';
+		if(data["dashboard-ui"] == false) {
+			card.className = 'card card-hidden';
+		}
                 container.appendChild(card);
             }
 
-            const { type, data } = widget;
             let innerContent = `<div class="widget-label">${id.replace(/_/g, ' ')}</div>`;
 
             if (type === "Counter") {
@@ -343,8 +348,8 @@
             // Handling StaticText
             else if (type === "StaticText") {
                 innerContent += `
-                    <div class="value" style="font-size: 1.5rem; text-align:center;">${data}</div>
-                    <button class="btn-reset-card" onclick="let t=prompt('Update Text:', '${data}'); if(t) updateWidget('${id}', t)">EDIT</button>`;
+                    <div class="value" style="font-size: 1.5rem; text-align:center;">${data.content}</div>
+                    <button class="btn-reset-card" onclick="let t=prompt('Update Text:', '${data.content}'); if(t) updateWidget('${id}', t)">EDIT</button>`;
             }
 
             card.innerHTML = innerContent;
