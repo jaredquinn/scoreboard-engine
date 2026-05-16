@@ -65,7 +65,7 @@ jobs:
       contents: write 
     defaults:
       run:
-        working-directory: companion-module-scoreboard-scoreboard
+        working-directory: companion-module-scoreboard-engine
     steps:
       - uses: actions/checkout@v6
 
@@ -73,7 +73,7 @@ jobs:
         with: 
           node-version: '22.20'
           cache: 'yarn'
-          cache-dependency-path: './companion-module-scoreboard-scoreboard/package.json'
+          cache-dependency-path: './companion-module-scoreboard-engine/package.json'
 
       - name: Install Dependencies
         run: yarn install 
@@ -96,7 +96,7 @@ jobs:
       - name: Build Companion Module
         run: yarn companion-module-build
 
-      - run: mv scoreboard-scoreboard-${{ steps.get_version.outputs.pkg_version }}.tgz companion-module-scoreboard-${{ steps.get_version.outputs.pkg_version }}.tgz
+      - run: mv scoreboard-engine-${{ steps.get_version.outputs.pkg_version }}.tgz companion-module-scoreboard-engine-${{ steps.get_version.outputs.pkg_version }}.tgz
 
       - name: Upload Zip to Latest Release
         env:
