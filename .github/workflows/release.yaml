@@ -13,15 +13,18 @@ jobs:
 
   upload-companion:
     runs-on: ubuntu-latest
-    working-directory: ./companion-module-scoreboard-scoreboard
     permissions:
       contents: write 
+    defaults:
+      run:
+        working-directory: companion-module-scoreboard-scoreboard
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v5
         with: 
           node-version: '24'
           cache: 'yarn'
+          cache-dependency-path: './companion-module-scoreboard-scoreboard/package.json'
       - name: Install Dependencies
         run: yarn install 
       - name: Build Companion Module
