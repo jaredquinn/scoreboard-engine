@@ -44,6 +44,8 @@ use std::net::SocketAddr;
 
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 mod ax_res {
     pub use axum::response::Html;
 }
@@ -714,7 +716,7 @@ fn print_listening_urls(port: u16) {
 
 #[tokio::main]
 async fn main() {
-    println!("⭐ Scoreboard Engine 0.4");
+    eprintln!("⭐ Scoreboard Engine {}", VERSION);
     println!("");
 
     let args = Args::parse();
