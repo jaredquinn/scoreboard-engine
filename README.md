@@ -1,5 +1,5 @@
 
-# 🎯 Scoreboard Engine v0.2
+# 🎯 Scoreboard Engine 
 
 * 𖣘  `engine` - A high-performance, real-time scoreboard backend built with **Rust**, **Axum**, and **Tokio** with integrated monitoring dashboard.
 * 🦾 `companion module` - A module for BitFocus Companion supporting all features.
