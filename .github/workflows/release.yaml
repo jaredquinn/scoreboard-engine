@@ -65,12 +65,11 @@ jobs:
       contents: write 
     steps:
       - uses: actions/checkout@v6
-      - run: ls -l
+      - run: mv companion-module-scoreboard-scoreboard/* .
       - uses: actions/setup-node@v3
         with: 
           node-version: '22'
           cache: 'yarn'
-          cache-dependency-path: "./companion-module-scoreboard-scoreboard/yarn.lock"
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
         working-directory: ./companion-module-soreboard-scoreboard
