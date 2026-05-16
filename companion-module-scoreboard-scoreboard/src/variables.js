@@ -24,7 +24,7 @@ module.exports = {
 				values[`${id}_raw`] = data.seconds;
 				values[id] = data.formatted_time;
 			} else if (type === 'MappedList') {
-				const [index, options] = data.options;
+				const { index, options } = data;
 				values[id] = options[index] || '---';
 			} else if (type === 'StaticText') {
 				values[id] = data.content;
