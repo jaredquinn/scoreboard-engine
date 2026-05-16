@@ -6,13 +6,61 @@ permissions:
 
 on:
   push:
-#    tags:
-#      - v[0-9]+.*
+    tags:
+      - v[0-9]+.*
 
 jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # for taiki-e/create-gh-release-action
+    steps:
+      - uses: actions/checkout@v6
+      - uses: taiki-e/create-gh-release-action@v1
+#        with:
+#          changelog: CHANGELOG.md
+
+  upload-assets:
+    needs: create-release
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: x86_64-apple-darwin
+            os: macos-latest
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write # for taiki-e/upload-rust-binary-action
+    steps:
+      - uses: actions/checkout@v6
+      - uses: taiki-e/upload-rust-binary-action@v1
+        with:
+          # (required) Binary names (non-extension portion of filename) to build and upload (whitespace or comma separated list).
+          # Note that glob pattern is not supported yet.
+          bin: scoreboard-engine
+          manifest-path: engine/Cargo.toml
+          include: engine/README.md,engine/CHANGELOG.md,engine/config.xml
+          # (optional) Target triple, default is host triple.
+          # This is optional but it is recommended that this always be set to
+          # clarify which target you are building for if macOS is included in
+          # the matrix because GitHub Actions changed the default architecture
+          # of macos-latest since macos-14.
+          target: ${{ matrix.target }}
+          # (optional) On which platform to distribute the `.tar.gz` file.
+          # [default value: unix]
+          # [possible values: all, unix, windows, none]
+          tar: unix
+          # (optional) On which platform to distribute the `.zip` file.
+          # [default value: windows]
+          # [possible values: all, unix, windows, none]
+          zip: windows
 
   upload-companion:
     runs-on: ubuntu-latest
+    needs: create-release
     permissions:
       contents: write 
     defaults:
@@ -20,13 +68,39 @@ jobs:
         working-directory: companion-module-scoreboard-scoreboard
     steps:
       - uses: actions/checkout@v6
+
       - uses: actions/setup-node@v5
         with: 
           node-version: '22.20'
           cache: 'yarn'
           cache-dependency-path: './companion-module-scoreboard-scoreboard/package.json'
+
       - name: Install Dependencies
         run: yarn install 
+
+      - name: Get version from package.json
+        id: get_version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "pkg_version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Get Latest Release Tag
+        id: get_release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Fetches the tag name of the most recent release
+          LATEST_TAG=$(gh release view --json tagName --template '{{.tagName}}')
+          echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+
       - name: Build Companion Module
         run: yarn companion-module-build
+
+      - name: Upload Zip to Latest Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ZIP_NAME="companion-module-scoreboard-scoreboard-${{ steps.get_version.outputs.pkg_version }}.zip"
+          echo "Uploading $ZIP_NAME to release ${{ steps.get_release.outputs.tag }}..."
+          gh release upload ${{ steps.get_release.outputs.tag }} "$ZIP_NAME" --clobber
 
