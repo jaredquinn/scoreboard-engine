@@ -4,6 +4,9 @@
 * 𖣘  `engine` - A high-performance, real-time scoreboard backend built with **Rust**, **Axum**, and **Tokio** with integrated monitoring dashboard.
 * 🦾 `companion module` - A module for BitFocus Companion supporting all features.
 
+
+If you find this useful - buy me a [Ko-Fi](https://ko-fi.com/vk2way).
+
 # Currently supported features
 
 * Timers (up/down,  min, max, start time, reset, set)
@@ -14,6 +17,8 @@
 # Quickstart
 
 ## Engine
+
+Yes, I know these instructions could be better!
 
 * Download the latest version from the [Github repository releases](https://github.com/jaredquinn/scoreboard-engine/releases).
 * Extract the archive

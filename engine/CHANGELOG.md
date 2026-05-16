@@ -5,6 +5,7 @@
 
 * Major refactor using polymorphic data structures and widget factory to 
   decouple widget functionality.
+* Add dashboard-ui option to hide widgets in the default generated webUI
 
 ## [v0.3] - 2026-05-07
 

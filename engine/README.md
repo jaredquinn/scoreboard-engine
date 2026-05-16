@@ -16,7 +16,11 @@ If you find this useful - buy me a [Ko-Fi](https://ko-fi.com/vk2way).
 * **Live Audit**: Every action is time-stamped in `match_log.txt` and mirrored to the stdout console.
 * **SSE Support**: Get every tick and every change in realtime via HTTP Server Sent Events.
 
+If you are not interested in building from the rust source code; you can follow the quickstart guide
+in the top level [README](/README.md).
+
 ---
+
 ## 🛠️ Build from Source
 
 **Dependencies**:
