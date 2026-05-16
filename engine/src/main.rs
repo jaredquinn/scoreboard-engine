@@ -48,18 +48,17 @@ mod ax_res {
     pub use axum::response::Html;
 }
 
-// --- DATA STRUCTURES ---
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(tag = "type", content = "data")]
 pub enum WidgetValue {
-    Counter { 
-        value: i64, 
-        increments: Vec<i64> 
+    Counter {
+        value: i64,
+        increments: Vec<i64>,
     },
-    Timer { 
+    Timer {
         formatted_time: String,
-        seconds: i64, 
-        running: bool, 
+        seconds: i64,
+        running: bool,
         initial_seconds: i64,
         is_down: bool,
         min_value: i64,
@@ -70,10 +69,269 @@ pub enum WidgetValue {
     StaticText(String),
 }
 
+// Trait defining the shared "class" behaviors for widgets
+pub trait Widget {
+    fn update(&mut self, payload: UpdatePayload) -> (bool, String);
+    fn tick(&mut self) -> (bool, String);
+    fn to_value(&self) -> WidgetValue;
+}
+
+// Counter 
+pub struct CounterWidget {
+    pub value: i64,
+    pub increments: Vec<i64>,
+}
+
+impl Widget for CounterWidget {
+    fn update(&mut self, payload: UpdatePayload) -> (bool, String) {
+        match payload {
+            UpdatePayload::Action { action, amount, .. } => {
+                let amt = amount.unwrap_or(1);
+                match action.as_str() {
+                    "increment" => self.value += amt,
+                    "decrement" => self.value -= amt,
+                    "reset" => self.value = self.increments.first().cloned().unwrap_or(0),
+                    _ => return (false, String::new()),
+                }
+                (true, self.value.to_string())
+            }
+            UpdatePayload::Value(v) => {
+                if let Some(new_val) = v.as_i64() {
+                    self.value = new_val;
+                    (true, self.value.to_string())
+                } else {
+                    (false, String::new())
+                }
+            }
+        }
+    }
+
+    fn tick(&mut self) -> (bool, String) {
+        (false, String::new()) // Counters don't update on timer ticks
+    }
+
+    fn to_value(&self) -> WidgetValue {
+        WidgetValue::Counter {
+            value: self.value,
+            increments: self.increments.clone(),
+        }
+    }
+}
+
+// Timer 
+pub struct TimerWidget {
+    pub seconds: i64,
+    pub initial_seconds: i64,
+    pub formatted_time: String,
+    pub running: bool,
+    pub is_down: bool,
+    pub min_value: i64,
+    pub max_value: i64,
+    pub format: String,
+}
+
+impl Widget for TimerWidget {
+    fn update(&mut self, payload: UpdatePayload) -> (bool, String) {
+        match payload {
+            UpdatePayload::Action { action, value, .. } => {
+                match action.as_str() {
+                    "start" => self.running = true,
+                    "stop" => self.running = false,
+                    "toggle" => self.running = !self.running,
+                    "reset" => {
+                        self.seconds = self.initial_seconds;
+                        self.formatted_time = format_timer(self.seconds, &self.format);
+                    }
+                    "set" => {
+                        if let Some(val_str) = value.and_then(|v| v.as_str().map(String::from)) {
+                            if let Some(parsed_secs) = parse_time_string(&val_str) {
+                                self.seconds = parsed_secs;
+                                self.formatted_time = format_timer(self.seconds, &self.format);
+                            }
+                        }
+                    }
+                    _ => return (false, String::new()),
+                }
+                (true, self.formatted_time.clone())
+            }
+            UpdatePayload::Value(v) => {
+                if let Some(val_str) = v.as_str() {
+                    if let Some(parsed_secs) = parse_time_string(val_str) {
+                        self.seconds = parsed_secs;
+                        self.formatted_time = format_timer(self.seconds, &self.format);
+                        return (true, self.formatted_time.clone());
+                    }
+                }
+                (false, String::new())
+            }
+        }
+    }
+
+    fn tick(&mut self) -> (bool, String) {
+        if self.running {
+            if self.is_down {
+                if self.seconds > self.min_value {
+                    self.seconds -= 1;
+                } else {
+                    self.running = false;
+                }
+            } else {
+                if self.seconds < self.max_value {
+                    self.seconds += 1;
+                } else {
+                    self.running = false;
+                }
+            }
+            self.formatted_time = format_timer(self.seconds, &self.format);
+            (true, self.formatted_time.clone())
+        } else {
+            (false, String::new())
+        }
+    }
+
+    fn to_value(&self) -> WidgetValue {
+        WidgetValue::Timer {
+            formatted_time: self.formatted_time.clone(),
+            seconds: self.seconds,
+            running: self.running,
+            initial_seconds: self.initial_seconds,
+            is_down: self.is_down,
+            min_value: self.min_value,
+            max_value: self.max_value,
+            format: self.format.clone(),
+        }
+    }
+}
+
+// MappedList
+pub struct MappedListWidget {
+    pub index: usize,
+    pub options: Vec<String>,
+}
+
+impl Widget for MappedListWidget {
+    fn update(&mut self, payload: UpdatePayload) -> (bool, String) {
+        match payload {
+            UpdatePayload::Action { action, .. } => {
+                match action.as_str() {
+                    "next" => {
+                        if !self.options.is_empty() {
+                            self.index = (self.index + 1) % self.options.len();
+                        }
+                    }
+                    "prev" => {
+                        if !self.options.is_empty() {
+                            self.index = if self.index == 0 { self.options.len() - 1 } else { self.index - 1 };
+                        }
+                    }
+                    "reset" => self.index = 0,
+                    _ => return (false, String::new()),
+                }
+                let log_val = self.options.get(self.index).cloned().unwrap_or_default();
+                (true, log_val)
+            }
+            UpdatePayload::Value(v) => {
+                if let Some(val_str) = v.as_str() {
+                    if let Some(pos) = self.options.iter().position(|s| s == val_str) {
+                        self.index = pos;
+                        return (true, val_str.to_string());
+                    }
+                } else if let Some(idx) = v.as_u64() {
+                    if (idx as usize) < self.options.len() {
+                        self.index = idx as usize;
+                        let log_val = self.options.get(self.index).cloned().unwrap_or_default();
+                        return (true, log_val);
+                    }
+                }
+                (false, String::new())
+            }
+        }
+    }
+
+    fn tick(&mut self) -> (bool, String) {
+        (false, String::new())
+    }
+
+    fn to_value(&self) -> WidgetValue {
+        WidgetValue::MappedList(self.index, self.options.clone())
+    }
+}
+
+// StaticText
+pub struct StaticTextWidget {
+    pub content: String,
+}
+
+impl Widget for StaticTextWidget {
+    fn update(&mut self, payload: UpdatePayload) -> (bool, String) {
+        match payload {
+            UpdatePayload::Value(v) => {
+                if let Some(val_str) = v.as_str() {
+                    self.content = val_str.to_string();
+                    (true, self.content.clone())
+                } else {
+                    (false, String::new())
+                }
+            }
+            _ => (false, String::new()),
+        }
+    }
+
+    fn tick(&mut self) -> (bool, String) {
+        (false, String::new())
+    }
+
+    fn to_value(&self) -> WidgetValue {
+        WidgetValue::StaticText(self.content.clone())
+    }
+}
+
+// Helper factory to dynamically instantiate a widget from its data representation
+fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
+    match value {
+        WidgetValue::Counter { value, increments } => Box::new(CounterWidget {
+            value: *value,
+            increments: increments.clone(),
+        }),
+        WidgetValue::Timer {
+            seconds,
+            initial_seconds,
+            formatted_time,
+            running,
+            is_down,
+            min_value,
+            max_value,
+            format,
+        } => Box::new(TimerWidget {
+            seconds: *seconds,
+            initial_seconds: *initial_seconds,
+            formatted_time: formatted_time.clone(),
+            running: *running,
+            is_down: *is_down,
+            min_value: *min_value,
+            max_value: *max_value,
+            format: format.clone(),
+        }),
+        WidgetValue::MappedList(index, options) => Box::new(MappedListWidget {
+            index: *index,
+            options: options.clone(),
+        }),
+        WidgetValue::StaticText(content) => Box::new(StaticTextWidget {
+            content: content.clone(),
+        }),
+    }
+}
+
+// --- DATA STRUCTURES ---
+
 #[derive(Deserialize, Debug)]
 #[serde(untagged)]
 pub enum UpdatePayload {
-    Action { action: String, amount: Option<i64>, value: Option<serde_json::Value>, },
+    Action {
+        action: String,
+        amount: Option<i64>,
+        value: Option<serde_json::Value>,
+    },
     Value(serde_json::Value),
 }
 
@@ -93,8 +351,8 @@ pub struct ScoreboardState {
     pub config_path: String,
 }
 
-
 // --- PERSISTENCE & LOGGING ---
+
 async fn log_event(widget_id: String, action: String, value: String) {
     let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S");
     let con_line = format!("[{}] ID: {:<12} | Action: {:<10} | Val: {}", timestamp, widget_id, action, value);
@@ -112,11 +370,10 @@ async fn save_to_disk(data: IndexMap<String, WidgetValue>, path: &str) {
     }
 }
 
-
 fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
     let mut data = IndexMap::new();
 
-    eprintln!("📁 Reading Configration file {}", path);
+    eprintln!("📁 Reading Configuration file {}", path);
     let xml_content = std::fs::read_to_string(path).unwrap_or_else(|_| {
         eprintln!("⚠️ Warning: Could not read {}, using empty config.", path);
         "<ScoreboardConfig></ScoreboardConfig>".to_string()
@@ -163,9 +420,9 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
 
                 let final_increments = if increments.is_empty() { vec![1] } else { increments };
 
-                WidgetValue::Counter { 
-                    value: initial, 
-                    increments: final_increments 
+                WidgetValue::Counter {
+                    value: initial,
+                    increments: final_increments,
                 }
             }
             "Timer" => {
@@ -189,12 +446,12 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
                 let fmt = node.children()
                     .find(|n| n.has_tag_name("format"))
                     .and_then(|n| n.text())
-                    .unwrap_or("mm:ss") // Default to mm:ss
+                    .unwrap_or("mm:ss")
                     .to_string();
 
                 WidgetValue::Timer {
                     seconds: secs,
-                    initial_seconds: secs, // Store the reset point
+                    initial_seconds: secs,
                     formatted_time: format_timer(secs, &fmt),
                     running: false,
                     is_down: down,
@@ -219,7 +476,7 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
                     .to_string();
                 WidgetValue::StaticText(content)
             }
-            _ => continue, // Skip unknown types
+            _ => continue,
         };
 
         eprintln!("🥅 Setting up widget {}:{}", w_type, id);
@@ -236,12 +493,12 @@ fn parse_time_string(input: &str) -> Option<i64> {
 
     let parts: Vec<&str> = input.split(':').collect();
     match parts.len() {
-        2 => { // mm:ss
+        2 => {
             let m = parts[0].parse::<i64>().ok()?;
             let s = parts[1].parse::<i64>().ok()?;
             Some((m * 60) + s)
         }
-        3 => { // hh:mm:ss
+        3 => {
             let h = parts[0].parse::<i64>().ok()?;
             let m = parts[1].parse::<i64>().ok()?;
             let s = parts[2].parse::<i64>().ok()?;
@@ -255,76 +512,48 @@ fn format_timer(total_seconds: i64, format: &str) -> String {
     let abs_secs = total_seconds.abs();
     let sign = if total_seconds < 0 { "-" } else { "" };
 
+    let hours = abs_secs / 3600;
+    let minutes = (abs_secs % 3600) / 60;
+    let seconds = abs_secs % 60;
+
     match format {
-        "hh:mm:ss" => {
-            let h = abs_secs / 3600;
-            let m = (abs_secs % 3600) / 60;
-            let s = abs_secs % 60;
-            format!("{}{:02}:{:02}:{:02}", sign, h, m, s)
-        }
-        "mm:ss" => {
-            // mm is NOT limited to 60 here
-            let m = abs_secs / 60;
-            let s = abs_secs % 60;
-            format!("{}{:02}:{:02}", sign, m, s)
-        }
-        "ss" => {
-            // Just raw seconds, supports large numbers
-            format!("{}{}", sign, abs_secs)
-        }
-        _ => {
-            // Fallback to standard mm:ss if format is unknown
-            let m = abs_secs / 60;
-            let s = abs_secs % 60;
-            format!("{:02}:{:02}", m, s)
-        }
+        "hh:mm:ss" => format!("{}{:02}:{:02}:{:02}", sign, hours, minutes, seconds),
+        "m:ss" => format!("{}{}:{:02}", sign, (hours * 60) + minutes, seconds),
+        "s" => format!("{}{}", sign, total_seconds),
+        _ => format!("{}{:02}:{:02}", sign, (hours * 60) + minutes, seconds),
     }
 }
 
-// --- HANDLERS ---
+// --- API ENDPOINTS ---
+
 async fn serve_index() -> Html<&'static str> {
     Html(include_str!("index.html"))
 }
 
-// The handler function
-async fn get_all(
-    State(state): State<Arc<ScoreboardState>>
-) -> Json<IndexMap<String, WidgetValue>> {
-    let data = state.data.read().unwrap_or_else(|e| e.into_inner());
+async fn get_all(State(state): State<Arc<ScoreboardState>>) -> Json<IndexMap<String, WidgetValue>> {
+    let data = state.data.read().unwrap();
     Json(data.clone())
 }
 
-async fn get_flat(State(state): State<Arc<ScoreboardState>>) -> Json<Vec<IndexMap<String, serde_json::Value>>> {
+async fn get_flat(State(state): State<Arc<ScoreboardState>>) -> Json<IndexMap<String, serde_json::Value>> {
     let data = state.data.read().unwrap();
     let mut flat = IndexMap::new();
+
     for (id, val) in data.iter() {
-        let json_val = match val {
-            WidgetValue::Timer { seconds, .. } => serde_json::Value::from(*seconds),
+        let v = match val {
             WidgetValue::Counter { value, .. } => serde_json::Value::from(*value),
-            WidgetValue::StaticText(s) => serde_json::Value::String(s.clone()),
-            WidgetValue::MappedList(i, opt) => serde_json::Value::String(opt.get(*i).cloned().unwrap_or_default()),
+            WidgetValue::Timer { formatted_time, .. } => serde_json::Value::from(formatted_time.clone()),
+            WidgetValue::MappedList(idx, options) => {
+                let s = options.get(*idx).cloned().unwrap_or_default();
+                serde_json::Value::from(s)
+            }
+            WidgetValue::StaticText(content) => serde_json::Value::from(content.clone()),
         };
-
-        flat.insert(id.clone(), json_val);
-        
-        // There's got to be a cleaner way to do this, but for now it will do!
-        let display_val = match val {
-            WidgetValue::Timer { formatted_time, .. } => serde_json::Value::String(formatted_time.clone()),
-            WidgetValue::Counter { .. } => serde_json::Value::String(String::new()),
-            WidgetValue::StaticText(_s) => serde_json::Value::String(String::new()),
-            WidgetValue::MappedList(_i, _opt) => serde_json::Value::String(String::new()),
-        };
-        if display_val.clone() != serde_json::Value::String(String::new()) {
-            flat.insert(format!("formatted_{}", id.clone()), display_val.clone());
-        };
+        flat.insert(id.clone(), v);
     }
-    flat.insert("_last_updated".into(), serde_json::Value::String(Local::now().format("%H:%M:%S").to_string()));
-    
-
-    Json(vec![flat,])
+    Json(flat)
 }
 
-#[axum::debug_handler]
 async fn universal_update(
     Path(id): Path<String>,
     State(state): State<Arc<ScoreboardState>>,
@@ -332,75 +561,21 @@ async fn universal_update(
 ) -> Json<bool> {
     let (success, log_val, current_data) = {
         let mut data = state.data.write().unwrap();
-        let mut success = false;
-        let mut log_val = String::new();
-
-        if let Some(widget) = data.get_mut(&id) {
-            match (widget, payload) {
-                (WidgetValue::Counter { value, .. }, UpdatePayload::Action { action, amount, .. }) => {
-                    let d = amount.unwrap_or(1);
-                    if action == "increment" { *value += d; success = true; }
-                    else if action == "decrement" { *value -= d; success = true; }
-                    log_val = value.to_string();
-                }
-                (WidgetValue::Timer { seconds, running, min_value, max_value, initial_seconds, .. },
-                 UpdatePayload::Action { action, amount, value }) => {
-
-                    match action.as_str() {
-                            "set_initial" | "set_min" | "set_max" | "set_current" => {
-                                if let Some(val_json) = value {
-                                    let val_str = match val_json {
-                                        serde_json::Value::String(s) => s.clone(),
-                                        serde_json::Value::Number(n) => n.to_string(),
-                                        _ => "".to_string(),
-                                    };
-                                    if let Some(parsed_secs) = parse_time_string(&val_str) {
-                                        match action.as_str() {
-                                            "set_initial" => {
-                                                *initial_seconds = parsed_secs;
-                                                *seconds = parsed_secs;
-                                            },
-                                            "set_min" => *min_value = parsed_secs,
-                                            "set_max" => *max_value = parsed_secs,
-                                            "set_current" => *seconds = parsed_secs,
-                                            _ => {}
-                                        }
-                                        tokio::spawn(log_event(
-                                            id.to_string(),
-                                            action.clone(),
-                                            format!("Set to {}s", parsed_secs)
-                                        ));
-                                    }
-                                }
-                            } 
-                            "start" => { *running = true; success = true; }
-                            "stop" => { *running = false; success = true; }
-                            "reset" => { *seconds = *initial_seconds; *running = false; success = true; }
-                            //"set_initial" => { *initial_seconds = opt; *seconds = opt; success = true; }
-                            //"set_min" => { *min_value = opt; success = true; }
-                            //"set_max" => { *max_value = opt; success = true; }
-                            "increment" => { *seconds += amount.unwrap_or(1); success = true; }
-                            "decrement" => { *seconds -= amount.unwrap_or(1); success = true; }
-                            _ => {}
-                    }
-                    log_val = format!("Action: {}, Current: {}", action, seconds);
-                }
-                (WidgetValue::StaticText(s), UpdatePayload::Value(serde_json::Value::String(new_val))) => {
-                    *s = new_val.clone(); success = true; log_val = s.clone();
-                }
-                (WidgetValue::MappedList(idx, options), UpdatePayload::Action { action, .. }) => {
-                    match action.as_str() {
-                        "next" => { *idx = (*idx + 1) % options.len(); success = true; }
-                        "prev" => { *idx = if *idx == 0 { options.len() - 1 } else { *idx - 1 }; success = true; }
-                        "reset" => { *idx = 0; success = true; } 
-                        _ => {}
-                    }
-                    log_val = options.get(*idx).cloned().unwrap_or_default();
-                }
-                _ => {}
+        if let Some(val) = data.get_mut(&id) {
+            // Instantiate our object-oriented wrapper
+            let mut widget_obj = create_widget(val);
+            let (success, log_val) = widget_obj.update(payload);
+            
+            if success {
+                // Save the mutated state back into the serialization mapping
+                *val = widget_obj.to_value();
+                (true, log_val, data.clone())
+            } else {
+                (false, String::new(), data.clone())
             }
+        } else {
+            (false, String::new(), data.clone())
         }
-        (success, log_val, data.clone())
     };
 
     if success {
@@ -412,13 +587,11 @@ async fn universal_update(
         tokio::spawn(async move {
             log_event(id_c, "UPDATE".into(), lv_c).await;
             save_to_disk(dt_c, &path_clone).await;
-
         });
         let _ = state.tx.send(current_data);
     }
     Json(success)
 }
-
 
 async fn reset_all(State(state): State<Arc<ScoreboardState>>) -> Json<bool> {
     let (new_widgets, new_path) = load_config(&state.config_path);
@@ -428,8 +601,7 @@ async fn reset_all(State(state): State<Arc<ScoreboardState>>) -> Json<bool> {
 
         let mut path = state.save_path.write().unwrap_or_else(|e| e.into_inner());
         *path = new_path.clone();
-    } 
-
+    }
     let _ = state.tx.send(new_widgets.clone());
     let path_to_save = state.save_path.read().unwrap_or_else(|e| e.into_inner()).clone();
     save_to_disk(new_widgets, &path_to_save).await;
@@ -437,10 +609,8 @@ async fn reset_all(State(state): State<Arc<ScoreboardState>>) -> Json<bool> {
     Json(true)
 }
 
-
-
 async fn sse_handler(
-    State(state): State<Arc<ScoreboardState>>
+    State(state): State<Arc<ScoreboardState>>,
 ) -> Sse<impl tokio_stream::Stream<Item = Result<Event, std::convert::Infallible>>> {
     let mut rx = state.tx.subscribe();
     let stream = async_stream::stream! {
@@ -456,13 +626,13 @@ async fn sse_handler(
 fn print_listening_urls(port: u16) {
     println!("🎯 Scoreboard Engine is live!");
     println!("---------------------------------------");
-    println!("Local:            http://localhost:{}", port);
+    println!("Local: http://localhost:{}", port);
 
     if let Ok(interfaces) = get_if_addrs::get_if_addrs() {
         for interface in interfaces {
             if !interface.is_loopback() {
                 if let std::net::IpAddr::V4(ipv4) = interface.ip() {
-                    println!("On your network:  http://{}:{}", ipv4, port);
+                    println!("On your network: http://{}:{}", ipv4, port);
                 }
             }
         }
@@ -471,11 +641,11 @@ fn print_listening_urls(port: u16) {
 }
 
 // --- MAIN ---
+
 #[tokio::main]
 async fn main() {
     println!("⭐ Scoreboard Engine 0.3");
     println!("");
-
 
     let args = Args::parse();
     let (xml_widgets, persistence_path) = load_config(&args.config);
@@ -486,25 +656,21 @@ async fn main() {
     } else {
         xml_widgets
     };
-
     let addr = SocketAddr::from(([0, 0, 0, 0], args.port));
     print_listening_urls(args.port);
 
-
     let (tx, _rx) = broadcast::channel(16);
-
-    let state = Arc::new(ScoreboardState { 
-        data: RwLock::new(initial_data), 
+    let state = Arc::new(ScoreboardState {
+        data: RwLock::new(initial_data),
         tx,
         save_path: RwLock::new(persistence_path),
-        config_path: args.config.clone()
+        config_path: args.config.clone(),
     });
 
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "tower_http=debug,axum::rejection=trace".into()))
         .with(tracing_subscriber::fmt::layer())
         .init();
-
 
     let timer_state = Arc::clone(&state);
     tokio::spawn(async move {
@@ -513,28 +679,24 @@ async fn main() {
             interval.tick().await;
             let mut changed = false;
             let mut snapshot = IndexMap::new();
-            
             {
                 let mut data = timer_state.data.write().unwrap();
                 for (id, val) in data.iter_mut() {
-                    //if let WidgetValue::Timer { seconds, formatted_time, running, initial_seconds, is_down, min_value, max_value } = val {
-                    if let WidgetValue::Timer { seconds, running, is_down, min_value, max_value, format, formatted_time, .. } = val {
-                        if *running {
-                            if *is_down {
-                                if *seconds > *min_value { *seconds -= 1; } else { *running = false; }
-                            } else {
-                                if *seconds < *max_value { *seconds += 1; } else { *running = false; }
-                            }
-                            *formatted_time = format_timer(*seconds, &format);
-                            changed = true;
-
-                            let display_val = formatted_time.clone();
-                            let id_clone = id.clone();
-                            tokio::spawn(log_event(id_clone, "TICK".to_string(), display_val));
-                        }
+                    // Create object interface to utilize encapsulated tick routines
+                    let mut widget_obj = create_widget(val);
+                    let (ticked, display_val) = widget_obj.tick();
+                    
+                    if ticked {
+                        *val = widget_obj.to_value();
+                        changed = true;
+                        
+                        let id_clone = id.clone();
+                        tokio::spawn(log_event(id_clone, "TICK".to_string(), display_val));
                     }
                 }
-                if changed { snapshot = data.clone(); }
+                if changed {
+                    snapshot = data.clone();
+                }
             }
 
             if changed {
@@ -544,10 +706,8 @@ async fn main() {
                     save_to_disk(snapshot, &current_path).await;
                 });
             }
-
         }
     });
-
 
     let app = Router::new()
         .route("/", get(serve_index))
@@ -561,8 +721,6 @@ async fn main() {
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-
-    println!("🏃 Running HTTP Server.  Press Ctrl-C to shutdown.");
+    println!("🏃 Running HTTP Server. Press Ctrl-C to shutdown.");
     axum::serve(listener, app).await.unwrap();
 }
-
