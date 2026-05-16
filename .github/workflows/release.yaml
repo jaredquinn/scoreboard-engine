@@ -65,6 +65,8 @@ jobs:
       contents: write 
     steps:
       - uses: actions/checkout@v6
+      - run: ls -l
+      - run: ls -l companion-module-scoreboard-scoreboard
       - run: mv companion-module-scoreboard-scoreboard/* .
       - uses: actions/setup-node@v3
         with: 
