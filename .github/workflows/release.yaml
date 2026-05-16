@@ -58,3 +58,20 @@ jobs:
           # [possible values: all, unix, windows, none]
           zip: windows
 
+  upload-companion:
+    needs: create-release
+    permissions:
+      contents: write 
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: [actions/setup-node@v3](https://github.com/actions/setup-node)
+
+        with: node-version: '20'
+        cache: 'yarn'
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build Companion Module
+        run: yarn companion-module-build
+
