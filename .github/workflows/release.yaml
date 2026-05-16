@@ -64,11 +64,10 @@ jobs:
       contents: write 
     steps:
       - uses: actions/checkout@v6
-
       - uses: [actions/setup-node@v3](https://github.com/actions/setup-node)
-
-        with: node-version: '20'
-        cache: 'yarn'
+        with: 
+          node-version: '20'
+          cache: 'yarn'
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
 
