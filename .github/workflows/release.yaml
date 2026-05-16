@@ -69,6 +69,7 @@ jobs:
         with: 
           node-version: '22'
           cache: 'yarn'
+          cache-dependency-path: "companion-module-scoreboard-scoreboard"
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
         working-directory: ./companion-module-soreboard-scoreboard
