@@ -19,11 +19,11 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v5
         with: 
-          node-version: '22'
+          node-version: '24'
           cache: 'yarn'
-          cache-dependency-path: companion-module-scoreboard-scoreboard
+          cache-dependency-path: './companion-module-scoreboard-scoreboard/yarn.lock'
       - name: Install Dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install 
         working-directory: ./companion-module-scoreboard-scoreboard
       - name: Build Companion Module
         run: yarn companion-module-build
