@@ -41,14 +41,16 @@ class ScoreboardModule extends InstanceBase {
 	}
 
 	async discoverWidgets() {
+		this.log(this.config.host);
 		if (!this.config.host) return;
 
 		try {
 			const response = await fetch(`http://${this.config.host}:${this.config.port}/widgets`);
 			this.widgets = await response.json();
+			this.log('info', 'Setup: ' + JSON.stringify(this.widgets));
 			
 			this.setVariableDefinitions(GetVariableDefinitions(this.widgets));
-			this.setVariableValues(GetVariableValues(this.widgets));
+			//this.setVariableValues(GetVariableValues(this.widgets));
 			
 			this.updateStatus(InstanceStatus.Ok);
 		} catch (e) {

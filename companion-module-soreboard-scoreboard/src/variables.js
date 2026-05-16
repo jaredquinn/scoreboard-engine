@@ -11,8 +11,9 @@ module.exports = {
 		return defs;
 	},
 
-	GetVariableValues(widgets) {
+	GetVariableValues(widgets, ss) {
 		const values = {};
+
 		for (const [id, w] of Object.entries(widgets)) {
 			const { type, data } = w;
 
@@ -22,12 +23,11 @@ module.exports = {
 				values[`${id}_running`] = data.running ? 'RUN' : 'STOP';
 				values[`${id}_raw`] = data.seconds;
 				values[id] = data.formatted_time;
-				//this.log('info', data);
 			} else if (type === 'MappedList') {
-				const [idx, options] = data;
-				values[id] = options[idx] || '---';
+				const [index, options] = data.options;
+				values[id] = options[index] || '---';
 			} else if (type === 'StaticText') {
-				values[id] = data;
+				values[id] = data.content;
 			}
 		}
 		return values;
