@@ -50,7 +50,7 @@ class ScoreboardModule extends InstanceBase {
 			this.log('info', 'Setup: ' + JSON.stringify(this.widgets));
 			
 			this.setVariableDefinitions(GetVariableDefinitions(this.widgets));
-			//this.setVariableValues(GetVariableValues(this.widgets));
+			this.setVariableValues(GetVariableValues(this.widgets));
 			
 			this.updateStatus(InstanceStatus.Ok);
 		} catch (e) {
