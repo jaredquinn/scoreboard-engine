@@ -26,8 +26,8 @@ jobs:
           cache: 'yarn'
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
-        working-directory: ./companion-module-soreboard-scoreboard
+        working-directory: ./companion-module-scoreboard-scoreboard
       - name: Build Companion Module
         run: yarn companion-module-build
-        working-directory: ./companion-module-soreboard-scoreboard
+        working-directory: ./companion-module-scoreboard-scoreboard
 
