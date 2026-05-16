@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v5
         with: 
-          node-version: '24'
+          node-version: '22.20'
           cache: 'yarn'
           cache-dependency-path: './companion-module-scoreboard-scoreboard/package.json'
       - name: Install Dependencies
