@@ -37,7 +37,7 @@ use tokio::sync::broadcast;
 use tokio::fs::OpenOptions;
 use tokio::io::AsyncWriteExt;
 use tower_http::cors::CorsLayer;
-use tower_http::trace::TraceLayer;
+//use tower_http::trace::TraceLayer;
 
 use clap::Parser;
 use std::net::SocketAddr;
@@ -714,7 +714,7 @@ fn print_listening_urls(port: u16) {
 
 #[tokio::main]
 async fn main() {
-    println!("⭐ Scoreboard Engine 0.3");
+    println!("⭐ Scoreboard Engine 0.4");
     println!("");
 
     let args = Args::parse();
@@ -785,7 +785,7 @@ async fn main() {
         .route("/reset", post(reset_all))
         .route("/widgets/:id/update", post(universal_update))
         .route("/events", get(sse_handler))
-        .layer(TraceLayer::new_for_http())
+        //.layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive())
         .with_state(state);
 
