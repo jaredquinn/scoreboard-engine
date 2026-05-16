@@ -1,6 +1,6 @@
-# companion-module-[replace with module name]
+# companion-module-scoreboard-engine
 
-See [HELP.md](./companion/HELP.md) and [LICENSE](./LICENSE)
+See [HELP.md](./companion/HELP.md) and [LICENSE](/LICENSE)
 
 Requirements
 
@@ -14,6 +14,6 @@ yarn install
 yarn companion-module-build
 ```
 
-A `scoreboard-scoreboard-0.2.2.tgz` file will be created which can be added to Bitfocus Companion.
+A `scoreboard-engine-X.Y.Z.tgz` file will be created which can be added to Bitfocus Companion.
 
 * More instructions needed
