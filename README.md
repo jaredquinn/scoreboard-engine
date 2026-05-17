@@ -2,8 +2,17 @@
 # 🎯 Scoreboard Engine 
 
 * 𖣘  `engine` - A high-performance, real-time scoreboard backend built with **Rust**, **Axum**, and **Tokio** with integrated web dashboard.
-* 🦾 `companion module` - A module for BitFocus Companion supporting all features.
+* 🦾 `companion-module-scoreboard-engine` - A module for BitFocus Companion supporting all features.
 
+# Key Features
+
+* **Single-Binary**: Single executable, built in rust for speed and robustness.
+* **Integrated Dashboard**: A HTML dashboard is baked directly into the executable.
+* **Disaster Recovery**: Live state is persisted on every change and tick.
+* **SSE Support**: Get every tick and every change in realtime via HTTP Server Sent Events.
+* **Live Audit**: Every action is time-stamped in `match_log.txt` and mirrored to the stdout console.
+* **JSON Data Source**: Link to vMix titles using Data Sources
+    
 <img alt="Dashboard Screenshot" src="https://github.com/user-attachments/assets/eb497cdd-4557-4086-bfb1-62f20e4448d7" />
 
 If you find this useful - buy me a [Ko-Fi](https://ko-fi.com/vk2way).
