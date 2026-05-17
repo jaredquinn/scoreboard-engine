@@ -8,6 +8,8 @@
 
 If you find this useful - buy me a [Ko-Fi](https://ko-fi.com/vk2way).
 
+
+
 # Currently supported features
 
 * Timers (up/down,  min, max, start time, reset, set)
@@ -21,6 +23,7 @@ Yes, I know these instructions could be better!
 
 These quickstart instructions are for getting up and running quickly using the precompiled binary version of the latest release.
 
+**Refer to the README file in each directory for instructions on how to build from source**
 
 ## Engine
 
@@ -44,7 +47,18 @@ There is an example page of companion buttons designed to work with the example 
 
 <img alt="image" src="https://github.com/user-attachments/assets/ed380278-96f4-4808-abd3-fce3fcddd136" />
 
+## vMix
 
-**Refer to the README file in each directory for instructions on how to build and run**
+Scoreboard Engine provides a flatten list of data designed for consumption in vMix Data Sources;  this can be found at the `/widgets/flat` endpoint.
+
+### Using in a vMix Title
+
+Add the vMix Data Source, refer to the vMix documentation for more information on adding data sources:
+
+<img alt="image" src="https://github.com/user-attachments/assets/7cd63eb2-ae3a-44a2-ac2c-52238872609c" />
+
+Create a title for your production, ensuring you label any fields appropriately for use in Title Editor when linking Data Sources.
+
+<img alt="image" src="https://github.com/user-attachments/assets/2876ab56-8a93-4c2c-b1a8-656bad099586" />
 
 
