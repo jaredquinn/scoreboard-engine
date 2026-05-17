@@ -1,9 +1,10 @@
 
 # 🎯 Scoreboard Engine 
 
-* 𖣘  `engine` - A high-performance, real-time scoreboard backend built with **Rust**, **Axum**, and **Tokio** with integrated monitoring dashboard.
+* 𖣘  `engine` - A high-performance, real-time scoreboard backend built with **Rust**, **Axum**, and **Tokio** with integrated web dashboard.
 * 🦾 `companion module` - A module for BitFocus Companion supporting all features.
 
+<img alt="Dashboard Screenshot" src="https://github.com/user-attachments/assets/eb497cdd-4557-4086-bfb1-62f20e4448d7" />
 
 If you find this useful - buy me a [Ko-Fi](https://ko-fi.com/vk2way).
 
@@ -40,6 +41,8 @@ Refer to [engine/README.md](/engine/README.md) if you're interested in developme
 * Add buttons using the companion UI
 
 There is an example page of companion buttons designed to work with the example config.xml file found in the examples folder, you can import this to a companion page.
+
+<img alt="image" src="https://github.com/user-attachments/assets/ed380278-96f4-4808-abd3-fce3fcddd136" />
 
 
 **Refer to the README file in each directory for instructions on how to build and run**
