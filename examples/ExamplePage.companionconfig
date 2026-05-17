@@ -1108,7 +1108,7 @@
 	"instances": {
 		"UuQRGBXIG1HbibI5wIQJ7": {
 			"moduleInstanceType": "connection",
-			"instance_type": "scoreboard-scoreboard",
+			"instance_type": "scoreboard-engine",
 			"moduleVersionId": "dev",
 			"updatePolicy": "stable",
 			"sortOrder": 3,
