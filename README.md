@@ -19,7 +19,7 @@ If you find this useful - buy me a [Ko-Fi](https://ko-fi.com/vk2way).
 
 
 
-# Currently supported features
+# Available Widgets
 
 * Timers (up/down,  min, max, start time, reset, set)
 * Counters (increment, decrement, set, shortcut list)
