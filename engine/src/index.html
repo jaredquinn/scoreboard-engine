@@ -318,8 +318,9 @@
 		    `;
 		}
 		else if (type === "MappedList") {
-		    const index = (data && data[0] !== undefined) ? data[0] : 0;
-		    const options = (data && data[1]) ? data[1] : [];
+		    const index = data.index;
+		    const options = data.options;
+
 		    const displayValue = options[index] || "---";
 
 		    innerContent += `

@@ -604,23 +604,35 @@ async fn get_all(State(state): State<Arc<ScoreboardState>>) -> Json<IndexMap<Str
     Json(filtered_data)
 }
 
-async fn get_flat(State(state): State<Arc<ScoreboardState>>) -> Json<IndexMap<String, serde_json::Value>> {
+async fn get_flat(State(state): State<Arc<ScoreboardState>>) -> Json<Vec<IndexMap<String, serde_json::Value>>> {
     let data = state.data.read().unwrap();
     let mut flat = IndexMap::new();
 
     for (id, val) in data.iter() {
         let v = match val {
             WidgetValue::Counter { value, .. } => serde_json::Value::from(*value),
-            WidgetValue::Timer { formatted_time, .. } => serde_json::Value::from(formatted_time.clone()),
+            WidgetValue::Timer { seconds, .. } => serde_json::Value::from(*seconds),
             WidgetValue::MappedList { index, options, .. } => {
                 let s = options.get(*index).cloned().unwrap_or_default();
                 serde_json::Value::from(s)
             }
             WidgetValue::StaticText { content, .. } => serde_json::Value::from(content.clone()),
         };
+
         flat.insert(id.clone(), v);
+
+        let display_val = match val {
+            WidgetValue::Timer { formatted_time, .. } => serde_json::Value::String(formatted_time.clone()),
+            WidgetValue::Counter { .. } => serde_json::Value::String(String::new()),
+            WidgetValue::StaticText { .. } => serde_json::Value::String(String::new()),
+            WidgetValue::MappedList  { .. } => serde_json::Value::String(String::new()),
+        };
+        if display_val.clone() != serde_json::Value::String(String::new()) {
+            flat.insert(format!("formatted_{}", id.clone()), display_val.clone());
+        };
     }
-    Json(flat)
+    flat.insert("_last_updated".into(), serde_json::Value::String(Local::now().format("%H:%M:%S").to_string()));
+    Json(vec![flat,])
 }
 
 async fn universal_update(
