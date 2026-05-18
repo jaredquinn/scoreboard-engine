@@ -101,5 +101,8 @@ Pages in the /pages folder are served at http://localhost:3000/pages/...
 
 ## Add to OBS
 
+Add a "Browser" input to your OBS Scene:
+
+<img alt="image" src="https://github.com/user-attachments/assets/1e8180d1-2be9-4876-af95-d13821563446" />
 
 
