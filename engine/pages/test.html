@@ -1,0 +1,40 @@
+<html>
+<head>
+	<script src="/scoreboard.js"></script>
+</head>
+<style>
+* 		{ box-sizing: border-box; }
+body	 	{ background-color: transparent; font-family: Sans-Serif; font-size: 32px; } 
+div		{ padding: 0; margin: 0; }
+#container	{ width: 1920px; height: 1080px; background-color: transparent; }
+
+#scorebar	{ position: absolute; top: 40px; right: 40px; 
+		  width: 300px; background-color: black; 
+		  display: grid;
+		  grid-template-columns: auto auto auto;
+		}
+
+.clock		{ background-color: white; color: black; }
+.score		{ background-color: black; color: white; }
+
+#scorebar div   { text-align: center; padding: 8px 4px; }
+
+</style>
+<body>
+	<div id="container">
+
+		<div id="scorebar">
+			<div class="score homescore">
+				<span data-bind="home_score"></span>
+			</div>
+			<div class="clock">
+				<span data-bind="formatted_match_clock"></span>
+			</div>
+			<div class="score awayscore">
+				<span data-bind="away_score"></span>
+			</div>
+		</div>
+	</div>
+</body>
+</html>
+

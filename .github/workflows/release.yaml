@@ -42,7 +42,7 @@ jobs:
           # Note that glob pattern is not supported yet.
           bin: scoreboard-engine
           manifest-path: engine/Cargo.toml
-          include: engine/README.md,engine/CHANGELOG.md,engine/config.xml
+          include: engine/README.md,engine/CHANGELOG.md,engine/config.xml,engine/pages
           # (optional) Target triple, default is host triple.
           # This is optional but it is recommended that this always be set to
           # clarify which target you are building for if macOS is included in
@@ -105,4 +105,5 @@ jobs:
           ZIP_NAME="companion-module-scoreboard-engine-${{ steps.get_version.outputs.pkg_version }}.tgz"
           echo "Uploading $ZIP_NAME to release ${{ steps.get_release.outputs.tag }}..."
           gh release upload ${{ steps.get_release.outputs.tag }} "$ZIP_NAME" --clobber
+
 

@@ -1,4 +1,4 @@
-// Simple Rust Scoreboard Server 
+// Simple Rust Scoreboard Server
 // Copyright 2025, Jared Quinn
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,11 +24,12 @@ use indexmap::IndexMap;
 
 use axum::{
     extract::{Path, State},
-    response::{sse::Event, Sse},
-    routing::{get, post},
+    response::{sse::Event, Sse, Html },
+    routing::{get, post, get_service},
     Json, Router,
 };
-use ax_res::Html;
+
+use axum_extra::response::JavaScript;
 
 use chrono::Local;
 use serde::{Deserialize, Serialize};
@@ -37,18 +38,17 @@ use tokio::sync::broadcast;
 use tokio::fs::OpenOptions;
 use tokio::io::AsyncWriteExt;
 use tower_http::cors::CorsLayer;
-//use tower_http::trace::TraceLayer;
+use tower_http::services::ServeDir;
 
 use clap::Parser;
 use std::net::SocketAddr;
+use std::convert::Infallible;
 
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-const VERSION: &str = env!("CARGO_PKG_VERSION");
+type Value = serde_json::Value;
 
-mod ax_res {
-    pub use axum::response::Html;
-}
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(tag = "type", content = "data")]
@@ -461,7 +461,6 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
             .and_then(|n| n.text())
             .unwrap_or("");
 
-        // Parse dashboard-ui flag from XML; defaults to true if omitted or not "false"
         let dashboard_ui = node.children()
             .find(|n| n.has_tag_name("dashboard-ui"))
             .and_then(|n| n.text())
@@ -588,26 +587,32 @@ fn format_timer(total_seconds: i64, format: &str) -> String {
     }
 }
 
-// --- API ENDPOINTS ---
-
+#[axum::debug_handler]
 async fn serve_index() -> Html<&'static str> {
     Html(include_str!("index.html"))
 }
 
-// Returns ONLY widgets where dashboard_ui == true so frontend hides flagged widgets automatically
+#[axum::debug_handler]
+async fn serve_js() -> JavaScript<&'static str> {
+    JavaScript(include_str!("scoreboard.js"))
+}
+
+
+pub async fn get_script() -> JavaScript<&'static str> {
+    JavaScript("console.log('Hello from Axum!');")
+}
 async fn get_all(State(state): State<Arc<ScoreboardState>>) -> Json<IndexMap<String, WidgetValue>> {
     let data = state.data.read().unwrap();
-    let filtered_data: IndexMap<String, WidgetValue> = data.iter()
+    let parsed_data: IndexMap<String, WidgetValue> = data.iter()
         .map(|(k, v)| (k.clone(), v.clone()))
         .collect();
 
-    Json(filtered_data)
+    Json(parsed_data)
 }
 
-async fn get_flat(State(state): State<Arc<ScoreboardState>>) -> Json<Vec<IndexMap<String, serde_json::Value>>> {
-    let data = state.data.read().unwrap();
+// Flatten the state
+fn flatten_state(data: &IndexMap<String, WidgetValue>) -> IndexMap<String, Value> {
     let mut flat = IndexMap::new();
-
     for (id, val) in data.iter() {
         let v = match val {
             WidgetValue::Counter { value, .. } => serde_json::Value::from(*value),
@@ -618,21 +623,31 @@ async fn get_flat(State(state): State<Arc<ScoreboardState>>) -> Json<Vec<IndexMa
             }
             WidgetValue::StaticText { content, .. } => serde_json::Value::from(content.clone()),
         };
-
         flat.insert(id.clone(), v);
 
         let display_val = match val {
             WidgetValue::Timer { formatted_time, .. } => serde_json::Value::String(formatted_time.clone()),
-            WidgetValue::Counter { .. } => serde_json::Value::String(String::new()),
-            WidgetValue::StaticText { .. } => serde_json::Value::String(String::new()),
-            WidgetValue::MappedList  { .. } => serde_json::Value::String(String::new()),
+            _ => serde_json::Value::String(String::new()),
         };
-        if display_val.clone() != serde_json::Value::String(String::new()) {
-            flat.insert(format!("formatted_{}", id.clone()), display_val.clone());
+        if display_val != serde_json::Value::String(String::new()) {
+            flat.insert(format!("formatted_{}", id.clone()), display_val);
         };
     }
     flat.insert("_last_updated".into(), serde_json::Value::String(Local::now().format("%H:%M:%S").to_string()));
-    Json(vec![flat,])
+
+    flat
+}
+
+fn get_flattened_snapshot(state: &Arc<ScoreboardState>) -> String {
+    let data = state.data.read().unwrap();
+    let flat = flatten_state(&*data);
+    serde_json::to_string(&vec![flat]).unwrap_or_default()
+}
+
+async fn get_flat(State(state): State<Arc<ScoreboardState>>) -> Json<Vec<IndexMap<String, serde_json::Value>>> {
+    let data = state.data.read().unwrap();
+    let flat = flatten_state(&*data);
+    Json(vec![flat])
 }
 
 async fn universal_update(
@@ -688,24 +703,46 @@ async fn reset_all(State(state): State<Arc<ScoreboardState>>) -> Json<bool> {
     Json(true)
 }
 
-async fn sse_handler(
+
+#[axum::debug_handler]
+async fn web_sse_handler(
     State(state): State<Arc<ScoreboardState>>,
-) -> Sse<impl tokio_stream::Stream<Item = Result<Event, std::convert::Infallible>>> {
+) -> Sse<impl tokio_stream::Stream<Item = Result<Event, Infallible>>> {
+    let mut rx = state.tx.subscribe();
+    let stream_state = Arc::clone(&state);
+
+    let stream = async_stream::stream! {
+        let initial_json = get_flattened_snapshot(&stream_state);
+        yield Ok::<Event, Infallible>(Event::default().data(initial_json));
+
+        while let Ok(_notification) = rx.recv().await {
+            let json = get_flattened_snapshot(&stream_state);
+            yield Ok::<Event, Infallible>(Event::default().data(json));
+        }
+    };
+    Sse::new(stream).keep_alive(axum::response::sse::KeepAlive::default())
+}
+
+#[axum::debug_handler]
+async fn full_sse_handler(
+    State(state): State<Arc<ScoreboardState>>,
+) -> Sse<impl tokio_stream::Stream<Item = Result<Event, Infallible>>> {
     let mut rx = state.tx.subscribe();
     let stream = async_stream::stream! {
         while let Ok(data) = rx.recv().await {
-            // Filter SSE payload to only include dashboard visible elements for the UI
+            // removed the filter for now but keeping the structure
             let filtered_data: IndexMap<String, WidgetValue> = data.iter()
                 .map(|(k, v)| (k.clone(), v.clone()))
                 .collect();
 
             if let Ok(json) = serde_json::to_string(&filtered_data) {
-                yield Ok(Event::default().data(json));
+                yield Ok::<Event, Infallible>(Event::default().data(json));
             }
         }
     };
-    Sse::new(stream).keep_alive(axum::response::sse::KeepAlive::new())
+    Sse::new(stream).keep_alive(axum::response::sse::KeepAlive::default())
 }
+
 
 fn print_listening_urls(port: u16) {
     println!("🎯 Scoreboard Engine is live!");
@@ -725,7 +762,6 @@ fn print_listening_urls(port: u16) {
 }
 
 // --- MAIN ---
-
 #[tokio::main]
 async fn main() {
     eprintln!("⭐ Scoreboard Engine {}", VERSION);
@@ -794,16 +830,20 @@ async fn main() {
 
     let app = Router::new()
         .route("/", get(serve_index))
+        .route("/scoreboard.js", get(serve_js))
         .route("/widgets", get(get_all))
         .route("/widgets/flat", get(get_flat))
         .route("/reset", post(reset_all))
         .route("/widgets/:id/update", post(universal_update))
-        .route("/events", get(sse_handler))
-        //.layer(TraceLayer::new_for_http())
+        .route("/sse", get(web_sse_handler))
+        .route("/events", get(full_sse_handler))
+        .nest_service("/pages", get_service(ServeDir::new("pages")))
         .layer(CorsLayer::permissive())
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     println!("🏃 Running HTTP Server. Press Ctrl-C to shutdown.");
+    println!("📂 Serving static content from ./pages folder");
     axum::serve(listener, app).await.unwrap();
 }
+
