@@ -47,6 +47,7 @@ use std::convert::Infallible;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 type Value = serde_json::Value;
+//use evalexpr::{eval_with_context, HashMapContext};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -79,6 +80,12 @@ pub enum WidgetValue {
     },
     StaticText {
         content: String,
+        #[serde(rename = "dashboard-ui", default = "default_true")]
+        dashboard_ui: bool,
+    },
+    Calculation{
+        value: String,
+        expression: String,
         #[serde(rename = "dashboard-ui", default = "default_true")]
         dashboard_ui: bool,
     },
@@ -336,6 +343,45 @@ impl Widget for StaticTextWidget {
     }
 }
 
+// Calculation 
+pub struct CalculationWidget {
+    pub value: String,
+    pub expression: String,
+    pub dashboard_ui: bool,
+}
+
+impl Widget for CalculationWidget {
+    fn update(&mut self, payload: UpdatePayload) -> (bool, String) {
+        match payload {
+            UpdatePayload::Value(v) => {
+                if let Some(val_str) = v.as_str() {
+                    self.expression = val_str.to_string();
+                    (true, self.expression.clone())
+                } else {
+                    (false, String::new())
+                }
+            }
+            _ => (false, String::new()),
+        }
+    }
+
+    fn tick(&mut self) -> (bool, String) {
+        (false, String::new())
+    }
+
+    fn is_visible(&self) -> bool {
+        self.dashboard_ui
+    }
+
+    fn to_value(&self) -> WidgetValue {
+        WidgetValue::Calculation {
+            value: self.value.clone(),
+            expression: self.expression.clone(),
+            dashboard_ui: self.dashboard_ui,
+        }
+    }
+}
+
 // Helper factory to dynamically instantiate widget from its data representation
 fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
     match value {
@@ -374,6 +420,11 @@ fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
             content: content.clone(),
             dashboard_ui: *dashboard_ui,
         }),
+        WidgetValue::Calculation { value, expression , dashboard_ui } => Box::new(CalculationWidget {
+            value: value.clone(),
+            expression: expression.clone(),
+            dashboard_ui: *dashboard_ui,
+        })
     }
 }
 
@@ -539,6 +590,21 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
                     .to_string();
                 WidgetValue::StaticText { content, dashboard_ui }
             }
+            "Calculation" => {
+                let initial = node.children()
+                    .find(|n| n.has_tag_name("initial_value"))
+                    .and_then(|n| n.text())
+                    .unwrap_or("")
+                    .to_string();
+
+                let expression = node.children()
+                    .find(|n| n.has_tag_name("expression"))
+                    .and_then(|n| n.text())
+                    .unwrap_or("")
+                    .to_string();
+
+                WidgetValue::Calculation { value: initial, expression, dashboard_ui }
+            }
             _ => continue,
         };
 
@@ -622,6 +688,7 @@ fn flatten_state(data: &IndexMap<String, WidgetValue>) -> IndexMap<String, Value
                 serde_json::Value::from(s)
             }
             WidgetValue::StaticText { content, .. } => serde_json::Value::from(content.clone()),
+            WidgetValue::Calculation { value, .. } => serde_json::Value::from(value.clone()),
         };
         flat.insert(id.clone(), v);
 
