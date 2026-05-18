@@ -105,4 +105,5 @@ Add a "Browser" input to your OBS Scene:
 
 <img alt="image" src="https://github.com/user-attachments/assets/1e8180d1-2be9-4876-af95-d13821563446" />
 
+Set the URL to your filename in the `pages` folder.
 
