@@ -12,6 +12,8 @@
 * **SSE Support**: Get every tick and every change in realtime via HTTP Server Sent Events.
 * **Live Audit**: Every action is time-stamped in `match_log.txt` and mirrored to the stdout console.
 * **JSON Data Source**: Link to vMix titles using Data Sources
+* **Javascript Helper**: Included Javascript helper library for easy HTML title creation.
+* **Static Server**: Serve custom HTML titles from a folder for use in OBS and as a web source/input.
     
 <img alt="Dashboard Screenshot" src="https://github.com/user-attachments/assets/eb497cdd-4557-4086-bfb1-62f20e4448d7" />
 
@@ -69,5 +71,35 @@ Add the vMix Data Source, refer to the vMix documentation for more information o
 Create a title for your production, ensuring you label any fields appropriately for use in Title Editor when linking Data Sources.
 
 <img alt="image" src="https://github.com/user-attachments/assets/2876ab56-8a93-4c2c-b1a8-656bad099586" />
+
+
+## OBS 
+
+For OBS and other systems using a web input; Scoreboard Engine provides a simple Javascript library and hosting for your HTML title.
+
+### Create the HTML Title
+
+Refer to the `pages/example.html` file for an example designed for use with the example configuration.
+
+Copy this example and update it according to your needs.
+
+To handle the live updates from the scoreboard engine, ensure the JS library is included in your page:
+
+```
+<script src="/scoreboard.js"></script>
+```
+
+To update an element's content with a value from the scoreboard engine simply add the attribute `data-bind=widget_id` to the HTML element; e.g.
+
+```
+<div class="score homescore">
+   <span data-bind="home_score"></span>
+</div>
+```
+
+Pages in the /pages folder are served at http://localhost:3000/pages/...
+
+## Add to OBS
+
 
 
