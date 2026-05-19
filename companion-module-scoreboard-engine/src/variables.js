@@ -28,6 +28,8 @@ module.exports = {
 				values[id] = options[index] || '---';
 			} else if (type === 'StaticText') {
 				values[id] = data.content;
+			} else if (type === 'Calculation') {
+				values[id] = data.value;
 			}
 		}
 		return values;
