@@ -52,7 +52,7 @@
 
     <widget>
         <id>period</id>
-        <type>MappedList</type>
+        <type>List</type>
         <initial_index>0</initial_index>
 	<options>
 	    <option>PRE GAME</option>
@@ -69,13 +69,13 @@
 
     <widget>
         <id>home_team_name</id>
-        <type>StaticText</type>
+        <type>Text</type>
         <content>HOME</content>
     </widget>
 
     <widget>
         <id>away_team_name</id>
-        <type>StaticText</type>
+        <type>Text</type>
         <content>AWAY</content>
     </widget>
 

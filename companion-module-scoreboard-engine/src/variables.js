@@ -23,10 +23,10 @@ module.exports = {
 				values[`${id}_running`] = data.running ? 'RUN' : 'STOP';
 				values[`${id}_raw`] = data.seconds;
 				values[id] = data.formatted_time;
-			} else if (type === 'MappedList') {
+			} else if (type === 'List') {
 				const { index, options } = data;
 				values[id] = options[index] || '---';
-			} else if (type === 'StaticText') {
+			} else if (type === 'Text') {
 				values[id] = data.content;
 			} else if (type === 'Calculation') {
 				values[id] = data.value;

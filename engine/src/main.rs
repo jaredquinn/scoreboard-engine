@@ -69,13 +69,13 @@ pub enum WidgetValue {
         #[serde(rename = "dashboard-ui", default = "default_true")]
         dashboard_ui: bool,
     },
-    MappedList {
+    List {
         index: usize,
         options: Vec<String>,
         #[serde(rename = "dashboard-ui", default = "default_true")]
         dashboard_ui: bool,
     },
-    StaticText {
+    Text {
         content: String,
         #[serde(rename = "dashboard-ui", default = "default_true")]
         dashboard_ui: bool,
@@ -241,14 +241,14 @@ impl Widget for TimerWidget {
     }
 }
 
-// MappedList
-pub struct MappedListWidget {
+// List
+pub struct ListWidget {
     pub index: usize,
     pub options: Vec<String>,
     pub dashboard_ui: bool,
 }
 
-impl Widget for MappedListWidget {
+impl Widget for ListWidget {
     fn update(&mut self, payload: UpdatePayload) -> (bool, String) {
         match payload {
             UpdatePayload::Action { action, .. } => {
@@ -296,7 +296,7 @@ impl Widget for MappedListWidget {
     }
 
     fn to_value(&self) -> WidgetValue {
-        WidgetValue::MappedList {
+        WidgetValue::List {
             index: self.index,
             options: self.options.clone(),
             dashboard_ui: self.dashboard_ui,
@@ -304,13 +304,13 @@ impl Widget for MappedListWidget {
     }
 }
 
-// StaticText
-pub struct StaticTextWidget {
+// Text
+pub struct TextWidget {
     pub content: String,
     pub dashboard_ui: bool,
 }
 
-impl Widget for StaticTextWidget {
+impl Widget for TextWidget {
     fn update(&mut self, payload: UpdatePayload) -> (bool, String) {
         match payload {
             UpdatePayload::Value(v) => {
@@ -334,7 +334,7 @@ impl Widget for StaticTextWidget {
     }
 
     fn to_value(&self) -> WidgetValue {
-        WidgetValue::StaticText {
+        WidgetValue::Text {
             content: self.content.clone(),
             dashboard_ui: self.dashboard_ui,
         }
@@ -457,12 +457,12 @@ fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
             format: format.clone(),
             dashboard_ui: *dashboard_ui,
         }),
-        WidgetValue::MappedList { index, options, dashboard_ui } => Box::new(MappedListWidget {
+        WidgetValue::List { index, options, dashboard_ui } => Box::new(ListWidget {
             index: *index,
             options: options.clone(),
             dashboard_ui: *dashboard_ui,
         }),
-        WidgetValue::StaticText { content, dashboard_ui } => Box::new(StaticTextWidget {
+        WidgetValue::Text { content, dashboard_ui } => Box::new(TextWidget {
             content: content.clone(),
             dashboard_ui: *dashboard_ui,
         }),
@@ -524,6 +524,7 @@ async fn save_to_disk(data: IndexMap<String, WidgetValue>, path: &str) {
 
 fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
     let mut data = IndexMap::new();
+
 
     eprintln!("📁 Reading Configuration file {}", path);
     let xml_content = std::fs::read_to_string(path).unwrap_or_else(|_| {
@@ -620,21 +621,21 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
                     dashboard_ui,
                 }
             }
-            "MappedList" => {
+            "List" => {
                 let options: Vec<String> = node.descendants()
                     .filter(|n| n.has_tag_name("option"))
                     .filter_map(|n| n.text())
                     .map(|s| s.to_string())
                     .collect();
-                WidgetValue::MappedList { index: 0, options, dashboard_ui }
+                WidgetValue::List { index: 0, options, dashboard_ui }
             }
-            "StaticText" => {
+            "Text" => {
                 let content = node.children()
                     .find(|n| n.has_tag_name("content"))
                     .and_then(|n| n.text())
                     .unwrap_or("")
                     .to_string();
-                WidgetValue::StaticText { content, dashboard_ui }
+                WidgetValue::Text { content, dashboard_ui }
             }
             "Calculation" => {
 
@@ -658,6 +659,7 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
         eprintln!("🥅 Setting up widget {}:{} (UI Visible: {})", w_type, id, dashboard_ui);
         data.insert(id, val);
     }
+    tokio::spawn(log_event("core".to_string(), "loadconfig".to_string(), path.to_string()));
 
     (data, save_file)
 }
@@ -730,11 +732,11 @@ fn flatten_state(data: &IndexMap<String, WidgetValue>) -> IndexMap<String, JsonV
         let v = match val {
             WidgetValue::Counter { value, .. } => serde_json::Value::from(*value),
             WidgetValue::Timer { seconds, .. } => serde_json::Value::from(*seconds),
-            WidgetValue::MappedList { index, options, .. } => {
+            WidgetValue::List { index, options, .. } => {
                 let s = options.get(*index).cloned().unwrap_or_default();
                 serde_json::Value::from(s)
             }
-            WidgetValue::StaticText { content, .. } => serde_json::Value::from(content.clone()),
+            WidgetValue::Text { content, .. } => serde_json::Value::from(content.clone()),
             WidgetValue::Calculation { value, .. } => serde_json::Value::from(value.clone()),
         };
         flat.insert(id.clone(), v);
@@ -901,7 +903,6 @@ async fn main() {
         xml_widgets
     };
     let addr = SocketAddr::from(([0, 0, 0, 0], args.port));
-    print_listening_urls(args.port);
 
     let (tx, _rx) = broadcast::channel(16);
     let state = Arc::new(ScoreboardState {
@@ -974,5 +975,7 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     println!("🏃 Running HTTP Server. Press Ctrl-C to shutdown.");
     println!("📂 Serving static content from ./pages folder");
+    print_listening_urls(args.port);
+    tokio::spawn(log_event("core".to_string(), "startup".to_string(), "".to_string()));
     axum::serve(listener, app).await.unwrap();
 }

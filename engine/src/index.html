@@ -317,7 +317,7 @@
 			</div>
 		    `;
 		}
-		else if (type === "MappedList") {
+		else if (type === "List") {
 		    const index = data.index;
 		    const options = data.options;
 
@@ -346,8 +346,8 @@
 		    `;
 		}
 
-            // Handling StaticText
-            else if (type === "StaticText") {
+            // Handling Text
+            else if (type === "Text") {
                 innerContent += `
                     <div class="value" style="font-size: 1.5rem; text-align:center;">${data.content}</div>
                     <button class="btn-reset-card" onclick="let t=prompt('Update Text:', '${data.content}'); if(t) updateWidget('${id}', t)">EDIT</button>`;

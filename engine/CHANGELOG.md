@@ -1,5 +1,36 @@
 # Scoreboard Engine Change Log
 
+## [v0.8.0] - Unreleased
+
+- Rename MappedList to List - Make widget names more sensible
+- Rename StaticText to Text - Make widget names more sensible
+
+## [v0.7.0] - 2026-05-19
+
+- Added Calculation type widget using rust evalexpr
+- Added example AFL Configuration using Calculation type for (GOALS * 6) + BEHINDS
+- Documentation Updates for Calculation Field
+- UI Tweaks - condensing spacing
+
+## [v0.6.0] - 2026-05-18
+
+- OBS (Web title) Support!
+- Added support for internal static HTML server to host web titles on the engine itself.
+- Added scoreboard.js helper library for easy HTML title creation.
+- Provide pages/example.html showing how to use the server & library
+
+## [v0.5.0] - 2026-05-27
+
+- *Bug*: Companion module was not returning the correct value for a MappedList. Fixed.
+- Companion module renamed to scoreboard-engine (was scoreboard-scoreboard)
+- Remove version numbers from READMEs and other documentation
+- Major documentation enhancements
+- Fixes to flat output for use in vMix
+- Major refactor using polymorphic data structures and widget factory to
+  decouple widget functionality.
+- Add dashboard-ui option to hide widgets in the default generated webUI
+- Updated code to use cargo version to remove redundant updates
+
 
 ## [v0.4.0] - 2026-05-16
 

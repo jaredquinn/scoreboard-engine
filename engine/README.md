@@ -63,8 +63,8 @@ Starting the scoreboard from the compiled source code:
 | `/widgets/:id/update` | `POST` | `{"action": "set_initial", "value": 600}` | **Timer**: Updates both current `seconds` and the `initial_seconds` reset point. |
 | `/widgets/:id/update` | `POST` | `{"action": "set_min", "value": 0}` | **Timer**: Updates the minimum bound (Buzzer floor). |
 | `/widgets/:id/update` | `POST` | `{"action": "set_max", "value": 3600}` | **Timer**: Updates the maximum bound (Ceiling). |
-| `/widgets/:id/update` | `POST` | `{"action": "next"}` / `{"action": "prev"}` | **MappedList**: Navigates the options array. |
-| `/widgets/:id/update` | `POST` | `"New Text Content"` | **StaticText**: Directly replaces the string value (Raw JSON string). |
+| `/widgets/:id/update` | `POST` | `{"action": "next"}` / `{"action": "prev"}` | **List**: Navigates the options array. |
+| `/widgets/:id/update` | `POST` | `"New Text Content"` | **Text**: Directly replaces the string value (Raw JSON string). |
 
 /widgets/flat is designed for use in consumers like vMix Data Sources.
 
@@ -108,7 +108,7 @@ Here is an example configuration file showing all available widgets and options
 
     <widget>
         <id>period</id>
-        <type>MappedList</type>
+        <type>List</type>
         <initial_index>0</initial_index>
         <options>
             <option>1ST HALF</option>
@@ -120,7 +120,7 @@ Here is an example configuration file showing all available widgets and options
 
     <widget>
         <id>tackle_count</id>
-        <type>MappedList</type>
+        <type>List</type>
         <initial_index>0</initial_index>
         <options>
             <option>ZERO</option>
@@ -134,13 +134,13 @@ Here is an example configuration file showing all available widgets and options
 
     <widget>
         <id>home_team_name</id>
-        <type>StaticText</type>
+        <type>Text</type>
         <content>HOME TEAM</content>
     </widget>
 
     <widget>
         <id>away_team_name</id>
-        <type>StaticText</type>
+        <type>Text</type>
         <content>AWAY TEAM</content>
     </widget>
 </ScoreboardConfig>

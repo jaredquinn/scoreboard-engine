@@ -7,11 +7,11 @@ module.exports = {
 			.map(([id, _]) => ({ id: id, label: id }))
 
 		const textChoices = Object.entries(self.widgets || {})
-			.filter(([_, w]) => w.type === 'StaticText')
+			.filter(([_, w]) => w.type === 'Text')
 			.map(([id, _]) => ({ id: id, label: id }))
 
 		const listChoices = Object.entries(self.widgets || {})
-			.filter(([_, w]) => w.type === 'MappedList')
+			.filter(([_, w]) => w.type === 'List')
 			.map(([id, _]) => ({ id: id, label: id }))
 
 		return {
