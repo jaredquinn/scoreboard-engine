@@ -80,9 +80,9 @@ For OBS and other systems using a web input; Scoreboard Engine provides a simple
 
 ### Create the HTML Title
 
-Refer to the `pages/example.html` file for an example designed for use with the example configuration.
+Refer to the HTML pages in the `examples` directory for demonstrations.
 
-Copy this example and update it according to your needs.
+Copy this example to your `pages` directory and update it according to your needs.
 
 To handle the live updates from the scoreboard engine, ensure the JS library is included in your page:
 
