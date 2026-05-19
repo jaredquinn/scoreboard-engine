@@ -1,6 +1,3 @@
-The Scoreboard Engine Project
-Copyright (c) 2024 Jared Quinn
-
 GNU Affero General Public License
 =================================
 
