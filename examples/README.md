@@ -4,17 +4,14 @@ Each of these example configurations comes complete with Companion Configuration
 
 Refer to the main [README](/README.md) Quickstart guide for getting up and running quickly with an example configuration.
 
-# Aussie Rules Football
+If you are using the web overlays copy the .html file(s) for your code to the `pages` folder in your engine directory.
 
-<img alt="image" src="https://github.com/user-attachments/assets/b07da5a9-cad0-49cf-8c61-896f76701fd6" />
-
-
-<img src="https://github.com/user-attachments/assets/009e14e1-8bd7-45d1-8ee5-43dc2babbd17" />
+* [Aussie Rules Football](/examples/afl/README.md)
+* [Rugby League Football](/examples/rugbyleague/README.md)
 
 
-<img alt="image" src="https://github.com/user-attachments/assets/72020b0d-7e89-4cd4-a482-119c9ad4a729" />
+*We welcome contributions for configuration files, companion configs and web overlays for any code or use!*
 
 
 
-# Rugby League
 
