@@ -2,8 +2,12 @@
 
 ## [v0.8.0] - Unreleased
 
-- Rename MappedList to List - Make widget names more sensible
-- Rename StaticText to Text - Make widget names more sensible
+### BREAKING CHANGES
+
+These changes require an update to your XML configuration.
+
+- Renamed MappedList to List - Make widget names more sensible
+- Renamed StaticText to Text - Make widget names more sensible
 
 ## [v0.7.0] - 2026-05-19
 
