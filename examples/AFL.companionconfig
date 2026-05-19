@@ -1,0 +1,928 @@
+{
+	"version": 9,
+	"type": "page",
+	"companionBuild": "4.2.6+8823-stable-4ecdfe70ba",
+	"page": {
+		"id": "Hi6LB68i_NxuWddWyTig6",
+		"name": "AFL",
+		"controls": {
+			"0": {
+				"0": {
+					"type": "pageup"
+				},
+				"1": {
+					"type": "button",
+					"style": {
+						"text": "PREV QTR",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 153,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "gkSv0x3g1fhwDKLZF37Rr",
+										"definitionId": "list_nav",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": "period",
+											"action": "prev"
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"2": {
+					"type": "button",
+					"style": {
+						"text": "$(scoreboard:period)",
+						"textExpression": false,
+						"size": "auto",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 153,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"3": {
+					"type": "button",
+					"style": {
+						"text": "NEXT QTR",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 153,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "7GLkFgZNzxUmfb0DeE9lI",
+										"definitionId": "list_nav",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": "period",
+											"action": "next"
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"6": {
+					"type": "button",
+					"style": {
+						"text": "($(scoreboard:match_clock_running) == 'STOP' ? `START\\n${$(scoreboard:match_clock)}` : `STOP\\n${$(scoreboard:match_clock)}`)",
+						"textExpression": true,
+						"size": "auto",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [
+						{
+							"id": "wqFvpFgXs0077luTuF1qa",
+							"definitionId": "timer_running",
+							"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+							"options": {
+								"timer_id": "match_clock"
+							},
+							"upgradeIndex": -1,
+							"type": "feedback",
+							"style": {
+								"bgcolor": 38400,
+								"color": 16777215
+							},
+							"isInverted": false
+						}
+					],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "nJDFdH5D387yAId87k9Um",
+										"definitionId": "logic_if",
+										"connectionId": "internal",
+										"options": {},
+										"type": "action",
+										"children": {
+											"condition": [
+												{
+													"id": "vkSPOAGqi_yCzkQrFw7cu",
+													"definitionId": "timer_running",
+													"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+													"options": {
+														"timer_id": "match_clock"
+													},
+													"upgradeIndex": -1,
+													"type": "feedback",
+													"style": {
+														"bgcolor": 38400,
+														"color": 16777215
+													},
+													"isInverted": false
+												}
+											],
+											"actions": [
+												{
+													"id": "hogp6vxBsFnVJnfHBDrcE",
+													"definitionId": "timer_control",
+													"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+													"options": {
+														"widget_id": "match_clock",
+														"action": "stop"
+													},
+													"upgradeIndex": -1,
+													"type": "action"
+												}
+											],
+											"else_actions": [
+												{
+													"id": "ygWVew6kfNix4zWMjiKm8",
+													"definitionId": "timer_control",
+													"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+													"options": {
+														"widget_id": "match_clock",
+														"action": "start"
+													},
+													"upgradeIndex": -1,
+													"type": "action"
+												}
+											]
+										}
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"7": {
+					"type": "button",
+					"style": {
+						"text": "RESET CLOCK",
+						"textExpression": false,
+						"size": "auto",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "C1lGaB7R5KKry3Ua8iLS7",
+										"definitionId": "timer_control",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": "match_clock",
+											"action": "reset"
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				}
+			},
+			"1": {
+				"0": {
+					"type": "pagenum"
+				},
+				"1": {
+					"type": "button",
+					"style": {
+						"text": "GOAL\\n-",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "XscOEvu6DhNvW0UpsClFr",
+										"definitionId": "increment_score",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": "home_goals",
+											"amount": -1
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"2": {
+					"type": "button",
+					"style": {
+						"text": "BEHIND\\n-",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "5Rm80tNUAdnABoECSAbcK",
+										"definitionId": "increment_score",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": "home_behinds",
+											"amount": -1
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"3": {
+					"type": "button",
+					"style": {
+						"text": "$(scoreboard:home_team_name)",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 9605778,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"5": {
+					"type": "button",
+					"style": {
+						"text": "GOAL\\n-",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "8iZMwIWwDnx3e51QBioit",
+										"definitionId": "increment_score",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": "away_goals",
+											"amount": -1
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"6": {
+					"type": "button",
+					"style": {
+						"text": "BEHIND\\n+",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "ridDM7RUG5WJ2CGZFy4GE",
+										"definitionId": "increment_score",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": "away_behinds",
+											"amount": -1
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"7": {
+					"type": "button",
+					"style": {
+						"text": "$(scoreboard:away_team_name)",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 9605778,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				}
+			},
+			"2": {
+				"0": {
+					"type": "pagedown"
+				},
+				"1": {
+					"type": "button",
+					"style": {
+						"text": "$(scoreboard:home_goals)",
+						"textExpression": false,
+						"size": "auto",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"2": {
+					"type": "button",
+					"style": {
+						"text": "$(scoreboard:home_behinds)",
+						"textExpression": false,
+						"size": "auto",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"3": {
+					"type": "button",
+					"style": {
+						"text": "$(scoreboard:home_score)",
+						"textExpression": false,
+						"size": "auto",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"5": {
+					"type": "button",
+					"style": {
+						"text": "$(scoreboard:away_goals)",
+						"textExpression": false,
+						"size": "auto",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"6": {
+					"type": "button",
+					"style": {
+						"text": "$(scoreboard:away_behinds)",
+						"textExpression": false,
+						"size": "auto",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"7": {
+					"type": "button",
+					"style": {
+						"text": "$(scoreboard:away_score)",
+						"textExpression": false,
+						"size": "auto",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				}
+			},
+			"3": {
+				"1": {
+					"type": "button",
+					"style": {
+						"text": "GOAL\\n+",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "5TuNQ_qiao5hPN_G1P9cG",
+										"definitionId": "increment_score",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": "home_goals",
+											"amount": 1
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"2": {
+					"type": "button",
+					"style": {
+						"text": "BEHIND\\n+",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "qwoTKIMMN8xeyOdbxMAyA",
+										"definitionId": "increment_score",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": "home_behinds",
+											"amount": 1
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"5": {
+					"type": "button",
+					"style": {
+						"text": "GOAL\\n+",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "jxDFHgFGODdUqvH6qm9II",
+										"definitionId": "increment_score",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": "away_goals",
+											"amount": 1
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"6": {
+					"type": "button",
+					"style": {
+						"text": "BEHIND\\n+",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "4_Z-mC7MuXgpjkFR9LfJ-",
+										"definitionId": "increment_score",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": "away_behinds",
+											"amount": 1
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				}
+			}
+		},
+		"gridSize": {
+			"minColumn": 0,
+			"maxColumn": 7,
+			"minRow": 0,
+			"maxRow": 3
+		}
+	},
+	"instances": {
+		"MsJcZXr-oSALS1ZKNQncF": {
+			"moduleInstanceType": "connection",
+			"instance_type": "scoreboard-engine",
+			"moduleVersionId": "dev",
+			"updatePolicy": "stable",
+			"sortOrder": 3,
+			"label": "scoreboard",
+			"isFirstInit": false,
+			"config": {
+				"host": "127.0.0.1",
+				"port": "3000",
+				"verbose": false
+			},
+			"secrets": {},
+			"lastUpgradeIndex": -1,
+			"enabled": true
+		}
+	},
+	"connectionCollections": [],
+	"oldPageNumber": 5
+}
