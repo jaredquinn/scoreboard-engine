@@ -3,31 +3,32 @@
      * Home & Away Scores with 4,2,1 shortcuts in dashboard
      * Home & Away Names
      * Match Clock
-     * Tackle count
      * Period
 -->
 <ScoreboardConfig>
-    <persistence_file>rugbyleague.json</persistence_file>
+    <persistence_file>afl.json</persistence_file>
     <widget>
-        <id>home_score</id>
+        <id>home_goals</id>
         <type>Counter</type>
         <initial_value>0</initial_value>
-	<increments>
-		<value>4</value>
-		<value>2</value>
-		<value>1</value>
-	</increments>
     </widget>
 
     <widget>
-        <id>away_score</id>
+        <id>home_behinds</id>
         <type>Counter</type>
         <initial_value>0</initial_value>
-	<increments>
-		<value>4</value>
-		<value>2</value>
-		<value>1</value>
-	</increments>
+    </widget>
+
+    <widget>
+        <id>away_goals</id>
+        <type>Counter</type>
+        <initial_value>0</initial_value>
+    </widget>
+
+    <widget>
+        <id>away_behinds</id>
+        <type>Counter</type>
+        <initial_value>0</initial_value>
     </widget>
 
     <widget>
@@ -44,43 +45,40 @@
         <type>MappedList</type>
         <initial_index>0</initial_index>
 	<options>
-            <option>1ST HALF</option>
+	    <option>PRE GAME</option>
+            <option>1ST QTR</option>
+	    <option>1/4</option>
+            <option>2ND QTR</option>
             <option>HALFTIME</option>
-            <option>2ND HALF</option>
+            <option>3RD QTR</option>
+	    <option>3/4</option>
+            <option>4TH QTR</option>
             <option>FULLTIME</option>
-        </options>
-    </widget>
-
-    <widget>
-        <id>tackle_count</id>
-        <type>MappedList</type>
-        <initial_index>0</initial_index>
-	<options>
-            <option>ZERO</option>
-	    <option>1ST</option>
-            <option>2ND</option>
-            <option>3RD</option>
-            <option>4TH</option>
-            <option>5TH</option>
         </options>
     </widget>
 
     <widget>
         <id>home_team_name</id>
         <type>StaticText</type>
-        <content>HOME TEAM</content>
+        <content>HOME</content>
     </widget>
 
     <widget>
         <id>away_team_name</id>
         <type>StaticText</type>
-        <content>AWAY TEAM</content>
+        <content>AWAY</content>
     </widget>
 
     <widget>
-        <id>test</id>
+        <id>home_score</id>
         <type>Calculation</type>
-	<expression>home_score * 6</expression>
+	<expression>(home_goals * 6) + home_behinds</expression>
+    </widget>
+
+    <widget>
+        <id>away_score</id>
+        <type>Calculation</type>
+	<expression>(away_goals * 6) + away_behinds</expression>
     </widget>
 
 </ScoreboardConfig>

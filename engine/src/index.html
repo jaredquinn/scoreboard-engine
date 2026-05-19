@@ -353,6 +353,12 @@
                     <button class="btn-reset-card" onclick="let t=prompt('Update Text:', '${data.content}'); if(t) updateWidget('${id}', t)">EDIT</button>`;
             }
 
+            // Handling Calculation
+            else if (type === "Calculation") {
+                innerContent += `
+                    <div class="value" style="font-size: 1.5rem; text-align:center;">${data.value}</div>`;
+            }
+
             card.innerHTML = innerContent;
         }
 

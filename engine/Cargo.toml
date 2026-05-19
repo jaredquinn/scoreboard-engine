@@ -19,3 +19,4 @@ clap = { version = "4.0", features = ["derive"] }
 get_if_addrs = "0.5"
 axum-extra = "0.9"
 axum = { version = "0.7", features = ["macros"] }
+evalexpr = "13.1.0"

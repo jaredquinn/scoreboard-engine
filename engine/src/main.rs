@@ -46,8 +46,9 @@ use std::convert::Infallible;
 
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-type Value = serde_json::Value;
-//use evalexpr::{eval_with_context, HashMapContext};
+// Renamed to avoid name clashes with evalexpr::Value
+type JsonValue = serde_json::Value;
+use evalexpr::{eval_with_context, HashMapContext, };
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -99,7 +100,7 @@ fn default_true() -> bool {
 // Trait defining the shared behaviors for widgets
 pub trait Widget {
     fn update(&mut self, payload: UpdatePayload) -> (bool, String);
-    fn tick(&mut self) -> (bool, String);
+    fn tick(&mut self, flat_context: &IndexMap<String, JsonValue>) -> (bool, String);
     fn to_value(&self) -> WidgetValue;
     fn is_visible(&self) -> bool;
 }
@@ -135,9 +136,10 @@ impl Widget for CounterWidget {
         }
     }
 
-    fn tick(&mut self) -> (bool, String) {
+    fn tick(&mut self, _flat_context: &IndexMap<String, JsonValue>) -> (bool, String) {
         (false, String::new())
     }
+
 
     fn is_visible(&self) -> bool {
         self.dashboard_ui
@@ -202,7 +204,7 @@ impl Widget for TimerWidget {
         }
     }
 
-    fn tick(&mut self) -> (bool, String) {
+    fn tick(&mut self, _flat_context: &IndexMap<String, JsonValue>) -> (bool, String) {
         if self.running {
             if self.is_down {
                 if self.seconds > self.min_value {
@@ -289,7 +291,7 @@ impl Widget for MappedListWidget {
         }
     }
 
-    fn tick(&mut self) -> (bool, String) {
+    fn tick(&mut self, _flat_context: &IndexMap<String, JsonValue>) -> (bool, String) {
         (false, String::new())
     }
 
@@ -327,7 +329,7 @@ impl Widget for StaticTextWidget {
         }
     }
 
-    fn tick(&mut self) -> (bool, String) {
+    fn tick(&mut self, _flat_context: &IndexMap<String, JsonValue>) -> (bool, String) {
         (false, String::new())
     }
 
@@ -343,7 +345,7 @@ impl Widget for StaticTextWidget {
     }
 }
 
-// Calculation 
+// Calculation
 pub struct CalculationWidget {
     pub value: String,
     pub expression: String,
@@ -365,8 +367,56 @@ impl Widget for CalculationWidget {
         }
     }
 
-    fn tick(&mut self) -> (bool, String) {
-        (false, String::new())
+    fn tick(&mut self, flat_context: &IndexMap<String, JsonValue>) -> (bool, String) {
+        if self.expression.is_empty() {
+            return (false, String::new());
+        }
+
+        // Build execution context cleanly without trait ambiguity
+        let mut context = HashMapContext::<evalexpr::DefaultNumericTypes>::new();
+
+        for (key, val) in flat_context.iter() {
+            let var_name: String = key.clone();
+            if let Some(i) = val.as_i64() {
+                let _ = evalexpr::ContextWithMutableVariables::set_value(&mut context, var_name, evalexpr::Value::Int(i));
+            } else if let Some(f) = val.as_f64() {
+                let _ = evalexpr::ContextWithMutableVariables::set_value(&mut context, var_name, evalexpr::Value::Float(f));
+            } else if let Some(b) = val.as_bool() {
+                let _ = evalexpr::ContextWithMutableVariables::set_value(&mut context, var_name, evalexpr::Value::Boolean(b));
+            } else if let Some(s) = val.as_str() {
+                let _ = evalexpr::ContextWithMutableVariables::set_value(&mut context, var_name, evalexpr::Value::String(s.to_string()));
+            }
+        }
+
+        // Evaluate the mathematical/logical expression
+        match eval_with_context(&self.expression, &context) {
+            Ok(eval_val) => {
+                let new_value: String = match eval_val {
+                    evalexpr::Value::String(s) => s,
+                    evalexpr::Value::Float(f) => {
+                        let f: f64 = f;
+                        f.to_string()
+                    },
+                    evalexpr::Value::Int(i) => {
+                        let i: i64 = i;
+                        i.to_string()
+                    },
+                    evalexpr::Value::Boolean(b) => b.to_string(),
+                    _ => return (false, String::new()),
+                };
+
+                if new_value != self.value {
+                    self.value = new_value;
+                    (true, self.value.clone())
+                } else {
+                    (false, String::new())
+                }
+            }
+            Err(e) => {
+                eprintln!("Calculation error evaluating '{}': {:?}", self.expression, e);
+                (false, String::new())
+            }
+        }
     }
 
     fn is_visible(&self) -> bool {
@@ -591,6 +641,7 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
                 WidgetValue::StaticText { content, dashboard_ui }
             }
             "Calculation" => {
+
                 let initial = node.children()
                     .find(|n| n.has_tag_name("initial_value"))
                     .and_then(|n| n.text())
@@ -663,10 +714,10 @@ async fn serve_js() -> JavaScript<&'static str> {
     JavaScript(include_str!("scoreboard.js"))
 }
 
-
 pub async fn get_script() -> JavaScript<&'static str> {
     JavaScript("console.log('Hello from Axum!');")
 }
+
 async fn get_all(State(state): State<Arc<ScoreboardState>>) -> Json<IndexMap<String, WidgetValue>> {
     let data = state.data.read().unwrap();
     let parsed_data: IndexMap<String, WidgetValue> = data.iter()
@@ -677,7 +728,7 @@ async fn get_all(State(state): State<Arc<ScoreboardState>>) -> Json<IndexMap<Str
 }
 
 // Flatten the state
-fn flatten_state(data: &IndexMap<String, WidgetValue>) -> IndexMap<String, Value> {
+fn flatten_state(data: &IndexMap<String, WidgetValue>) -> IndexMap<String, JsonValue> {
     let mut flat = IndexMap::new();
     for (id, val) in data.iter() {
         let v = match val {
@@ -770,7 +821,6 @@ async fn reset_all(State(state): State<Arc<ScoreboardState>>) -> Json<bool> {
     Json(true)
 }
 
-
 #[axum::debug_handler]
 async fn web_sse_handler(
     State(state): State<Arc<ScoreboardState>>,
@@ -797,7 +847,6 @@ async fn full_sse_handler(
     let mut rx = state.tx.subscribe();
     let stream = async_stream::stream! {
         while let Ok(data) = rx.recv().await {
-            // removed the filter for now but keeping the structure
             let filtered_data: IndexMap<String, WidgetValue> = data.iter()
                 .map(|(k, v)| (k.clone(), v.clone()))
                 .collect();
@@ -809,7 +858,6 @@ async fn full_sse_handler(
     };
     Sse::new(stream).keep_alive(axum::response::sse::KeepAlive::default())
 }
-
 
 fn print_listening_urls(port: u16) {
     println!("🎯 Scoreboard Engine is live!");
@@ -864,13 +912,19 @@ async fn main() {
         let mut interval = tokio::time::interval(Duration::from_secs(1));
         loop {
             interval.tick().await;
+
             let mut changed = false;
             let mut snapshot = IndexMap::new();
             {
+                let current_flat_context = {
+                    let data_read = timer_state.data.read().unwrap();
+                    flatten_state(&*data_read)
+                };
+
                 let mut data = timer_state.data.write().unwrap();
                 for (id, val) in data.iter_mut() {
                     let mut widget_obj = create_widget(val);
-                    let (ticked, display_val) = widget_obj.tick();
+                    let (ticked, display_val) = widget_obj.tick(&current_flat_context);
 
                     if ticked {
                         *val = widget_obj.to_value();
@@ -913,4 +967,3 @@ async fn main() {
     println!("📂 Serving static content from ./pages folder");
     axum::serve(listener, app).await.unwrap();
 }
-

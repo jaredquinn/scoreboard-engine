@@ -1,0 +1,77 @@
+<html>
+<head>
+	<script src="/scoreboard.js"></script>
+</head>
+<style>
+* 		{ box-sizing: border-box; }
+body	 	{ background-color: transparent; font-family: Sans-Serif; font-size: 32px; } 
+div		{ padding: 0; margin: 0; }
+#container	{ width: 1920px; height: 1080px; background-color: transparent; }
+
+#scorebar	{ position: absolute; top: 40px; right: 40px; 
+		  width: 400px; background-color: black; 
+		}
+
+#scorebar {
+		  display: grid;
+		  grid-template-columns: auto auto auto auto auto;
+		  grid-template-rows: auto auto;
+		}
+#scorebar div   { text-align: center; padding: 8px 4px; }
+
+.period 	{ background-color: white; color: black; font-size: 24px; line-height: 32px; }
+.clock		{ background-color: white; color: black; font-weight: bold; }
+.score		{ background-color: black; color: white; }
+.total		{ font-weight: bold; }
+
+</style>
+<body>
+	<div id="container">
+
+		<div id="scorebar">
+
+			<div class="period">
+				<span data-bind="period"></span>
+			</div>
+
+			<div class="score homescore">
+				<span data-bind="home_team_name"></span>
+			</div>
+
+			<div class="score homescore">
+				<span data-bind="home_goals"></span>
+			</div>
+
+			<div class="score homescore">
+				<span data-bind="home_behinds"></span>
+			</div>
+
+			<div class="score homescore total">
+				<span data-bind="home_score"></span>
+			</div>
+
+			<div class="clock">
+				<span data-bind="formatted_match_clock"></span>
+			</div>
+
+			<div class="score awayscore">
+				<span data-bind="away_team_name"></span>
+			</div>
+
+			<div class="score awayscore">
+				<span data-bind="away_goals"></span>
+			</div>
+
+			<div class="score awayscore">
+				<span data-bind="away_behinds"></span>
+			</div>
+
+			<div class="score awayscore total">
+				<span data-bind="away_score"></span>
+			</div>
+
+		</div>
+	</div>
+</body>
+</html>
+
