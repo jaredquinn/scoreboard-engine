@@ -1,6 +1,6 @@
 # Scoreboard Engine Change Log
 
-## [v0.8.0] - Unreleased
+## [v0.8.0] - Unreleased (Working Title)
 
 ### BREAKING CHANGES
 
@@ -9,7 +9,7 @@ These changes require an update to your XML configuration.
 - Renamed MappedList to List - Make widget names more sensible
 - Renamed StaticText to Text - Make widget names more sensible
 
-## [v0.7.0] - 2026-05-19
+## [v0.7.0] - 2026-05-19 (Pocket Calculator)
 
 - Added Calculation type widget using rust evalexpr
 - Added example AFL Configuration using Calculation type for (GOALS * 6) + BEHINDS
