@@ -133,7 +133,7 @@
 				"6": {
 					"type": "button",
 					"style": {
-						"text": "($(scoreboard:match_clock_running) == 'STOP' ? `START\\n${$(scoreboard:match_clock)}` : `STOP\\n${$(scoreboard:match_clock)}`)",
+						"text": "($(scoreboard:match_clock_running) == 'STOP' ? `PERIOD START\\n${$(scoreboard:match_clock)}` : `PERIOD STOP\\n${$(scoreboard:match_clock)}`)",
 						"textExpression": true,
 						"size": "auto",
 						"png64": null,
@@ -234,9 +234,9 @@
 				"7": {
 					"type": "button",
 					"style": {
-						"text": "RESET CLOCK",
+						"text": "PERIOD CLOCK RESET",
 						"textExpression": false,
-						"size": "auto",
+						"size": "14",
 						"png64": null,
 						"alignment": "center:center",
 						"pngalignment": "center:center",
@@ -447,7 +447,7 @@
 				"6": {
 					"type": "button",
 					"style": {
-						"text": "BEHIND\\n+",
+						"text": "BEHIND\\n-",
 						"textExpression": false,
 						"size": "14",
 						"png64": null,
@@ -612,6 +612,66 @@
 						"0": {
 							"action_sets": {
 								"down": [],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"4": {
+					"type": "button",
+					"style": {
+						"text": "PAUSE SHOT CLOCK",
+						"textExpression": false,
+						"size": "auto",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [
+						{
+							"id": "amMaJ5qMry21CSSVCRXoi",
+							"definitionId": "timer_running",
+							"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+							"options": {
+								"timer_id": "shot_clock"
+							},
+							"upgradeIndex": -1,
+							"type": "feedback",
+							"style": {
+								"bgcolor": 0,
+								"color": 4737096
+							},
+							"isInverted": true
+						}
+					],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "hYzdNyFfbwG6lSRkefJfC",
+										"definitionId": "timer_control",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": "shot_clock",
+											"action": "stop"
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
 								"up": []
 							},
 							"options": {
@@ -796,6 +856,118 @@
 										},
 										"upgradeIndex": -1,
 										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"4": {
+					"type": "button",
+					"style": {
+						"text": "($(scoreboard:shot_clock_running) == 'STOP' ? `SHOT START\\n${$(scoreboard:shot_clock)}` : `SHOT STOP\\n${$(scoreboard:shot_clock)}`)",
+						"textExpression": true,
+						"size": "auto",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [
+						{
+							"id": "ExEahnagxcJapNWlkIsyI",
+							"definitionId": "timer_running",
+							"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+							"options": {
+								"timer_id": "shot_clock"
+							},
+							"upgradeIndex": -1,
+							"type": "feedback",
+							"style": {
+								"bgcolor": 38400,
+								"color": 16777215
+							},
+							"isInverted": false
+						}
+					],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "uJ1D7UFADzad4UGGP6-MZ",
+										"definitionId": "logic_if",
+										"connectionId": "internal",
+										"options": {},
+										"type": "action",
+										"children": {
+											"condition": [
+												{
+													"id": "cAH4MYR96Y1jhBR46JsCF",
+													"definitionId": "timer_running",
+													"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+													"options": {
+														"timer_id": "shot_clock"
+													},
+													"upgradeIndex": -1,
+													"type": "feedback",
+													"style": {
+														"bgcolor": 38400,
+														"color": 16777215
+													},
+													"isInverted": false
+												}
+											],
+											"actions": [
+												{
+													"id": "bVviJsQHL5hC7sFD4UD5_",
+													"definitionId": "timer_control",
+													"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+													"options": {
+														"widget_id": "shot_clock",
+														"action": "stop"
+													},
+													"upgradeIndex": -1,
+													"type": "action"
+												},
+												{
+													"id": "g97SkSWnd0OpPEx6oC_C6",
+													"definitionId": "timer_control",
+													"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+													"options": {
+														"widget_id": "shot_clock",
+														"action": "reset"
+													},
+													"upgradeIndex": -1,
+													"type": "action"
+												}
+											],
+											"else_actions": [
+												{
+													"id": "noHBQGsn6mhpdreMYXasy",
+													"definitionId": "timer_control",
+													"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+													"options": {
+														"widget_id": "shot_clock",
+														"action": "start"
+													},
+													"upgradeIndex": -1,
+													"type": "action"
+												}
+											]
+										}
 									}
 								],
 								"up": []

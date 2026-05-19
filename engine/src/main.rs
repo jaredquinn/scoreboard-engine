@@ -739,16 +739,29 @@ fn flatten_state(data: &IndexMap<String, WidgetValue>) -> IndexMap<String, JsonV
         };
         flat.insert(id.clone(), v);
 
+
+        // These should be moved to a function in the traits for Widgets to return additional
+        // values
         let display_val = match val {
             WidgetValue::Timer { formatted_time, .. } => serde_json::Value::String(formatted_time.clone()),
             _ => serde_json::Value::String(String::new()),
         };
         if display_val != serde_json::Value::String(String::new()) {
-            flat.insert(format!("formatted_{}", id.clone()), display_val);
+            flat.insert(format!("{}_formatted", id.clone()), display_val);
         };
+
+
+        let state_val = match val {
+            WidgetValue::Timer { running, .. } => serde_json::Value::from(*running),
+            _ => serde_json::Value::String(String::new()),
+        };
+        if state_val != serde_json::Value::String(String::new()) {
+            flat.insert(format!("{}_running", id.clone()), state_val);
+        };
+
+
     }
     flat.insert("_last_updated".into(), serde_json::Value::String(Local::now().format("%H:%M:%S").to_string()));
-
     flat
 }
 
