@@ -1,6 +1,6 @@
 # Scoreboard Engine Change Log
 
-## [v0.8.0] - Unreleased (Working Title)
+## [v0.8.0] - 2026-05-21 (What's My Name)
 
 ### BREAKING CHANGES
 
