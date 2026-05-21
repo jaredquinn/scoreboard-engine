@@ -43,7 +43,7 @@ Refer to [engine/README.md](/engine/README.md) if you're interested in developme
 
 * Download the latest version from the [Github repository releases](https://github.com/jaredquinn/scoreboard-engine/releases).  There is precompiled binaries there for Windows, Linux & Mac.
 * Extract the archive to any location on your computer.
-* Edit/create a config.xml to match your requirements.
+* Copy/edit/create a config.xml to match your requirements.
 * Run `scoreboard-engine` (or `scoreboard-engine.exe` on windows)
 * Open your dashboard [http://localhost:3000](http://localhost:3000)
 
