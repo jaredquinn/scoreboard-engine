@@ -20,6 +20,8 @@ module.exports = {
 			if (type === 'Counter') {
 				values[id] = data.value;
 			} else if (type === 'Timer') {
+				values[`${id}_paused_time`] = data.paused_time;
+				values[`${id}_paused`] = data.paused;
 				values[`${id}_running`] = data.running ? 'RUN' : 'STOP';
 				values[`${id}_raw`] = data.seconds;
 				values[id] = data.formatted_time;

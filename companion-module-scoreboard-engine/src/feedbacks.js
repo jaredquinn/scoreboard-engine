@@ -29,6 +29,19 @@ module.exports = {
 				},
 			},
 
+			timer_paused: {
+				type: 'boolean',
+				name: 'Timer: Style When Paused',
+				defaultStyle: { bgcolor: combineRgb(0, 150, 0), color: combineRgb(255, 255, 255) },
+				options: [
+					{ type: 'dropdown', id: 'timer_id', label: 'Timer', default: timerChoices[0]?.id || '', choices: timerChoices }
+				],
+				callback: (feedback) => {
+					const isPaused = self.getVariableValue(`${feedback.options.timer_id}_paused`)
+					return isPaused === 'RUN'
+				},
+			},
+
 			// --- TEXT MATCH FEEDBACK  ---
 			text_match: {
 				type: 'boolean',

@@ -43,6 +43,7 @@ module.exports = {
 						choices: [
 							{ id: 'start', label: 'Start' },
 							{ id: 'stop', label: 'Stop' },
+							{ id: 'pause', label: 'Pause Toggle' },
 							{ id: 'reset', label: 'Reset to Initial' }
 						] 
 					}
