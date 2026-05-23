@@ -275,15 +275,21 @@
 		    innerContent += `<button class="btn-reset-card" onclick="updateWidget('${id}', {action:'reset'})">RESET TO 0</button></div>`;
             } 
 	    else if (type === "Timer") {
-		    const { initial_seconds, value, formatted_time, running, is_down, seconds, min_value, max_value } = data;
+		    const { initial_seconds, value, paused, paused_time, formatted_time, running, is_down, seconds, min_value, max_value } = data;
 		    
 		    innerContent += `
 			<div class="value timer-display">${formatted_time}</div>
+			<div style="text-align: center;">Stoppage Time: ${paused_time} seconds</div>
+
 
 			<div class="controls">
 			    <button class="${running ? 'btn-stop' : 'btn-main'}" 
 				    onclick="updateWidget('${id}', {action:'${running ? 'stop' : 'start'}'})">
 				${running ? 'STOP' : 'START'}
+			    </button>
+			    <button class="${paused ? 'btn-stop' : 'btn-main'}" 
+				    onclick="updateWidget('${id}', {action: 'pause'})">
+				${paused ? '&#9654;' : '&#9208;'}
 			    </button>
 			    <button title="Reset to ${initial_seconds}s" onclick="if(confirm('Reset?')) updateWidget('${id}', {action:'reset'})">⟲</button>
 
