@@ -38,7 +38,7 @@ module.exports = {
 				],
 				callback: (feedback) => {
 					const isPaused = self.getVariableValue(`${feedback.options.timer_id}_paused`)
-					return isPaused === 'RUN'
+					return isPaused === true
 				},
 			},
 

@@ -6,6 +6,9 @@ module.exports = {
 			if (widgets[id].type === 'Timer') {
 				defs.push({ variableId: `${id}_running`, name: `${id} Status` });
 				defs.push({ variableId: `${id}_raw`, name: `${id} Raw Value` });
+				defs.push({ variableId: `${id}_paused_formatted`, name: `${id} Formatted Stoppage Time` });
+				defs.push({ variableId: `${id}_paused_time`, name: `${id} Raw Stoppage Time` });
+				defs.push({ variableId: `${id}_paused`, name: `${id} Currently Paused` });
 			}
 		}
 		return defs;
@@ -20,6 +23,7 @@ module.exports = {
 			if (type === 'Counter') {
 				values[id] = data.value;
 			} else if (type === 'Timer') {
+				values[`${id}_paused_formatted`] = data.paused_formatted;
 				values[`${id}_paused_time`] = data.paused_time;
 				values[`${id}_paused`] = data.paused;
 				values[`${id}_running`] = data.running ? 'RUN' : 'STOP';
