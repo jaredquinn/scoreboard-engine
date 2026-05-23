@@ -77,11 +77,6 @@
         <content>AWAY TEAM</content>
     </widget>
 
-    <widget>
-        <id>test</id>
-        <type>Calculation</type>
-	<expression>home_score * 6</expression>
-    </widget>
 
 </ScoreboardConfig>
 
