@@ -61,7 +61,9 @@ pub enum WidgetValue {
         formatted_time: String,
         seconds: i64,
         running: bool,
+        paused: bool,
         initial_seconds: i64,
+        paused_time: i64,
         is_down: bool,
         min_value: i64,
         max_value: i64,
@@ -153,9 +155,11 @@ impl Widget for CounterWidget {
 // Timer
 pub struct TimerWidget {
     pub seconds: i64,
+    pub paused_time: i64,
     pub initial_seconds: i64,
     pub formatted_time: String,
     pub running: bool,
+    pub paused: bool,
     pub is_down: bool,
     pub min_value: i64,
     pub max_value: i64,
@@ -171,6 +175,7 @@ impl Widget for TimerWidget {
                     "start" => self.running = true,
                     "stop" => self.running = false,
                     "toggle" => self.running = !self.running,
+                    "pause" => self.paused = !self.paused,
                     "reset" => {
                         self.seconds = self.initial_seconds;
                         self.formatted_time = format_timer(self.seconds, &self.format);
@@ -202,20 +207,24 @@ impl Widget for TimerWidget {
 
     fn tick(&mut self, _flat_context: &IndexMap<String, JsonValue>) -> (bool, String) {
         if self.running {
-            if self.is_down {
-                if self.seconds > self.min_value {
-                    self.seconds -= 1;
-                } else {
-                    self.running = false;
-                }
+            if self.paused {
+                self.paused_time += 1;
             } else {
-                if self.seconds < self.max_value {
-                    self.seconds += 1;
+                if self.is_down {
+                    if self.seconds > self.min_value {
+                        self.seconds -= 1;
+                    } else {
+                        self.running = false;
+                    }
                 } else {
-                    self.running = false;
+                    if self.seconds < self.max_value {
+                        self.seconds += 1;
+                    } else {
+                        self.running = false;
+                    }
                 }
+                self.formatted_time = format_timer(self.seconds, &self.format);
             }
-            self.formatted_time = format_timer(self.seconds, &self.format);
             (true, self.formatted_time.clone())
         } else {
             (false, String::new())
@@ -231,6 +240,8 @@ impl Widget for TimerWidget {
             formatted_time: self.formatted_time.clone(),
             seconds: self.seconds,
             running: self.running,
+            paused: self.paused,
+            paused_time: self.paused_time,
             initial_seconds: self.initial_seconds,
             is_down: self.is_down,
             min_value: self.min_value,
@@ -440,7 +451,9 @@ fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
             seconds,
             initial_seconds,
             formatted_time,
+            paused_time,
             running,
+            paused,
             is_down,
             min_value,
             max_value,
@@ -450,7 +463,9 @@ fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
             seconds: *seconds,
             initial_seconds: *initial_seconds,
             formatted_time: formatted_time.clone(),
+            paused_time: *paused_time,
             running: *running,
+            paused: *paused,
             is_down: *is_down,
             min_value: *min_value,
             max_value: *max_value,
@@ -611,9 +626,11 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
 
                 WidgetValue::Timer {
                     seconds: secs,
+                    paused_time: 0,
                     initial_seconds: secs,
                     formatted_time: format_timer(secs, &fmt),
                     running: false,
+                    paused: false,
                     is_down: down,
                     min_value: min,
                     max_value: max,

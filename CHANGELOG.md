@@ -1,5 +1,10 @@
 # Scoreboard Engine Change Log
 
+## [v0.9.0] - Unreleased
+
+- Added `paused` and `paused\_time` state to Timer widgets.
+- Remove `test` widget from example rugby league configuration
+
 ## [v0.8.1] - 2026-05-21 
 
 Fix issue in github workflow preventing automated builds.
