@@ -5,6 +5,7 @@
 - Added `paused` and `paused\_time` state to Timer widgets.
 - Remove `test` widget from example rugby league configuration
 - Refactor code for flat json with new `extra_values` function on Widgets.
+- Add `paused\_formatted` state to Timer widgets
 
 ## [v0.8.1] - 2026-05-21 
 
