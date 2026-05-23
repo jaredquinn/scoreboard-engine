@@ -17,6 +17,7 @@
 
 use std::{sync::{Arc, RwLock}, time::Duration};
 use indexmap::IndexMap;
+use std::collections::HashMap;
 
 use axum::{
     extract::{Path, State},
@@ -101,6 +102,7 @@ pub trait Widget {
     fn tick(&mut self, flat_context: &IndexMap<String, JsonValue>) -> (bool, String);
     fn to_value(&self) -> WidgetValue;
     fn is_visible(&self) -> bool;
+    fn extra_values(&self) -> HashMap<String, serde_json::Value>;
 }
 
 // Counter
@@ -150,6 +152,8 @@ impl Widget for CounterWidget {
             dashboard_ui: self.dashboard_ui,
         }
     }
+
+    fn extra_values(&self) -> HashMap<String, serde_json::Value> { let extras = HashMap::new(); extras }
 }
 
 // Timer
@@ -253,6 +257,15 @@ impl Widget for TimerWidget {
             dashboard_ui: self.dashboard_ui,
         }
     }
+
+    fn extra_values(&self) -> HashMap<String, serde_json::Value> { 
+        let mut extras = HashMap::new();
+        extras.insert("formatted".to_string(), serde_json::Value::String(self.formatted_time.clone()));
+        extras.insert("paused_time".to_string(), serde_json::Value::from(self.paused_time));
+        extras.insert("paused".to_string(), serde_json::Value::from(self.paused));
+        extras.insert("running".to_string(), serde_json::Value::from(self.running));
+        extras
+    }
 }
 
 // List
@@ -316,6 +329,7 @@ impl Widget for ListWidget {
             dashboard_ui: self.dashboard_ui,
         }
     }
+    fn extra_values(&self) -> HashMap<String, serde_json::Value> { let extras = HashMap::new(); extras }
 }
 
 // Text
@@ -353,6 +367,8 @@ impl Widget for TextWidget {
             dashboard_ui: self.dashboard_ui,
         }
     }
+
+    fn extra_values(&self) -> HashMap<String, serde_json::Value> { let extras = HashMap::new(); extras }
 }
 
 // Calculation
@@ -440,6 +456,8 @@ impl Widget for CalculationWidget {
             dashboard_ui: self.dashboard_ui,
         }
     }
+
+    fn extra_values(&self) -> HashMap<String, serde_json::Value> { let extras = HashMap::new(); extras }
 }
 
 // Helper factory to dynamically instantiate widget from its data representation
@@ -761,9 +779,18 @@ fn flatten_state(data: &IndexMap<String, WidgetValue>) -> IndexMap<String, JsonV
         };
         flat.insert(id.clone(), v);
 
+        // Fetch the extra values dictionary from the trait function
+        let widget_obj = create_widget(val);
+        let extra_vals = widget_obj.extra_values();
+        for (key, xvalue) in extra_vals {
+            let prefixed_key = format!("{}_{}", id.clone(), key);
+            flat.insert(prefixed_key, xvalue);
+        }
 
+        // UPDATE ME
         // These should be moved to a function in the traits for Widgets to return additional
         // values
+        /*
         let display_val = match val {
             WidgetValue::Timer { formatted_time, .. } => serde_json::Value::String(formatted_time.clone()),
             _ => serde_json::Value::String(String::new()),
@@ -773,6 +800,8 @@ fn flatten_state(data: &IndexMap<String, WidgetValue>) -> IndexMap<String, JsonV
         };
 
 
+        // AND THIS TOO
+        // this should move into the trait
         let state_val = match val {
             WidgetValue::Timer { running, .. } => serde_json::Value::from(*running),
             _ => serde_json::Value::String(String::new()),
@@ -780,6 +809,7 @@ fn flatten_state(data: &IndexMap<String, WidgetValue>) -> IndexMap<String, JsonV
         if state_val != serde_json::Value::String(String::new()) {
             flat.insert(format!("{}_running", id.clone()), state_val);
         };
+        */
 
 
     }
