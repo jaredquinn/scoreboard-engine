@@ -179,6 +179,8 @@ impl Widget for TimerWidget {
                     "reset" => {
                         self.seconds = self.initial_seconds;
                         self.formatted_time = format_timer(self.seconds, &self.format);
+                        self.paused = false;
+                        self.running = false;
                     }
                     "set" => {
                         if let Some(val_str) = value.and_then(|v| v.as_str().map(String::from)) {
