@@ -60,6 +60,7 @@ pub enum WidgetValue {
     },
     Timer {
         formatted_time: String,
+        paused_formatted: String,
         seconds: i64,
         running: bool,
         paused: bool,
@@ -162,6 +163,7 @@ pub struct TimerWidget {
     pub paused_time: i64,
     pub initial_seconds: i64,
     pub formatted_time: String,
+    pub paused_formatted: String,
     pub running: bool,
     pub paused: bool,
     pub is_down: bool,
@@ -185,6 +187,7 @@ impl Widget for TimerWidget {
                         self.formatted_time = format_timer(self.seconds, &self.format);
                         self.paused = false;
                         self.paused_time = 0;
+                        self.paused_formatted = format_timer(self.paused_time, &self.format);
                         self.running = false;
                     }
                     "set" => {
@@ -216,6 +219,7 @@ impl Widget for TimerWidget {
         if self.running {
             if self.paused {
                 self.paused_time += 1;
+                self.paused_formatted = format_timer(self.paused_time, &self.format);
             } else {
                 if self.is_down {
                     if self.seconds > self.min_value {
@@ -245,6 +249,7 @@ impl Widget for TimerWidget {
     fn to_value(&self) -> WidgetValue {
         WidgetValue::Timer {
             formatted_time: self.formatted_time.clone(),
+            paused_formatted: self.paused_formatted.clone(),
             seconds: self.seconds,
             running: self.running,
             paused: self.paused,
@@ -261,6 +266,7 @@ impl Widget for TimerWidget {
     fn extra_values(&self) -> HashMap<String, serde_json::Value> { 
         let mut extras = HashMap::new();
         extras.insert("formatted".to_string(), serde_json::Value::String(self.formatted_time.clone()));
+        extras.insert("paused_formatted".to_string(), serde_json::Value::String(self.paused_formatted.clone()));
         extras.insert("paused_time".to_string(), serde_json::Value::from(self.paused_time));
         extras.insert("paused".to_string(), serde_json::Value::from(self.paused));
         extras.insert("running".to_string(), serde_json::Value::from(self.running));
@@ -472,6 +478,7 @@ fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
             seconds,
             initial_seconds,
             formatted_time,
+            paused_formatted,
             paused_time,
             running,
             paused,
@@ -484,6 +491,7 @@ fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
             seconds: *seconds,
             initial_seconds: *initial_seconds,
             formatted_time: formatted_time.clone(),
+            paused_formatted: paused_formatted.clone(),
             paused_time: *paused_time,
             running: *running,
             paused: *paused,
@@ -649,6 +657,7 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
                     seconds: secs,
                     paused_time: 0,
                     initial_seconds: secs,
+                    paused_formatted: format_timer(0, &fmt),
                     formatted_time: format_timer(secs, &fmt),
                     running: false,
                     paused: false,
@@ -786,6 +795,7 @@ fn flatten_state(data: &IndexMap<String, WidgetValue>) -> IndexMap<String, JsonV
             let prefixed_key = format!("{}_{}", id.clone(), key);
             flat.insert(prefixed_key, xvalue);
         }
+
     }
     flat.insert("_last_updated".into(), serde_json::Value::String(Local::now().format("%H:%M:%S").to_string()));
     flat
