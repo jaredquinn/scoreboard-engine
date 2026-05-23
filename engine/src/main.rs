@@ -180,6 +180,7 @@ impl Widget for TimerWidget {
                         self.seconds = self.initial_seconds;
                         self.formatted_time = format_timer(self.seconds, &self.format);
                         self.paused = false;
+                        self.paused_time = 0;
                         self.running = false;
                     }
                     "set" => {
