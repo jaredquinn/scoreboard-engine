@@ -62,12 +62,14 @@ pub enum WidgetValue {
     Timer {
         formatted_time: String,
         paused_formatted: String,
+        paused_time: i64,
+        total_formatted: String,
+        total_time: i64,
         seconds: i64,
         running: bool,
         paused: bool,
         reset_on_start: bool,
         initial_seconds: i64,
-        paused_time: i64,
         is_down: bool,
         min_value: i64,
         max_value: i64,
@@ -174,9 +176,11 @@ impl Widget for CounterWidget {
 pub struct TimerWidget {
     pub seconds: i64,
     pub paused_time: i64,
+    pub paused_formatted: String,
+    pub total_time: i64,
+    pub total_formatted: String,
     pub initial_seconds: i64,
     pub formatted_time: String,
-    pub paused_formatted: String,
     pub running: bool,
     pub reset_on_start: bool,
     pub paused: bool,
@@ -198,6 +202,8 @@ impl Widget for TimerWidget {
                             self.formatted_time = format_timer(self.seconds, &self.format);
                             self.paused_time = 0;
                             self.paused_formatted = format_timer(self.paused_time, &self.format);
+                            self.total_time = 0;
+                            self.total_formatted = format_timer(self.total_time, &self.format);
                         }
                         self.paused = false;
                         self.running = true;
@@ -273,7 +279,9 @@ impl Widget for TimerWidget {
         if self.running {
             if self.paused {
                 self.paused_time += 1;
+                self.total_time += 1;
                 self.paused_formatted = format_timer(self.paused_time, &self.format);
+                self.total_formatted = format_timer(self.total_time, &self.format);
                 (true, format!("PAUSED {}",self.paused_formatted.clone()))
             } else {
                 if self.is_down {
@@ -289,6 +297,8 @@ impl Widget for TimerWidget {
                         self.running = false;
                     }
                 }
+                self.total_time += 1;
+                self.total_formatted = format_timer(self.total_time, &self.format);
                 self.formatted_time = format_timer(self.seconds, &self.format);
                 (true, format!("RUNNING {}",self.paused_formatted.clone()))
             }
@@ -304,11 +314,13 @@ impl Widget for TimerWidget {
     fn to_value(&self) -> WidgetValue {
         WidgetValue::Timer {
             formatted_time: self.formatted_time.clone(),
-            paused_formatted: self.paused_formatted.clone(),
             seconds: self.seconds,
             running: self.running,
             paused: self.paused,
             paused_time: self.paused_time,
+            paused_formatted: self.paused_formatted.clone(),
+            total_time: self.total_time,
+            total_formatted: self.total_formatted.clone(),
             reset_on_start: self.reset_on_start,
             initial_seconds: self.initial_seconds,
             is_down: self.is_down,
@@ -324,6 +336,8 @@ impl Widget for TimerWidget {
         extras.insert("formatted".to_string(), serde_json::Value::String(self.formatted_time.clone()));
         extras.insert("paused_formatted".to_string(), serde_json::Value::String(self.paused_formatted.clone()));
         extras.insert("paused_time".to_string(), serde_json::Value::from(self.paused_time));
+        extras.insert("total_formatted".to_string(), serde_json::Value::String(self.total_formatted.clone()));
+        extras.insert("total_time".to_string(), serde_json::Value::from(self.total_time));
         extras.insert("paused".to_string(), serde_json::Value::from(self.paused));
         extras.insert("running".to_string(), serde_json::Value::from(self.running));
         extras
@@ -617,6 +631,8 @@ fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
             formatted_time,
             paused_formatted,
             paused_time,
+            total_formatted,
+            total_time,
             reset_on_start,
             running,
             paused,
@@ -631,6 +647,8 @@ fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
             formatted_time: formatted_time.clone(),
             paused_formatted: paused_formatted.clone(),
             paused_time: *paused_time,
+            total_formatted: total_formatted.clone(),
+            total_time: *total_time,
             reset_on_start: *reset_on_start,
             running: *running,
             paused: *paused,
@@ -807,9 +825,11 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
 
                 WidgetValue::Timer {
                     seconds: secs,
-                    paused_time: 0,
                     initial_seconds: secs,
+                    paused_time: 0,
                     paused_formatted: format_timer(0, &fmt),
+                    total_time: 0,
+                    total_formatted: format_timer(0, &fmt),
                     formatted_time: format_timer(secs, &fmt),
                     reset_on_start: ros,
                     running: false,
