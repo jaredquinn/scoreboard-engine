@@ -47,6 +47,7 @@
         <is_down>true</is_down>
         <min_value>0</min_value>
         <max_value>30</max_value>
+	<reset_on_start>true</reset_on_start>
     </widget>
 
 
@@ -68,16 +69,23 @@
     </widget>
 
     <widget>
-        <id>home_team_name</id>
-        <type>Text</type>
-        <content>HOME</content>
+        <id>home_team</id>
+        <type>Team</type>
+        <initial_short_name>HOME</initial_short_name>
+        <initial_name>HOME TEAM</initial_name>
+        <initial_primary_color>#7865ab</initial_primary_color>
+        <initial_secondary_color>#ffffff</initial_secondary_color>
     </widget>
 
     <widget>
-        <id>away_team_name</id>
-        <type>Text</type>
-        <content>AWAY</content>
+        <id>away_team</id>
+        <type>Team</type>
+        <initial_short_name>AWAY</initial_short_name>
+        <initial_name>AWAY TEAM</initial_name>
+        <initial_primary_color>#7a8888</initial_primary_color>
+        <initial_secondary_color>#000000</initial_secondary_color>
     </widget>
+
 
     <widget>
         <id>home_score</id>

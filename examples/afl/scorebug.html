@@ -18,6 +18,10 @@ div		{ padding: 0; margin: 0; }
 		  grid-template-rows: auto auto;
 		}
 #scorebar div   { text-align: center; padding: 8px 4px; }
+#shotclock	{ position: absolute; top: 40; left: 40px;
+		  width: 100px; background-color: black; color: white; text-align: center; }
+#shotclock span { font-size: 2em; }
+
 
 .period 	{ background-color: white; color: black; font-size: 24px; line-height: 32px; }
 .clock		{ background-color: white; color: black; font-weight: bold; }
@@ -28,45 +32,49 @@ div		{ padding: 0; margin: 0; }
 <body>
 	<div id="container">
 
+		<div id="shotclock" data-visible="shot_clock_running">
+			<span data-bind="shot_clock" />
+		</div>
+
 		<div id="scorebar">
 
 			<div class="period">
 				<span data-bind="period"></span>
 			</div>
 
-			<div class="score homescore">
-				<span data-bind="home_team_name"></span>
+			<div class="score homescore" data-background="home_team_primary_color" data-foreground="home_team_secondary_color">
+				<span data-bind="home_team"></span>
 			</div>
 
-			<div class="score homescore">
+			<div class="score homescore" data-background="home_team_primary_color" data-foreground="home_team_secondary_color">
 				<span data-bind="home_goals"></span>
 			</div>
 
-			<div class="score homescore">
+			<div class="score homescore" data-background="home_team_primary_color" data-foreground="home_team_secondary_color">
 				<span data-bind="home_behinds"></span>
 			</div>
 
-			<div class="score homescore total">
+			<div class="score homescore total" data-background="home_team_primary_color" data-foreground="home_team_secondary_color">
 				<span data-bind="home_score"></span>
 			</div>
 
 			<div class="clock">
-				<span data-bind="formatted_match_clock"></span>
+				<span data-bind="match_clock_formatted"></span>
 			</div>
 
-			<div class="score awayscore">
-				<span data-bind="away_team_name"></span>
+			<div class="score awayscore" data-background="away_team_primary_color" data-foreground="away_team_secondary_color">
+				<span data-bind="away_team"></span>
 			</div>
 
-			<div class="score awayscore">
+			<div class="score awayscore" data-background="away_team_primary_color" data-foreground="away_team_secondary_color">
 				<span data-bind="away_goals"></span>
 			</div>
 
-			<div class="score awayscore">
+			<div class="score awayscore" data-background="away_team_primary_color" data-foreground="away_team_secondary_color">
 				<span data-bind="away_behinds"></span>
 			</div>
 
-			<div class="score awayscore total">
+			<div class="score awayscore total" data-background="away_team_primary_color" data-foreground="away_team_secondary_color">
 				<span data-bind="away_score"></span>
 			</div>
 
