@@ -47,17 +47,7 @@ Refer to [engine/README.md](/engine/README.md) if you're interested in developme
 * Run `scoreboard-engine` (or `scoreboard-engine.exe` on windows)
 * Open your dashboard [http://localhost:3000](http://localhost:3000)
 
-## Companion
 
-* Have Bitfocus Companion already running.
-* Download the latest companion module from the [Github repository releases](https://github.com/jaredquinn/scoreboard-engine/releases).  This is the file named companion-module-scoreboard-engine-verison.tgz.
-* In Companion under modules select import module package and select the zip file downloaded in the previous step.
-* Go to connections and add a connection for "Scoreboard Engine/Jared Quinn (The Scoreboard)"
-* Add buttons using the companion UI
-
-There is an example page of companion buttons designed to work with the example config.xml file found in the examples folder, you can import this to a companion page.
-
-<img alt="image" src="https://github.com/user-attachments/assets/ed380278-96f4-4808-abd3-fce3fcddd136" />
 
 # Quickstart Integration Guides
 
