@@ -20,6 +20,7 @@
 ### Bug Fixes
 
 - Added missing actions for Timers (set\_min, set\_max, set\_initial, set\_direction)
+- Clock running companion feedback broken in last release, fixed.
 
 
 ## [v0.9.0] - 2026-05-23 - Pause Release

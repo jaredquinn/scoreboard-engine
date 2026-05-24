@@ -25,7 +25,7 @@ module.exports = {
 				],
 				callback: (feedback) => {
 					const isRunning = self.getVariableValue(`${feedback.options.timer_id}_running`)
-					return isRunning === 'RUN'
+					return isRunning === true
 				},
 			},
 
