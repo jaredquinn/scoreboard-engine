@@ -1,7 +1,7 @@
 {
-	"version": 9,
+	"version": 12,
 	"type": "page",
-	"companionBuild": "4.2.6+8823-stable-4ecdfe70ba",
+	"companionBuild": "4.3.3+9230-stable-06a7406709",
 	"page": {
 		"id": "Hi6LB68i_NxuWddWyTig6",
 		"name": "AFL",
@@ -34,12 +34,18 @@
 							"action_sets": {
 								"down": [
 									{
-										"id": "gkSv0x3g1fhwDKLZF37Rr",
+										"id": "ckR0YkWd6JwRBXIV_0dW9",
 										"definitionId": "list_nav",
 										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
 										"options": {
-											"widget_id": "period",
-											"action": "prev"
+											"widget_id": {
+												"isExpression": false,
+												"value": "period"
+											},
+											"action": {
+												"isExpression": false,
+												"value": "prev"
+											}
 										},
 										"upgradeIndex": -1,
 										"type": "action"
@@ -110,12 +116,18 @@
 							"action_sets": {
 								"down": [
 									{
-										"id": "7GLkFgZNzxUmfb0DeE9lI",
+										"id": "T15cEfzBqkLW_390ek0xM",
 										"definitionId": "list_nav",
 										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
 										"options": {
-											"widget_id": "period",
-											"action": "next"
+											"widget_id": {
+												"isExpression": false,
+												"value": "period"
+											},
+											"action": {
+												"isExpression": false,
+												"value": "next"
+											}
 										},
 										"upgradeIndex": -1,
 										"type": "action"
@@ -130,7 +142,7 @@
 					},
 					"localVariables": []
 				},
-				"6": {
+				"4": {
 					"type": "button",
 					"style": {
 						"text": "($(scoreboard:match_clock_running) == 'STOP' ? `PERIOD START\\n${$(scoreboard:match_clock)}` : `PERIOD STOP\\n${$(scoreboard:match_clock)}`)",
@@ -150,11 +162,14 @@
 					},
 					"feedbacks": [
 						{
-							"id": "wqFvpFgXs0077luTuF1qa",
+							"id": "neZu9O94AQ1jrvV2BHD6L",
 							"definitionId": "timer_running",
 							"connectionId": "MsJcZXr-oSALS1ZKNQncF",
 							"options": {
-								"timer_id": "match_clock"
+								"timer_id": {
+									"isExpression": false,
+									"value": "match_clock"
+								}
 							},
 							"upgradeIndex": -1,
 							"type": "feedback",
@@ -162,7 +177,31 @@
 								"bgcolor": 38400,
 								"color": 16777215
 							},
-							"isInverted": false
+							"isInverted": {
+								"value": false,
+								"isExpression": false
+							}
+						},
+						{
+							"id": "vpoLQaqL5tJcDp4ZiRKu8",
+							"definitionId": "timer_paused",
+							"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+							"options": {
+								"timer_id": {
+									"isExpression": false,
+									"value": "match_clock"
+								}
+							},
+							"upgradeIndex": -1,
+							"type": "feedback",
+							"style": {
+								"bgcolor": 16744448,
+								"color": 16777215
+							},
+							"isInverted": {
+								"value": false,
+								"isExpression": false
+							}
 						}
 					],
 					"steps": {
@@ -170,7 +209,7 @@
 							"action_sets": {
 								"down": [
 									{
-										"id": "nJDFdH5D387yAId87k9Um",
+										"id": "c7_k9B8qHfF8BYRq7mRHs",
 										"definitionId": "logic_if",
 										"connectionId": "internal",
 										"options": {},
@@ -178,11 +217,14 @@
 										"children": {
 											"condition": [
 												{
-													"id": "vkSPOAGqi_yCzkQrFw7cu",
+													"id": "-ZdAd8WY7G0fQUYqlJ9zI",
 													"definitionId": "timer_running",
 													"connectionId": "MsJcZXr-oSALS1ZKNQncF",
 													"options": {
-														"timer_id": "match_clock"
+														"timer_id": {
+															"isExpression": false,
+															"value": "match_clock"
+														}
 													},
 													"upgradeIndex": -1,
 													"type": "feedback",
@@ -190,17 +232,26 @@
 														"bgcolor": 38400,
 														"color": 16777215
 													},
-													"isInverted": false
+													"isInverted": {
+														"isExpression": false,
+														"value": false
+													}
 												}
 											],
 											"actions": [
 												{
-													"id": "hogp6vxBsFnVJnfHBDrcE",
+													"id": "LeX9ui6XvPc7zJaO5FuSc",
 													"definitionId": "timer_control",
 													"connectionId": "MsJcZXr-oSALS1ZKNQncF",
 													"options": {
-														"widget_id": "match_clock",
-														"action": "stop"
+														"widget_id": {
+															"isExpression": false,
+															"value": "match_clock"
+														},
+														"action": {
+															"isExpression": false,
+															"value": "stop"
+														}
 													},
 													"upgradeIndex": -1,
 													"type": "action"
@@ -208,12 +259,18 @@
 											],
 											"else_actions": [
 												{
-													"id": "ygWVew6kfNix4zWMjiKm8",
+													"id": "bjgWRxMiAaGXRionTIbjO",
 													"definitionId": "timer_control",
 													"connectionId": "MsJcZXr-oSALS1ZKNQncF",
 													"options": {
-														"widget_id": "match_clock",
-														"action": "start"
+														"widget_id": {
+															"isExpression": false,
+															"value": "match_clock"
+														},
+														"action": {
+															"isExpression": false,
+															"value": "start"
+														}
 													},
 													"upgradeIndex": -1,
 													"type": "action"
@@ -231,7 +288,7 @@
 					},
 					"localVariables": []
 				},
-				"7": {
+				"5": {
 					"type": "button",
 					"style": {
 						"text": "PERIOD CLOCK RESET",
@@ -255,12 +312,18 @@
 							"action_sets": {
 								"down": [
 									{
-										"id": "C1lGaB7R5KKry3Ua8iLS7",
+										"id": "LHxfzhAUGbMJ_uQ6gGjOQ",
 										"definitionId": "timer_control",
 										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
 										"options": {
-											"widget_id": "match_clock",
-											"action": "reset"
+											"widget_id": {
+												"isExpression": false,
+												"value": "match_clock"
+											},
+											"action": {
+												"isExpression": false,
+												"value": "reset"
+											}
 										},
 										"upgradeIndex": -1,
 										"type": "action"
@@ -304,12 +367,18 @@
 							"action_sets": {
 								"down": [
 									{
-										"id": "XscOEvu6DhNvW0UpsClFr",
+										"id": "rzwHGHsKqeWiVRMAxfxj9",
 										"definitionId": "increment_score",
 										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
 										"options": {
-											"widget_id": "home_goals",
-											"amount": -1
+											"widget_id": {
+												"isExpression": false,
+												"value": "home_goals"
+											},
+											"amount": {
+												"isExpression": false,
+												"value": -1
+											}
 										},
 										"upgradeIndex": -1,
 										"type": "action"
@@ -348,12 +417,18 @@
 							"action_sets": {
 								"down": [
 									{
-										"id": "5Rm80tNUAdnABoECSAbcK",
+										"id": "09dyKrFmPnnuCmfFuTIPC",
 										"definitionId": "increment_score",
 										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
 										"options": {
-											"widget_id": "home_behinds",
-											"amount": -1
+											"widget_id": {
+												"isExpression": false,
+												"value": "home_behinds"
+											},
+											"amount": {
+												"isExpression": false,
+												"value": -1
+											}
 										},
 										"upgradeIndex": -1,
 										"type": "action"
@@ -400,6 +475,78 @@
 					},
 					"localVariables": []
 				},
+				"4": {
+					"type": "button",
+					"style": {
+						"text": "PERIOD\\nTIMEOFF\\n$(scoreboard:match_clock_paused_formatted)",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [
+						{
+							"id": "7fytDY3n0HZ4lel4a3SJl",
+							"definitionId": "timer_paused",
+							"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+							"options": {
+								"timer_id": {
+									"isExpression": false,
+									"value": "match_clock"
+								}
+							},
+							"upgradeIndex": -1,
+							"type": "feedback",
+							"style": {
+								"bgcolor": 16728128,
+								"color": 16777215
+							},
+							"isInverted": {
+								"value": false,
+								"isExpression": false
+							}
+						}
+					],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "Ybq9BwxdGg1xIT_EbQptG",
+										"definitionId": "timer_control",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": {
+												"value": "match_clock",
+												"isExpression": false
+											},
+											"action": {
+												"value": "pause",
+												"isExpression": false
+											}
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
 				"5": {
 					"type": "button",
 					"style": {
@@ -424,12 +571,18 @@
 							"action_sets": {
 								"down": [
 									{
-										"id": "8iZMwIWwDnx3e51QBioit",
+										"id": "hZE_l-R3Bs4ntLBCPSc6L",
 										"definitionId": "increment_score",
 										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
 										"options": {
-											"widget_id": "away_goals",
-											"amount": -1
+											"widget_id": {
+												"isExpression": false,
+												"value": "away_goals"
+											},
+											"amount": {
+												"isExpression": false,
+												"value": -1
+											}
 										},
 										"upgradeIndex": -1,
 										"type": "action"
@@ -468,12 +621,18 @@
 							"action_sets": {
 								"down": [
 									{
-										"id": "ridDM7RUG5WJ2CGZFy4GE",
+										"id": "eyvUpP4ZYnIsKz0X8TB4z",
 										"definitionId": "increment_score",
 										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
 										"options": {
-											"widget_id": "away_behinds",
-											"amount": -1
+											"widget_id": {
+												"isExpression": false,
+												"value": "away_behinds"
+											},
+											"amount": {
+												"isExpression": false,
+												"value": -1
+											}
 										},
 										"upgradeIndex": -1,
 										"type": "action"
@@ -624,9 +783,9 @@
 				"4": {
 					"type": "button",
 					"style": {
-						"text": "PAUSE SHOT CLOCK",
-						"textExpression": false,
-						"size": "auto",
+						"text": "($(scoreboard:shot_clock_running) == 'STOP' ? `RESUME \\nSHOT\\nCLOCK` : `PAUSE\\nSHOT\\nCLOCK`)",
+						"textExpression": true,
+						"size": "14",
 						"png64": null,
 						"alignment": "center:center",
 						"pngalignment": "center:center",
@@ -641,19 +800,25 @@
 					},
 					"feedbacks": [
 						{
-							"id": "amMaJ5qMry21CSSVCRXoi",
-							"definitionId": "timer_running",
+							"id": "IvH4mQVbpUco953u-a_v9",
+							"definitionId": "timer_paused",
 							"connectionId": "MsJcZXr-oSALS1ZKNQncF",
 							"options": {
-								"timer_id": "shot_clock"
+								"timer_id": {
+									"value": "shot_clock",
+									"isExpression": false
+								}
 							},
 							"upgradeIndex": -1,
 							"type": "feedback",
 							"style": {
-								"bgcolor": 0,
-								"color": 4737096
+								"bgcolor": 16728128,
+								"color": 16777215
 							},
-							"isInverted": true
+							"isInverted": {
+								"value": false,
+								"isExpression": false
+							}
 						}
 					],
 					"steps": {
@@ -661,12 +826,18 @@
 							"action_sets": {
 								"down": [
 									{
-										"id": "hYzdNyFfbwG6lSRkefJfC",
+										"id": "hcPN-rxt3JhTruz7eWKcr",
 										"definitionId": "timer_control",
 										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
 										"options": {
-											"widget_id": "shot_clock",
-											"action": "stop"
+											"widget_id": {
+												"value": "shot_clock",
+												"isExpression": false
+											},
+											"action": {
+												"value": "pause",
+												"isExpression": false
+											}
 										},
 										"upgradeIndex": -1,
 										"type": "action"
@@ -803,12 +974,18 @@
 							"action_sets": {
 								"down": [
 									{
-										"id": "5TuNQ_qiao5hPN_G1P9cG",
+										"id": "mjXPKw9-gavZU7XzYMGDm",
 										"definitionId": "increment_score",
 										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
 										"options": {
-											"widget_id": "home_goals",
-											"amount": 1
+											"widget_id": {
+												"isExpression": false,
+												"value": "home_goals"
+											},
+											"amount": {
+												"isExpression": false,
+												"value": 1
+											}
 										},
 										"upgradeIndex": -1,
 										"type": "action"
@@ -847,12 +1024,18 @@
 							"action_sets": {
 								"down": [
 									{
-										"id": "qwoTKIMMN8xeyOdbxMAyA",
+										"id": "_c8Tv2ihaFteYlpr6GG19",
 										"definitionId": "increment_score",
 										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
 										"options": {
-											"widget_id": "home_behinds",
-											"amount": 1
+											"widget_id": {
+												"isExpression": false,
+												"value": "home_behinds"
+											},
+											"amount": {
+												"isExpression": false,
+												"value": 1
+											}
 										},
 										"upgradeIndex": -1,
 										"type": "action"
@@ -870,7 +1053,7 @@
 				"4": {
 					"type": "button",
 					"style": {
-						"text": "($(scoreboard:shot_clock_running) == 'STOP' ? `SHOT START\\n${$(scoreboard:shot_clock)}` : `SHOT STOP\\n${$(scoreboard:shot_clock)}`)",
+						"text": "($(scoreboard:shot_clock_running) ? `SHOT STOP\\n${$(scoreboard:shot_clock)}` : `SHOT START\\n${$(scoreboard:shot_clock)}`)",
 						"textExpression": true,
 						"size": "auto",
 						"png64": null,
@@ -891,7 +1074,10 @@
 							"definitionId": "timer_running",
 							"connectionId": "MsJcZXr-oSALS1ZKNQncF",
 							"options": {
-								"timer_id": "shot_clock"
+								"timer_id": {
+									"isExpression": false,
+									"value": "shot_clock"
+								}
 							},
 							"upgradeIndex": -1,
 							"type": "feedback",
@@ -899,7 +1085,10 @@
 								"bgcolor": 38400,
 								"color": 16777215
 							},
-							"isInverted": false
+							"isInverted": {
+								"isExpression": false,
+								"value": false
+							}
 						}
 					],
 					"steps": {
@@ -907,7 +1096,7 @@
 							"action_sets": {
 								"down": [
 									{
-										"id": "uJ1D7UFADzad4UGGP6-MZ",
+										"id": "2Gw9EJgllGz-8Ev-HL_md",
 										"definitionId": "logic_if",
 										"connectionId": "internal",
 										"options": {},
@@ -915,11 +1104,14 @@
 										"children": {
 											"condition": [
 												{
-													"id": "cAH4MYR96Y1jhBR46JsCF",
+													"id": "6Uji3mFiNbPF-gQgDF-5o",
 													"definitionId": "timer_running",
 													"connectionId": "MsJcZXr-oSALS1ZKNQncF",
 													"options": {
-														"timer_id": "shot_clock"
+														"timer_id": {
+															"isExpression": false,
+															"value": "shot_clock"
+														}
 													},
 													"upgradeIndex": -1,
 													"type": "feedback",
@@ -927,28 +1119,26 @@
 														"bgcolor": 38400,
 														"color": 16777215
 													},
-													"isInverted": false
+													"isInverted": {
+														"isExpression": false,
+														"value": false
+													}
 												}
 											],
 											"actions": [
 												{
-													"id": "bVviJsQHL5hC7sFD4UD5_",
+													"id": "qxjK_8OY7zvnVyKzlm0lH",
 													"definitionId": "timer_control",
 													"connectionId": "MsJcZXr-oSALS1ZKNQncF",
 													"options": {
-														"widget_id": "shot_clock",
-														"action": "stop"
-													},
-													"upgradeIndex": -1,
-													"type": "action"
-												},
-												{
-													"id": "g97SkSWnd0OpPEx6oC_C6",
-													"definitionId": "timer_control",
-													"connectionId": "MsJcZXr-oSALS1ZKNQncF",
-													"options": {
-														"widget_id": "shot_clock",
-														"action": "reset"
+														"widget_id": {
+															"isExpression": false,
+															"value": "shot_clock"
+														},
+														"action": {
+															"isExpression": false,
+															"value": "stop"
+														}
 													},
 													"upgradeIndex": -1,
 													"type": "action"
@@ -956,12 +1146,35 @@
 											],
 											"else_actions": [
 												{
-													"id": "noHBQGsn6mhpdreMYXasy",
+													"id": "ppuG0vtzNluMgK6ORmeb4",
 													"definitionId": "timer_control",
 													"connectionId": "MsJcZXr-oSALS1ZKNQncF",
 													"options": {
-														"widget_id": "shot_clock",
-														"action": "start"
+														"widget_id": {
+															"isExpression": false,
+															"value": "shot_clock"
+														},
+														"action": {
+															"isExpression": false,
+															"value": "reset"
+														}
+													},
+													"upgradeIndex": -1,
+													"type": "action"
+												},
+												{
+													"id": "z9iuz6H97tyxLx8ZSsBsw",
+													"definitionId": "timer_control",
+													"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+													"options": {
+														"widget_id": {
+															"isExpression": false,
+															"value": "shot_clock"
+														},
+														"action": {
+															"isExpression": false,
+															"value": "start"
+														}
 													},
 													"upgradeIndex": -1,
 													"type": "action"
@@ -1003,12 +1216,18 @@
 							"action_sets": {
 								"down": [
 									{
-										"id": "jxDFHgFGODdUqvH6qm9II",
+										"id": "KSN8lxwFodzn29y6dzAan",
 										"definitionId": "increment_score",
 										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
 										"options": {
-											"widget_id": "away_goals",
-											"amount": 1
+											"widget_id": {
+												"isExpression": false,
+												"value": "away_goals"
+											},
+											"amount": {
+												"isExpression": false,
+												"value": 1
+											}
 										},
 										"upgradeIndex": -1,
 										"type": "action"
@@ -1047,12 +1266,18 @@
 							"action_sets": {
 								"down": [
 									{
-										"id": "4_Z-mC7MuXgpjkFR9LfJ-",
+										"id": "bWv92WFCMgo70XcaQfV3o",
 										"definitionId": "increment_score",
 										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
 										"options": {
-											"widget_id": "away_behinds",
-											"amount": 1
+											"widget_id": {
+												"isExpression": false,
+												"value": "away_behinds"
+											},
+											"amount": {
+												"isExpression": false,
+												"value": 1
+											}
 										},
 										"upgradeIndex": -1,
 										"type": "action"
@@ -1079,7 +1304,6 @@
 	"instances": {
 		"MsJcZXr-oSALS1ZKNQncF": {
 			"moduleInstanceType": "connection",
-			"instance_type": "scoreboard-engine",
 			"moduleVersionId": "dev",
 			"updatePolicy": "stable",
 			"sortOrder": 3,
@@ -1092,7 +1316,8 @@
 			},
 			"secrets": {},
 			"lastUpgradeIndex": -1,
-			"enabled": true
+			"enabled": true,
+			"moduleId": "scoreboard-engine"
 		}
 	},
 	"connectionCollections": [],
