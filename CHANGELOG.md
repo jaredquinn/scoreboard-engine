@@ -16,6 +16,7 @@
 - Add Team Widget support to Companion module
 - Fixed but in reset counter using first increment value instead of initial\_value
 - Expand widget documentation and move to github wiki.
+- Added `total_time` and `total_formatted` to Timers, these always count up and contain total seconds ticked (paused + main).
 
 ### Bug Fixes
 
