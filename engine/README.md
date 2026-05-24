@@ -49,102 +49,11 @@ Starting the scoreboard from the compiled source code:
 ```
 
 ---
-## API Functions
-
-| Endpoint | Method | Payload Example | Functionality |
-| :--- | :--- | :--- | :--- |
-| `/events` | `GET` | *None* | Opens the **SSE (Server-Sent Events)** stream for real-time state broadcasting. |
-| `/reset` | `POST` | *None* | Reloads specified `config.xml`, clears persistence, and broadcasts the **fresh state**. |
-| `/widgets` | `GET` | *None* | Returns **all current widget states** as a JSON object.  Contains all widgets, values and metadata.|
-| `/widgets/flat` | `GET` | *None* | Returns **key and value only** as list containing a JSON object for each widget.|
-| `/widgets/:id/update` | `POST` | `{"action": "increment", "amount": 1}` | **Counter**: Increases/decreases value by `amount` (use negative numbers for dec). |
-| `/widgets/:id/update` | `POST` | `{"action": "start"}` / `{"action": "stop"}` | **Timer**: Toggles the background ticker for the specified ID. |
-| `/widgets/:id/update` | `POST` | `{"action": "reset"}` | **Timer**: Reverts to `initial_seconds`. **List**: Resets index to `0`. |
-| `/widgets/:id/update` | `POST` | `{"action": "set_initial", "value": 600}` | **Timer**: Updates both current `seconds` and the `initial_seconds` reset point. |
-| `/widgets/:id/update` | `POST` | `{"action": "set_min", "value": 0}` | **Timer**: Updates the minimum bound (Buzzer floor). |
-| `/widgets/:id/update` | `POST` | `{"action": "set_max", "value": 3600}` | **Timer**: Updates the maximum bound (Ceiling). |
-| `/widgets/:id/update` | `POST` | `{"action": "next"}` / `{"action": "prev"}` | **List**: Navigates the options array. |
-| `/widgets/:id/update` | `POST` | `"New Text Content"` | **Text**: Directly replaces the string value (Raw JSON string). |
-
-/widgets/flat is designed for use in consumers like vMix Data Sources.
 
 ## Config Example
 
-Here is an example configuration file showing all available widgets and options
+See the examples directory for example configurations
 
-```xml
-<ScoreboardConfig>
-    <persistence_file>match_data_final.json</persistence_file>
-    <widget>
-        <id>home_score</id>
-        <type>Counter</type>
-        <initial_value>0</initial_value>
-        <increments>
-            <value>4</value>
-            <value>2</value>
-            <value>1</value>
-        </increments>
-    </widget>
-
-    <widget>
-        <id>away_score</id>
-        <type>Counter</type>
-        <initial_value>0</initial_value>
-        <increments>
-            <value>4</value>
-            <value>2</value>
-            <value>1</value>
-        </increments>
-    </widget>
-
-    <widget>
-        <id>match_clock</id>
-        <type>Timer</type>
-        <initial_seconds>0</initial_seconds>
-        <is_down>false</is_down>
-        <min_value>0</min_value>
-        <max_value>3600</max_value>
-    </widget>
-
-    <widget>
-        <id>period</id>
-        <type>List</type>
-        <initial_index>0</initial_index>
-        <options>
-            <option>1ST HALF</option>
-            <option>HALFTIME</option>
-            <option>2ND HALF</option>
-            <option>FULLTIME</option>
-        </options>
-    </widget>
-
-    <widget>
-        <id>tackle_count</id>
-        <type>List</type>
-        <initial_index>0</initial_index>
-        <options>
-            <option>ZERO</option>
-            <option>1ST</option>
-            <option>2ND</option>
-            <option>3RD</option>
-            <option>4TH</option>
-            <option>5TH</option>
-        </options>
-    </widget>
-
-    <widget>
-        <id>home_team_name</id>
-        <type>Text</type>
-        <content>HOME TEAM</content>
-    </widget>
-
-    <widget>
-        <id>away_team_name</id>
-        <type>Text</type>
-        <content>AWAY TEAM</content>
-    </widget>
-</ScoreboardConfig>
-```
 
 ## Access the Cockpit
 
