@@ -54,6 +54,7 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub enum WidgetValue {
     Counter {
         value: i64,
+        initial_value: i64,
         increments: Vec<i64>,
         #[serde(rename = "dashboard-ui", default = "default_true")]
         dashboard_ui: bool,
@@ -118,6 +119,7 @@ pub trait Widget {
 // Counter
 pub struct CounterWidget {
     pub value: i64,
+    pub initial_value: i64,
     pub increments: Vec<i64>,
     pub dashboard_ui: bool,
 }
@@ -125,11 +127,12 @@ pub struct CounterWidget {
 impl Widget for CounterWidget {
     fn update(&mut self, payload: UpdatePayload) -> (bool, String) {
         match payload {
-            UpdatePayload::Action { action, amount, .. } => {
-                let amt = amount.unwrap_or(1);
+            UpdatePayload::Action { action, value, .. } => {
+                let amt = value.and_then(|v| v.as_i64()).unwrap_or(1);
                 match action.as_str() {
                     "increment" => self.value += amt,
                     "decrement" => self.value -= amt,
+                    "set" => self.value = amt,
                     "reset" => self.value = self.increments.first().cloned().unwrap_or(0),
                     _ => return (false, String::new()),
                 }
@@ -158,6 +161,7 @@ impl Widget for CounterWidget {
     fn to_value(&self) -> WidgetValue {
         WidgetValue::Counter {
             value: self.value,
+            initial_value: self.initial_value,
             increments: self.increments.clone(),
             dashboard_ui: self.dashboard_ui,
         }
@@ -601,8 +605,9 @@ impl Widget for CalculationWidget {
 // Helper factory to dynamically instantiate widget from its data representation
 fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
     match value {
-        WidgetValue::Counter { value, increments, dashboard_ui } => Box::new(CounterWidget {
+        WidgetValue::Counter { value, increments, initial_value, dashboard_ui } => Box::new(CounterWidget {
             value: *value,
+            initial_value: *initial_value,
             increments: increments.clone(),
             dashboard_ui: *dashboard_ui,
         }),
@@ -666,7 +671,6 @@ fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
 pub enum UpdatePayload {
     Action {
         action: String,
-        amount: Option<i64>,
         value: Option<serde_json::Value>,
     },
     Value(serde_json::Value),
@@ -766,6 +770,7 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
 
                 WidgetValue::Counter {
                     value: initial,
+                    initial_value: initial,
                     increments: final_increments,
                     dashboard_ui,
                 }

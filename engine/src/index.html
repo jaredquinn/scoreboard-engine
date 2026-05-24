@@ -267,8 +267,8 @@
                 const incs = data.increments || [1];
                 let buttons = incs.map(inc => `
                     <div style="display:flex; flex-direction:column; gap:5px;">
-                        <button onclick="updateWidget('${id}', {action:'increment', amount:${inc}})">+${inc}</button>
-                        <button class="btn-small" style="opacity:0.5" onclick="updateWidget('${id}', {action:'decrement', amount:${inc}})">-${inc}</button>
+                        <button onclick="updateWidget('${id}', {action:'increment', value:${inc}})">+${inc}</button>
+                        <button class="btn-small" style="opacity:0.5" onclick="updateWidget('${id}', {action:'decrement', value:${inc}})">-${inc}</button>
                     </div>
                 `).join('');
                 innerContent += `<div class="value">${val}</div><div class="controls">${buttons}`;
@@ -326,8 +326,8 @@
 			    </button>
 			    <button title="Reset to ${initial_seconds}s" onclick="if(confirm('Reset?')) updateWidget('${id}', {action:'reset'})">⟲</button>
 
-			    <button onclick="updateWidget('${id}', {action:'increment', amount: 60})">+1m</button>
-			    <button onclick="updateWidget('${id}', {action:'decrement', amount: 60})">-1m</button>
+			    <button onclick="updateWidget('${id}', {action:'increment', value: 60})">+1m</button>
+			    <button onclick="updateWidget('${id}', {action:'decrement', value: 60})">-1m</button>
 			</div>
 
 			<div class="admin-section">

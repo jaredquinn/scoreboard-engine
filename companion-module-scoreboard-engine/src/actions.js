@@ -22,13 +22,13 @@ module.exports = {
 				name: 'Counter: Adjust Value',
 				options: [
 					{ type: 'dropdown', id: 'widget_id', label: 'Counter', default: counterChoices[0]?.id || '', choices: counterChoices },
-					{ type: 'number', id: 'amount', label: 'Amount (Negative to decrement)', default: 1 }
+					{ type: 'number', id: 'value', label: 'Value (Negative to decrement)', default: 1 }
 				],
 				callback: async (event) => {
-					const amt = event.options.amount
+					const amt = event.options.value
 					await self.sendUpdate(event.options.widget_id, {
 						action: amt >= 0 ? 'increment' : 'decrement',
-						amount: Math.abs(amt),
+						value: Math.abs(amt),
 					})
 				},
 			},
@@ -56,13 +56,13 @@ module.exports = {
 				name: 'Timer: Adjust Time (Manual)',
 				options: [
 					{ type: 'dropdown', id: 'widget_id', label: 'Timer', default: timerChoices[0]?.id || '', choices: timerChoices },
-					{ type: 'number', id: 'amount', label: 'Seconds to add (Negative to subtract)', default: 60 }
+					{ type: 'number', id: 'value', label: 'Seconds to add (Negative to subtract)', default: 60 }
 				],
 				callback: async (event) => {
-					const amt = event.options.amount
+					const amt = event.options.value
 					await self.sendUpdate(event.options.widget_id, {
 						action: amt >= 0 ? 'increment' : 'decrement',
-						amount: Math.abs(amt),
+						value: Math.abs(amt),
 					})
 				},
 			},
