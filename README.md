@@ -21,8 +21,8 @@ If you find this useful - buy me a [Ko-Fi](https://ko-fi.com/vk2way).
 
 # Available Widgets
 
-* Timers (up/down,  min, max, start time, reset, set)
-* Counters (increment, decrement, set, shortcut list)
+* [https://github.com/jaredquinn/scoreboard-engine/wiki/Widgets#timer](Timer) (up/down,  min, max, start time, reset, set)
+* [https://github.com/jaredquinn/scoreboard-engine/wiki/Widgets#counter](Counter) (increment, decrement, set, shortcut list)
 * Text (set)
 * List (set, next, prev)
 * Calculation (using evalexpr)
