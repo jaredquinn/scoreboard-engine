@@ -64,6 +64,7 @@ pub enum WidgetValue {
         seconds: i64,
         running: bool,
         paused: bool,
+        reset_on_start: bool,
         initial_seconds: i64,
         paused_time: i64,
         is_down: bool,
@@ -90,6 +91,14 @@ pub enum WidgetValue {
         #[serde(rename = "dashboard-ui", default = "default_true")]
         dashboard_ui: bool,
     },
+    Team {
+        short_name: String,
+        name: String,
+        primary_color: String,
+        secondary_color: String,
+        #[serde(rename = "dashboard-ui", default = "default_true")]
+        dashboard_ui: bool,
+    }
 }
 
 // Helper function to handle serde defaults to true
@@ -165,6 +174,7 @@ pub struct TimerWidget {
     pub formatted_time: String,
     pub paused_formatted: String,
     pub running: bool,
+    pub reset_on_start: bool,
     pub paused: bool,
     pub is_down: bool,
     pub min_value: i64,
@@ -178,7 +188,47 @@ impl Widget for TimerWidget {
         match payload {
             UpdatePayload::Action { action, value, .. } => {
                 match action.as_str() {
-                    "start" => self.running = true,
+                    "start" => {
+                        if self.reset_on_start {
+                            self.seconds = self.initial_seconds;
+                            self.formatted_time = format_timer(self.seconds, &self.format);
+                            self.paused_time = 0;
+                            self.paused_formatted = format_timer(self.paused_time, &self.format);
+                        }
+                        self.paused = false;
+                        self.running = true;
+                    },
+                    "set_direction" => {
+                        if let Some(val_str) = value.and_then(|v| v.as_str().map(String::from)) {
+                            if val_str == "UP" {
+                                self.is_down = false;
+                            }
+                            if val_str == "DOWN" {
+                                self.is_down = true;
+                            }
+                        }
+                    },
+                    "set_max" => {
+                        if let Some(val_str) = value.and_then(|v| v.as_str().map(String::from)) {
+                            if let Some(parsed_secs) = parse_time_string(&val_str) {
+                                self.max_value = parsed_secs
+                            }
+                        }
+                    },
+                    "set_min" => {
+                        if let Some(val_str) = value.and_then(|v| v.as_str().map(String::from)) {
+                            if let Some(parsed_secs) = parse_time_string(&val_str) {
+                                self.min_value = parsed_secs
+                            }
+                        }
+                    },
+                    "set_initial" => {
+                        if let Some(val_str) = value.and_then(|v| v.as_str().map(String::from)) {
+                            if let Some(parsed_secs) = parse_time_string(&val_str) {
+                                self.initial_seconds = parsed_secs
+                            }
+                        }
+                    },
                     "stop" => self.running = false,
                     "toggle" => self.running = !self.running,
                     "pause" => self.paused = !self.paused,
@@ -255,6 +305,7 @@ impl Widget for TimerWidget {
             running: self.running,
             paused: self.paused,
             paused_time: self.paused_time,
+            reset_on_start: self.reset_on_start,
             initial_seconds: self.initial_seconds,
             is_down: self.is_down,
             min_value: self.min_value,
@@ -336,8 +387,88 @@ impl Widget for ListWidget {
             dashboard_ui: self.dashboard_ui,
         }
     }
-    fn extra_values(&self) -> HashMap<String, serde_json::Value> { let extras = HashMap::new(); extras }
+    fn extra_values(&self) -> HashMap<String, serde_json::Value> { 
+        let mut extras = HashMap::new();
+        extras.insert("index".to_string(), serde_json::Value::from(self.index));
+        extras
+    }
+
 }
+
+// Team
+pub struct TeamWidget {
+    pub short_name: String,
+    pub name: String,
+    pub primary_color: String,
+    pub secondary_color: String,
+    pub dashboard_ui: bool,
+}
+
+impl Widget for TeamWidget {
+    fn update(&mut self, payload: UpdatePayload) -> (bool, String) {
+        match payload {
+            UpdatePayload::Action { action, value, .. } => {
+                match action.as_str() {
+                    "set" => {
+                        if let Some(val_str) = value.and_then(|v| v.as_str().map(String::from)) {
+                            self.short_name = val_str.to_string();
+                            return (true, self.short_name.clone())
+                        }
+                    }
+                    "set_name" => {
+                        if let Some(val_str) = value.and_then(|v| v.as_str().map(String::from)) {
+                            self.name = val_str.to_string();
+                            return (true, self.name.clone())
+                        }
+                    }
+                    "set_primary" => {
+                        if let Some(val_str) = value.and_then(|v| v.as_str().map(String::from)) {
+                            self.primary_color = val_str.to_string();
+                            return (true, self.primary_color.clone())
+                        }
+                    }
+                    "set_secondary" => {
+                        if let Some(val_str) = value.and_then(|v| v.as_str().map(String::from)) {
+                            self.secondary_color = val_str.to_string();
+                            return (true, self.secondary_color.clone())
+                        }
+                    }
+                    _ => return (false, String::new()),
+                }
+                (true, self.short_name.clone())
+            }
+
+            _ => (false, String::new()),
+        }
+    }
+
+    fn tick(&mut self, _flat_context: &IndexMap<String, JsonValue>) -> (bool, String) {
+        (false, String::new())
+    }
+
+    fn is_visible(&self) -> bool {
+        self.dashboard_ui
+    }
+
+    fn to_value(&self) -> WidgetValue {
+        WidgetValue::Team {
+            short_name: self.short_name.clone(),
+            name: self.name.clone(),
+            primary_color: self.primary_color.clone(),
+            secondary_color: self.secondary_color.clone(),
+            dashboard_ui: self.dashboard_ui,
+        }
+    }
+
+    fn extra_values(&self) -> HashMap<String, serde_json::Value> { 
+        let mut extras = HashMap::new();
+        extras.insert("name".to_string(), serde_json::Value::String(self.name.clone()));
+        extras.insert("primary_color".to_string(), serde_json::Value::String(self.primary_color.clone()));
+        extras.insert("secondary_color".to_string(), serde_json::Value::from(self.secondary_color.clone()));
+        extras
+    }
+}
+
 
 // Text
 pub struct TextWidget {
@@ -481,6 +612,7 @@ fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
             formatted_time,
             paused_formatted,
             paused_time,
+            reset_on_start,
             running,
             paused,
             is_down,
@@ -494,6 +626,7 @@ fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
             formatted_time: formatted_time.clone(),
             paused_formatted: paused_formatted.clone(),
             paused_time: *paused_time,
+            reset_on_start: *reset_on_start,
             running: *running,
             paused: *paused,
             is_down: *is_down,
@@ -514,6 +647,13 @@ fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
         WidgetValue::Calculation { value, expression , dashboard_ui } => Box::new(CalculationWidget {
             value: value.clone(),
             expression: expression.clone(),
+            dashboard_ui: *dashboard_ui,
+        }),
+        WidgetValue::Team { name, short_name, primary_color, secondary_color, dashboard_ui } => Box::new(TeamWidget {
+            name: name.clone(),
+            short_name: short_name.clone(),
+            primary_color: primary_color.clone(),
+            secondary_color: secondary_color.clone(),
             dashboard_ui: *dashboard_ui,
         })
     }
@@ -654,12 +794,19 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
                     .unwrap_or("mm:ss")
                     .to_string();
 
+                let ros = node.children()
+                    .find(|n| n.has_tag_name("reset_on_start"))
+                    .and_then(|n| n.text())
+                    .map(|t| t.trim().to_lowercase() == "true")
+                    .unwrap_or(false);
+
                 WidgetValue::Timer {
                     seconds: secs,
                     paused_time: 0,
                     initial_seconds: secs,
                     paused_formatted: format_timer(0, &fmt),
                     formatted_time: format_timer(secs, &fmt),
+                    reset_on_start: ros,
                     running: false,
                     paused: false,
                     is_down: down,
@@ -677,6 +824,33 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
                     .collect();
                 WidgetValue::List { index: 0, options, dashboard_ui }
             }
+            "Team" => {
+                let short_name = node.children()
+                    .find(|n| n.has_tag_name("initial_short_name"))
+                    .and_then(|n| n.text())
+                    .unwrap_or("")
+                    .to_string();
+
+                let name = node.children()
+                    .find(|n| n.has_tag_name("initial_name"))
+                    .and_then(|n| n.text())
+                    .unwrap_or("")
+                    .to_string();
+
+                let primary_color = node.children()
+                    .find(|n| n.has_tag_name("initial_primary_color"))
+                    .and_then(|n| n.text())
+                    .unwrap_or("")
+                    .to_string();
+
+                let secondary_color = node.children()
+                    .find(|n| n.has_tag_name("initial_secondary_color"))
+                    .and_then(|n| n.text())
+                    .unwrap_or("")
+                    .to_string();
+
+                WidgetValue::Team { short_name, name, primary_color, secondary_color, dashboard_ui }
+            }
             "Text" => {
                 let content = node.children()
                     .find(|n| n.has_tag_name("content"))
@@ -686,7 +860,6 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
                 WidgetValue::Text { content, dashboard_ui }
             }
             "Calculation" => {
-
                 let initial = node.children()
                     .find(|n| n.has_tag_name("initial_value"))
                     .and_then(|n| n.text())
@@ -785,6 +958,7 @@ fn flatten_state(data: &IndexMap<String, WidgetValue>) -> IndexMap<String, JsonV
                 serde_json::Value::from(s)
             }
             WidgetValue::Text { content, .. } => serde_json::Value::from(content.clone()),
+            WidgetValue::Team { short_name, .. } => serde_json::Value::from(short_name.clone()),
             WidgetValue::Calculation { value, .. } => serde_json::Value::from(value.clone()),
         };
         flat.insert(id.clone(), v);
