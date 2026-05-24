@@ -4,6 +4,8 @@
 * 𖣘  `engine` - A high-performance, real-time scoreboard backend built with **Rust**, **Axum**, and **Tokio** with integrated web dashboard.
 * 🦾 `companion-module-scoreboard-engine` - A module for BitFocus Companion supporting all features.
 
+<img alt="Dashboard Screenshot" src="https://raw.github.com/jaredquinn/scoreboard-engine/pages/screenshots/readme-dashboard.png" />
+
 # Key Features
 
 * **Single-Binary**: Single executable, built in rust for speed and robustness.
@@ -15,7 +17,6 @@
 * **Javascript Helper**: Included Javascript helper library for easy HTML title creation.
 * **Static Server**: Serve custom HTML titles from a folder for use in OBS and as a web source/input.
     
-<img alt="Dashboard Screenshot" src="https://github.com/user-attachments/assets/eb497cdd-4557-4086-bfb1-62f20e4448d7" />
 
 If you find this useful - buy me a [Ko-Fi](https://ko-fi.com/vk2way).
 
