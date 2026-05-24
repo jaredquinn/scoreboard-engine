@@ -17,6 +17,8 @@ module.exports = {
 				defs.push({ variableId: `${id}_raw`, name: `${id} Raw Value` });
 				defs.push({ variableId: `${id}_paused_formatted`, name: `${id} Formatted Stoppage Time` });
 				defs.push({ variableId: `${id}_paused_time`, name: `${id} Raw Stoppage Time` });
+				defs.push({ variableId: `${id}_total_formatted`, name: `${id} Formatted Total Time` });
+				defs.push({ variableId: `${id}_total_time`, name: `${id} Raw Total Time` });
 				defs.push({ variableId: `${id}_paused`, name: `${id} Currently Paused` });
 			}
 		}
@@ -39,6 +41,8 @@ module.exports = {
 			} else if (type === 'Timer') {
 				values[`${id}_paused_formatted`] = data.paused_formatted;
 				values[`${id}_paused_time`] = data.paused_time;
+				values[`${id}_total_formatted`] = data.total_formatted;
+				values[`${id}_total_time`] = data.total_time;
 				values[`${id}_paused`] = data.paused;
 				values[`${id}_running`] = data.running;
 				values[`${id}_running_state`] = data.running ? 'RUN' : 'STOP';
