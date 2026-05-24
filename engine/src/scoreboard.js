@@ -21,6 +21,14 @@ window.addEventListener('DOMContentLoaded', () => {
 					els.forEach(el => {
 						el.innerHTML = w;
 					});
+					var els = document.querySelectorAll('[data-visible="' + id + '"]');
+					els.forEach(el => {
+						if(w == true) {
+							el.style.visibility = 'visible';
+						} else {
+							el.style.visibility = 'hidden';
+						}
+					});
 
 			    	    }
 			    });
