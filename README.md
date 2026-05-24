@@ -59,52 +59,10 @@ There is an example page of companion buttons designed to work with the example 
 
 <img alt="image" src="https://github.com/user-attachments/assets/ed380278-96f4-4808-abd3-fce3fcddd136" />
 
-## vMix
+# Quickstart Integration Guides
 
-Scoreboard Engine provides a flatten list of data designed for consumption in vMix Data Sources;  this can be found at the `/widgets/flat` endpoint.
+_The quickstart guides have moved to the wiki_
 
-### Using in a vMix Title
-
-Add the vMix Data Source, refer to the vMix documentation for more information on adding data sources:
-
-<img alt="image" src="https://github.com/user-attachments/assets/7cd63eb2-ae3a-44a2-ac2c-52238872609c" />
-
-Create a title for your production, ensuring you label any fields appropriately for use in Title Editor when linking Data Sources.
-
-<img alt="image" src="https://github.com/user-attachments/assets/2876ab56-8a93-4c2c-b1a8-656bad099586" />
-
-
-## OBS 
-
-For OBS and other systems using a web input; Scoreboard Engine provides a simple Javascript library and hosting for your HTML title.
-
-### Create the HTML Title
-
-Refer to the HTML pages in the `examples` directory for demonstrations.
-
-Copy this example to your `pages` directory and update it according to your needs.
-
-To handle the live updates from the scoreboard engine, ensure the JS library is included in your page:
-
-```
-<script src="/scoreboard.js"></script>
-```
-
-To update an element's content with a value from the scoreboard engine simply add the attribute `data-bind=widget_id` to the HTML element; e.g.
-
-```
-<div class="score homescore">
-   <span data-bind="home_score"></span>
-</div>
-```
-
-Pages in the /pages folder are served at http://localhost:3000/pages/...
-
-## Add to OBS
-
-Add a "Browser" input to your OBS Scene:
-
-<img alt="image" src="https://github.com/user-attachments/assets/1e8180d1-2be9-4876-af95-d13821563446" />
-
-Set the URL to your filename in the `pages` folder.
-
+* [Quickstart OBS](https://github.com/jaredquinn/scoreboard-engine/wiki/Quickstart-OBS)
+* [Quickstart vMix](https://github.com/jaredquinn/scoreboard-engine/wiki/Quickstart-vMix)
+  
