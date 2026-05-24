@@ -13,7 +13,7 @@
 * [Latest Release](https://github.com/jaredquinn/scoreboard-engine/releases/latest)
 * [Documentation Wiki](https://github.com/jaredquinn/scoreboard-engine/wiki)
 * [Build Instructions](engine/README.md)
-* 
+  
 # Key Features
 
 * **Single-Binary**: Single executable, built in rust for speed and robustness.
@@ -25,7 +25,6 @@
 * **Javascript Helper**: Included Javascript helper library for easy HTML title creation.
 * **Static Server**: Serve custom HTML titles from a folder for use in OBS and as a web source/input.
     
-
 If you find this useful - buy me a [Ko-Fi](https://ko-fi.com/vk2way).
 
 # Available Widgets
