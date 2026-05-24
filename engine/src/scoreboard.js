@@ -17,6 +17,14 @@ window.addEventListener('DOMContentLoaded', () => {
 				    if(!id in values || values[id] != w) {
 			    		values[id] = w;
 				        console.log('updated ' + id + ' to ' + w);
+					var els = document.querySelectorAll('[data-foreground="' + id + '"]');
+					els.forEach(el => {
+						el.style.color = w;
+					});
+					var els = document.querySelectorAll('[data-background="' + id + '"]');
+					els.forEach(el => {
+						el.style.backgroundColor = w;
+					});
 					var els = document.querySelectorAll('[data-bind="' + id + '"]');
 					els.forEach(el => {
 						el.innerHTML = w;
