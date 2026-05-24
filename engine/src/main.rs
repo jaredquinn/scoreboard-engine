@@ -220,6 +220,7 @@ impl Widget for TimerWidget {
             if self.paused {
                 self.paused_time += 1;
                 self.paused_formatted = format_timer(self.paused_time, &self.format);
+                (true, format!("PAUSED {}",self.paused_formatted.clone()))
             } else {
                 if self.is_down {
                     if self.seconds > self.min_value {
@@ -235,8 +236,8 @@ impl Widget for TimerWidget {
                     }
                 }
                 self.formatted_time = format_timer(self.seconds, &self.format);
+                (true, format!("RUNNING {}",self.paused_formatted.clone()))
             }
-            (true, self.formatted_time.clone())
         } else {
             (false, String::new())
         }
