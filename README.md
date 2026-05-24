@@ -39,17 +39,17 @@ These quickstart instructions are for getting up and running quickly using the p
 
 ## Engine
 
-Refer to [engine/README.md](/engine/README.md) if you're interested in development/building from source.
-
 * Download the latest version from the [Github repository releases](https://github.com/jaredquinn/scoreboard-engine/releases).  There is precompiled binaries there for Windows, Linux & Mac.
 * Extract the archive to any location on your computer.
 * Copy/edit/create a config.xml to match your requirements.
 * Run `scoreboard-engine` (or `scoreboard-engine.exe` on windows)
 * Open your dashboard [http://localhost:3000](http://localhost:3000)
 
+To install the **Bitfocus Companion module** see the [Bitfocus Companion](https://github.com/jaredquinn/scoreboard-engine/wiki/Bitfocus-Companion) page on our Wiki
 
+Refer to [engine/README.md](/engine/README.md) if you're interested in development/building from source.
 
-# Quickstart Integration Guides
+## Quickstart Integration Guides
 
 _The quickstart guides have moved to the wiki_
 
