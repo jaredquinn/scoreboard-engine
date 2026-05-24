@@ -1,11 +1,19 @@
 
 # 🎯 Scoreboard Engine 
 
+## What is Scoreboard Engine?
+
 * 𖣘  `engine` - A high-performance, real-time scoreboard backend built with **Rust**, **Axum**, and **Tokio** with integrated web dashboard.
 * 🦾 `companion-module-scoreboard-engine` - A module for BitFocus Companion supporting all features.
 
 <img alt="Dashboard Screenshot" src="https://raw.github.com/jaredquinn/scoreboard-engine/pages/screenshots/readme-dashboard.png" />
 
+# Quick Links
+
+* [Latest Release](https://github.com/jaredquinn/scoreboard-engine/releases/latest)
+* [Documentation Wiki](https://github.com/jaredquinn/scoreboard-engine/wiki)
+* [Build Instructions](engine/README.md)
+* 
 # Key Features
 
 * **Single-Binary**: Single executable, built in rust for speed and robustness.
@@ -36,8 +44,6 @@ Yes, I know these instructions could be better!
 
 These quickstart instructions are for getting up and running quickly using the precompiled binary version of the latest release.
 
-**Refer to the README file in each directory for instructions on how to build from source**
-
 ## Engine
 
 * Download the latest version from the [Github repository releases](https://github.com/jaredquinn/scoreboard-engine/releases).  There is precompiled binaries there for Windows, Linux & Mac.
@@ -47,8 +53,6 @@ These quickstart instructions are for getting up and running quickly using the p
 * Open your dashboard [http://localhost:3000](http://localhost:3000)
 
 To install the **Bitfocus Companion module** see the [Bitfocus Companion](https://github.com/jaredquinn/scoreboard-engine/wiki/Bitfocus-Companion) page on our Wiki
-
-Refer to [engine/README.md](/engine/README.md) if you're interested in development/building from source.
 
 ## Quickstart Integration Guides
 
