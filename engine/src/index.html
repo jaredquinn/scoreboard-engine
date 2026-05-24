@@ -274,6 +274,39 @@
                 innerContent += `<div class="value">${val}</div><div class="controls">${buttons}`;
 		    innerContent += `<button class="btn-reset-card" onclick="updateWidget('${id}', {action:'reset'})">RESET TO 0</button></div>`;
             } 
+	    else if (type === "Team") {
+		    const { name, short_name, primary_color, secondary_color } = data;
+
+		    innerContent += `
+			<div class="value list-value" style="font-size: 1.8rem; min-height: 1.2em; color: var(--accent);">
+			    ${short_name}
+			</div>
+		        <div class="widget-label">${name}</div>
+
+			<div class="admin-section">
+			    <div class="bounds-grid">
+				<div class="bound-item" style="text-align: center;">
+				    <span>SHORT NAME</span>
+				    <button style="display: inline-block;" class="btn-reset-card" onclick="let v=prompt('Short Name:', '${short_name}'); if(v) updateWidget('${id}', {action:'set', value:v})">EDIT</button>
+				</div>
+				<div class="bound-item" style="text-align: center;">
+				    <span>NAME</span>
+				    <button style="display: inline-block;" class="btn-reset-card" onclick="let v=prompt('Long Name:', '${name}'); if(v) updateWidget('${id}', {action:'set_name', value:v})">EDIT</button>
+				</div>
+				<div class="bound-item" style="text-align: center;">
+				    <span>PRIMARY</span>
+				    <button style="display: inline-block;" class="btn-reset-card" onclick="let v=prompt('Primary Color:', '${primary_color}'); if(v) updateWidget('${id}', {action:'set_primary', value:v})">EDIT</button>
+			    	    <div style="width: 2em; height: 2em; background-color: ${primary_color}"></div>
+				</div>
+				<div class="bound-item" style="text-align: center;">
+				    <span>SECONDARY</span>
+				    <button style="display: inline-block;" class="btn-reset-card" onclick="let v=prompt('Secondary Color:', '${secondary_color}'); if(v) updateWidget('${id}', {action:'set_secondary', value:v})">EDIT</button>
+			    	    <div style="width: 2em; height: 2em; background-color: ${secondary_color}"></div>
+			    	</div>
+			    </div>
+		        </div>
+		    `;
+	    }
 	    else if (type === "Timer") {
 		    const { initial_seconds, value, paused, paused_time, formatted_time, running, is_down, seconds, min_value, max_value } = data;
 		    
@@ -315,8 +348,9 @@
 				    <button style="display: inline-block;" class="btn-reset-card" onclick="let v=prompt('Max Seconds:', ${max_value}); if(v) updateWidget('${id}', {action:'set_max', value:v})">EDIT</button>
 				</div>
 				<div class="bound-item">
-				    <div style="font-size: 0.7rem; color: ${is_down ? '#f87171' : '#60a5fa'}; margin-bottom: 10px;">
-					    ${is_down ? 'COUNT DOWN' : 'COUNT UP'}
+				    <span>DIRECTION</span>
+				    <strong>${is_down ? 'DOWN' : 'UP'}</strong>
+				    <button style="display: inline-block;" class="btn-reset-card" onclick="updateWidget('${id}', {action:'set_direction', value: ${is_down} ? 'UP' : 'DOWN'})">REVERSE</button>
 				    </div>
 			        </div>
 			    </div>
