@@ -1,5 +1,25 @@
 # Scoreboard Engine Change Log
 
+## [v0.10.0] - 2026-05-24 - Team Release
+
+### Breaking Changes
+
+- Timers and Counters used `amount` on some actions for thier `value`, these are now `value`.
+- Updated companion module and web dashboard to use `value` instead.
+
+### New Features
+
+- New Team Widget (value/short name, name, primary colour, secondary colour)
+- Add `data-foreground` and `data-background` attributes to scoreboard.js helper
+- Add colors to example HTML
+- Update example configurations to use Team Widget
+- Add Team Widget support to Companion module
+
+### Bug Fixes
+
+- Added missing actions for Timers (set\_min, set\_max, set\_initial, set\_direction)
+
+
 ## [v0.9.0] - 2026-05-23 - Pause Release
 
 - Added `paused` and `paused\_time` state to Timer widgets.
