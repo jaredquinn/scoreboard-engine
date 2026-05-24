@@ -17,6 +17,7 @@
 # Key Features
 
 * **Single-Binary**: Single executable, built in rust for speed and robustness.
+* **Customisable**: Assemble your scoreboard from a collection of widgets and an XML configuration.
 * **Integrated Dashboard**: A HTML dashboard is baked directly into the executable.
 * **Disaster Recovery**: Live state is persisted on every change and tick.
 * **SSE Support**: Get every tick and every change in realtime via HTTP Server Sent Events.
