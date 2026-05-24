@@ -300,7 +300,7 @@ impl Widget for TimerWidget {
                 self.total_time += 1;
                 self.total_formatted = format_timer(self.total_time, &self.format);
                 self.formatted_time = format_timer(self.seconds, &self.format);
-                (true, format!("RUNNING {}",self.paused_formatted.clone()))
+                (true, format!("RUNNING {}",self.formatted_time.clone()))
             }
         } else {
             (false, String::new())
