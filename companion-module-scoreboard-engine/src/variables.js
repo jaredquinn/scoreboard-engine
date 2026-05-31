@@ -3,6 +3,9 @@ module.exports = {
 		const defs = [];
 		for (const id of Object.keys(widgets)) {
 			defs.push({ variableId: id, name: id.replace(/_/g, ' ') });
+			if (widgets[id].type === 'Switch') {
+				defs.push({ variableId: `${id}_display`, name: `${id} Display Value` });
+			}
 			if (widgets[id].type === 'List') {
 				defs.push({ variableId: `${id}_index`, name: `${id} Raw Index Value` });
 			}
@@ -31,7 +34,10 @@ module.exports = {
 		for (const [id, w] of Object.entries(widgets)) {
 			const { type, data } = w;
 
-			if (type === 'Counter') {
+			if (type === 'Switch') {
+				values[id] = data.value;
+				values[`${id}_display`] = data.value ? data.display_true : data.display_false;
+			} else if (type === 'Counter') {
 				values[id] = data.value;
 			} else if (type == 'Team') {
 				values[`${id}_name`] = data.name;

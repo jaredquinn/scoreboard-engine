@@ -4,6 +4,10 @@ module.exports = {
 			.filter(([_, w]) => w.type === 'Counter')
 			.map(([id, _]) => ({ id: id, label: id }))
 
+		const switchChoices = Object.entries(self.widgets || {})
+			.filter(([_, w]) => w.type === 'Switch')
+			.map(([id, _]) => ({ id: id, label: id }))
+
 		const timerChoices = Object.entries(self.widgets || {})
 			.filter(([_, w]) => w.type === 'Timer')
 			.map(([id, _]) => ({ id: id, label: id }))
@@ -17,6 +21,29 @@ module.exports = {
 			.map(([id, _]) => ({ id: id, label: id }))
 
 		return {
+
+			// --- SWITCH ACTIONS ----
+			set: { 
+				name: 'Switch: Update Switch',
+				options: [
+					{ type: 'dropdown', id: 'widget_id', label: 'Counter', default: switchChoices[0]?.id || '', choices: switchChoices },
+					{ type: 'dropdown', id: 'action', label: 'Action', default: 'toggle',
+						choices: [
+							{ id: 'toggle', label: 'Toggle State' },
+							{ id: 'on', label: 'Set On' },
+							{ id: 'off', label: 'Set Off' },
+							{ id: 'reset', label: 'Reset' },
+						] 
+					}
+				],
+				callback: async (event) => {
+					await self.sendUpdate(event.options.widget_id, {
+						action: event.options.action,
+					})
+				}
+			},
+
+
 			// --- COUNTER ACTIONS ---
 			increment_score: {
 				name: 'Counter: Adjust Value',

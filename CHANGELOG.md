@@ -9,6 +9,7 @@
 
 ### New Features
 
+- New Switch Widget (value, display\_true, display\_false)
 - New Team Widget (value/short name, name, primary colour, secondary colour)
 - Add `data-foreground` and `data-background` attributes to scoreboard.js helper
 - Add colors to example HTML
@@ -22,6 +23,7 @@
 
 - Added missing actions for Timers (set\_min, set\_max, set\_initial, set\_direction)
 - Clock running companion feedback broken in last release, fixed.
+- Fix bug where match log contained paused time when clock was running.
 
 
 ## [v0.9.0] - 2026-05-23 - Pause Release

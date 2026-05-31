@@ -14,7 +14,24 @@ module.exports = {
 			.filter(([_, w]) => w.type === 'List')
 			.map(([id, _]) => ({ id: id, label: id }))
 
+		const switchChoices = Object.entries(self.widgets || {})
+			.filter(([_, w]) => w.type === 'Switch')
+			.map(([id, _]) => ({ id: id, label: id }))
+
 		return {
+			// --- SWITWCH FEEDBACKS ---
+			switch_on: {
+				type: 'boolean',
+				name: 'Switch Status',
+				defaultStyle: { bgcolor: combineRgb(0, 150, 0), color: combineRgb(255, 255, 255) },
+				options: [
+					{ type: 'dropdown', id: 'switch_id', label: 'Switch', default: switchChoices[0]?.id || '', choices: switchChoices }
+				],
+				callback: (feedback) => {
+					return self.getVariableValue(`${feedback.options.switch_id}`)
+				}
+			},
+
 			// --- TIMER RUNNING FEEDBACK ---
 			timer_running: {
 				type: 'boolean',

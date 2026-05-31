@@ -103,7 +103,7 @@
             transition: all 0.2s;
         }
 
-        button:hover { background: #475569; border-color: var(--accent); }
+        button:hover { border-color: var(--accent); }
         button:active { transform: scale(0.96); }
 
 	/* --- Bounds Grid (3-Column Settings) --- */
@@ -162,6 +162,8 @@
 	    background: rgba(239, 68, 68, 0.1);
 	    border-color: var(--danger);
 	}
+
+	.btn-stop { background-color: red; }
 
 	.admin-section {
 		margin-top: 1rem;
@@ -262,7 +264,18 @@
 
             let innerContent = `<div class="widget-label">${id.replace(/_/g, ' ')}</div>`;
 
-            if (type === "Counter") {
+            if (type === "Switch") {
+                const val = data.value ?? false;
+		const dsp = data.value ? data.display_true : data.display_false;
+
+		    const buttons = `<div class="controls">
+		        <button class="${data.value ? 'btn-main': 'btn-stop'}" onclick="updateWidget('${id}', {action:'set', value:false})">OFF</button>
+		        <button onclick="updateWidget('${id}', {action:'toggle'})">TOGGLE</button>
+			<button class="${data.value ? 'btn-stop': 'btn-main'}" onclick="updateWidget('${id}', {action:'set', value:true})">ON</button>
+                    </div>`;
+	        innerContent += `<div class="value">${dsp}</div><div class="controls">${buttons}</div>`;
+            } 
+	    else if (type === "Counter") {
                 const val = data.value ?? 0;
                 const incs = data.increments || [1];
                 let buttons = incs.map(inc => `
@@ -272,7 +285,7 @@
                     </div>
                 `).join('');
                 innerContent += `<div class="value">${val}</div><div class="controls">${buttons}`;
-		    innerContent += `<button class="btn-reset-card" onclick="updateWidget('${id}', {action:'reset'})">RESET TO 0</button></div>`;
+		innerContent += `<button class="btn-reset-card" onclick="updateWidget('${id}', {action:'reset'})">RESET TO 0</button></div>`;
             } 
 	    else if (type === "Team") {
 		    const { name, short_name, primary_color, secondary_color } = data;

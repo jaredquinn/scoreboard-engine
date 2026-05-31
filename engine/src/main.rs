@@ -88,9 +88,17 @@ pub enum WidgetValue {
         #[serde(rename = "dashboard-ui", default = "default_true")]
         dashboard_ui: bool,
     },
-    Calculation{
+    Calculation {
         value: String,
         expression: String,
+        #[serde(rename = "dashboard-ui", default = "default_true")]
+        dashboard_ui: bool,
+    },
+    Switch {
+        value: bool,
+        initial_value: bool,
+        display_true: String,
+        display_false: String,
         #[serde(rename = "dashboard-ui", default = "default_true")]
         dashboard_ui: bool,
     },
@@ -116,6 +124,74 @@ pub trait Widget {
     fn to_value(&self) -> WidgetValue;
     fn is_visible(&self) -> bool;
     fn extra_values(&self) -> HashMap<String, serde_json::Value>;
+}
+
+
+// Switch
+pub struct SwitchWidget {
+    pub value: bool,
+    pub initial_value: bool,
+    pub display_true: String,
+    pub display_false: String,
+    pub dashboard_ui: bool,
+}
+
+
+impl Widget for SwitchWidget {
+    fn update(&mut self, payload: UpdatePayload) -> (bool, String) {
+        match payload {
+            UpdatePayload::Action { action, value, .. } => {
+                match action.as_str() {
+                    "on" => self.value = true,
+                    "off" => self.value = false,
+                    "toggle" => self.value = !self.value,
+                    "reset" => self.value = self.initial_value,
+                    "set" => self.value = {
+                        if let Some(new_val) = value.expect("Value Required").as_bool() {
+                            new_val
+                        } else {
+                            return (false, String::new())
+                        }
+                    },
+                    _ => return (false, String::new()),
+                }
+                (true, if self.value { self.display_true.to_string() } else { self.display_false.to_string() })
+            }
+            UpdatePayload::Value(v) => {
+                if let Some(new_val) = v.as_bool() {
+                    self.value = new_val;
+                    (true, if self.value { self.display_true.to_string() } else { self.display_false.to_string() } )
+                } else {
+                    (false, String::new())
+                }
+            }
+        }
+    }
+
+    fn tick(&mut self, _flat_context: &IndexMap<String, JsonValue>) -> (bool, String) {
+        (false, String::new())
+    }
+
+
+    fn is_visible(&self) -> bool {
+        self.dashboard_ui
+    }
+
+    fn to_value(&self) -> WidgetValue {
+        WidgetValue::Switch {
+            value: self.value,
+            initial_value: self.initial_value,
+            display_true: self.display_true.clone(),
+            display_false: self.display_false.clone(),
+            dashboard_ui: self.dashboard_ui,
+        }
+    }
+
+    fn extra_values(&self) -> HashMap<String, serde_json::Value> { 
+        let mut extras = HashMap::new();
+        extras.insert("display".to_string(), if self.value { serde_json::Value::String(self.display_true.clone()) } else { serde_json::Value::String(self.display_false.clone()) });
+        extras
+    }
 }
 
 // Counter
@@ -678,6 +754,13 @@ fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
             primary_color: primary_color.clone(),
             secondary_color: secondary_color.clone(),
             dashboard_ui: *dashboard_ui,
+        }),
+        WidgetValue::Switch { value, initial_value, display_true, display_false, dashboard_ui } => Box::new(SwitchWidget {
+            value: *value,
+            initial_value: *initial_value,
+            display_true: display_true.clone(),
+            display_false: display_false.clone(),
+            dashboard_ui: *dashboard_ui,
         })
     }
 }
@@ -841,6 +924,34 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
                     dashboard_ui,
                 }
             }
+            "Switch" => {
+                let iv = node.children()
+                    .find(|n| n.has_tag_name("initial_value"))
+                    .and_then(|n| n.text())
+                    .map(|t| t.trim().to_lowercase() != "false")
+                    .unwrap_or(true);
+
+                let dt = node.children()
+                    .find(|n| n.has_tag_name("display_true"))
+                    .and_then(|n| n.text())
+                    .unwrap_or("ON")
+                    .to_string();
+
+                let df = node.children()
+                    .find(|n| n.has_tag_name("display_false"))
+                    .and_then(|n| n.text())
+                    .unwrap_or("OFF")
+                    .to_string();
+
+                WidgetValue::Switch {
+                    value: iv,
+                    initial_value: iv,
+                    display_true: dt,
+                    display_false: df,
+                    dashboard_ui,
+                }
+
+            }
             "List" => {
                 let options: Vec<String> = node.descendants()
                     .filter(|n| n.has_tag_name("option"))
@@ -985,6 +1096,7 @@ fn flatten_state(data: &IndexMap<String, WidgetValue>) -> IndexMap<String, JsonV
             WidgetValue::Text { content, .. } => serde_json::Value::from(content.clone()),
             WidgetValue::Team { short_name, .. } => serde_json::Value::from(short_name.clone()),
             WidgetValue::Calculation { value, .. } => serde_json::Value::from(value.clone()),
+            WidgetValue::Switch{ value, display_true, display_false, .. } => serde_json::Value::from(if *value { display_true.clone() } else { display_false.clone() }),
         };
         flat.insert(id.clone(), v);
 
