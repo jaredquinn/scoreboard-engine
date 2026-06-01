@@ -1,0 +1,75 @@
+<!-- Example Scoreboard Configuration for Netball
+
+     * Home & Away Scores
+     * Home & Away Names
+     * Match Clock
+     * Period
+-->
+<ScoreboardConfig>
+    <persistence_file>netball.json</persistence_file>
+    <widget>
+        <id>home_score</id>
+        <type>Counter</type>
+        <initial_value>0</initial_value>
+    </widget>
+
+    <widget>
+        <id>away_score</id>
+        <type>Counter</type>
+        <initial_value>0</initial_value>
+    </widget>
+
+    <widget>
+        <id>match_clock</id>
+        <type>Timer</type>
+        <initial_seconds>0</initial_seconds>
+        <is_down>false</is_down>
+        <min_value>0</min_value>
+        <max_value>900</max_value>
+    </widget>
+
+    <widget>
+        <id>period</id>
+        <type>List</type>
+        <initial_index>0</initial_index>
+	<options>
+	    <option>PRE GAME</option>
+            <option>1ST QTR</option>
+	    <option>1/4</option>
+            <option>2ND QTR</option>
+            <option>HALFTIME</option>
+            <option>3RD QTR</option>
+	    <option>3/4</option>
+            <option>4TH QTR</option>
+            <option>FULLTIME</option>
+        </options>
+    </widget>
+
+    <widget>
+        <id>home_team</id>
+        <type>Team</type>
+        <initial_short_name>HOME</initial_short_name>
+        <initial_name>HOME TEAM</initial_name>
+        <initial_primary_color>#7865ab</initial_primary_color>
+        <initial_secondary_color>#ffffff</initial_secondary_color>
+    </widget>
+
+    <widget>
+        <id>away_team</id>
+        <type>Team</type>
+        <initial_short_name>AWAY</initial_short_name>
+        <initial_name>AWAY TEAM</initial_name>
+        <initial_primary_color>#7a8888</initial_primary_color>
+        <initial_secondary_color>#000000</initial_secondary_color>
+    </widget>
+
+    <widget>
+        <id>pass</id>
+        <type>Switch</type>
+	<display_true>AWAY</display_true>
+	<display_false>HOME</display_false>
+    </widget>
+
+
+</ScoreboardConfig>
+
