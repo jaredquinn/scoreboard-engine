@@ -17,25 +17,30 @@ window.addEventListener('DOMContentLoaded', () => {
 				    if(!id in values || values[id] != w) {
 			    		values[id] = w;
 				        console.log('updated ' + id + ' to ' + w);
+
 					var els = document.querySelectorAll('[data-foreground="' + id + '"]');
 					els.forEach(el => {
 						el.style.color = w;
 					});
+
 					var els = document.querySelectorAll('[data-background="' + id + '"]');
 					els.forEach(el => {
 						el.style.backgroundColor = w;
 					});
+
 					var els = document.querySelectorAll('[data-bind="' + id + '"]');
 					els.forEach(el => {
 						el.innerHTML = w;
 					});
+
 					var els = document.querySelectorAll('[data-visible="' + id + '"]');
 					els.forEach(el => {
-						if(w == true) {
-							el.style.visibility = 'visible';
-						} else {
-							el.style.visibility = 'hidden';
-						}
+						if(w == true) { el.style.visibility = 'visible'; } else { el.style.visibility = 'hidden'; }
+					});
+
+					var els = document.querySelectorAll('[data-invisible="' + id + '"]');
+					els.forEach(el => {
+						if(w == true) { el.style.visibility = 'hidden'; } else { el.style.visibility = 'visible'; }
 					});
 
 			    	    }
