@@ -30,13 +30,18 @@ If you find this useful - buy me a [Ko-Fi](https://ko-fi.com/vk2way).
 
 # Available Widgets
 
+See the wiki page [Widgets](https://github.com/jaredquinn/scoreboard-engine/wiki/Widgets) for documentation on each widget.
+
+
 * [Timer](https://github.com/jaredquinn/scoreboard-engine/wiki/Widgets#timer) (up/down,  min, max, start time, reset, set)
 * [Counter](https://github.com/jaredquinn/scoreboard-engine/wiki/Widgets#counter) (increment, decrement, set, shortcut list)
 * [Text](https://github.com/jaredquinn/scoreboard-engine/wiki/Widgets/#text) (set)
-* List (set, next, prev)
-* Calculation (using evalexpr)
+* [List](https://github.com/jaredquinn/scoreboard-engine/wiki/Widgets/#list) (set, next, prev)
+* [Switch](https://github.com/jaredquinn/scoreboard-engine/wiki/Widgets/#switch) (toggle, on, off)
+* [Team](https://github.com/jaredquinn/scoreboard-engine/wiki/Widgets/#team) (name, short name, colours)
+* [Calculation](https://github.com/jaredquinn/scoreboard-engine/wiki/Widgets/#calculation) (using evalexpr)
 
-Example configurations are provided for Rugby League & AFL.
+Example configurations are provided for Rugby League & AFL in the [examples](examples/) folder.
 
 # Quickstart
 
