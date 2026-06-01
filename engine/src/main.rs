@@ -189,7 +189,7 @@ impl Widget for SwitchWidget {
 
     fn extra_values(&self) -> HashMap<String, serde_json::Value> { 
         let mut extras = HashMap::new();
-        extras.insert("display".to_string(), if self.value { serde_json::Value::String(self.display_true.clone()) } else { serde_json::Value::String(self.display_false.clone()) });
+        extras.insert("value".to_string(), serde_json::Value::from(self.value));
         extras
     }
 }
