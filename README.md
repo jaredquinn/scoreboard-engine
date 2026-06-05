@@ -41,8 +41,13 @@ See the wiki page [Widgets](https://github.com/jaredquinn/scoreboard-engine/wiki
 * [Team](https://github.com/jaredquinn/scoreboard-engine/wiki/Widgets/#team) (name, short name, colours)
 * [Calculation](https://github.com/jaredquinn/scoreboard-engine/wiki/Widgets/#calculation) (using evalexpr)
 
-Example configurations are provided for Rugby League & AFL in the [examples](examples/) folder.
+Ready to run configurations, companion pages and HTML scorebug for
 
+* [Australian Rules Football](examples/afl)
+* [Rugby League](examples/rugbyleague)
+* [Netball](examples/netball)
+
+  
 # Quickstart
 
 Yes, I know these instructions could be better!
