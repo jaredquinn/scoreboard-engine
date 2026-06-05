@@ -1,0 +1,753 @@
+{
+	"version": 12,
+	"type": "page",
+	"companionBuild": "4.3.3+9230-stable-06a7406709",
+	"page": {
+		"id": "i1zZJ7dAeXWwH_WK7p_cp",
+		"name": "NETBALL",
+		"controls": {
+			"0": {
+				"0": {
+					"type": "pageup"
+				},
+				"1": {
+					"type": "button",
+					"style": {
+						"text": "$(scoreboard:home_team)\\nGOAL\\n-",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "0eTSQAtuZT9DrgZIrn2--",
+										"definitionId": "increment_score",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": {
+												"value": "home_score",
+												"isExpression": false
+											},
+											"amount": {
+												"isExpression": false,
+												"value": 1
+											},
+											"value": {
+												"value": -1,
+												"isExpression": false
+											}
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"3": {
+					"type": "button",
+					"style": {
+						"text": "$(scoreboard:away_team)\\nGOAL\\n-",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "fUBLWjO8VKFm3ShwXxgc_",
+										"definitionId": "increment_score",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": {
+												"value": "away_score",
+												"isExpression": false
+											},
+											"amount": {
+												"isExpression": false,
+												"value": 1
+											},
+											"value": {
+												"value": -1,
+												"isExpression": false
+											}
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"5": {
+					"type": "button",
+					"style": {
+						"text": "$(scoreboard:period)",
+						"textExpression": false,
+						"size": "auto",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 153,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "Sn6Apjef2AuulWgk6ZdbY",
+										"definitionId": "list_nav",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": {
+												"isExpression": false,
+												"value": "period"
+											},
+											"action": {
+												"isExpression": false,
+												"value": "next"
+											}
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"6": {
+					"type": "button",
+					"style": {
+						"text": "CLOCK RESET",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "GaYvPXHENKFGyGpa14zcM",
+										"definitionId": "timer_control",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": {
+												"isExpression": false,
+												"value": "match_clock"
+											},
+											"action": {
+												"isExpression": false,
+												"value": "reset"
+											}
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"7": {
+					"type": "button",
+					"style": {
+						"text": "($(scoreboard:match_clock_running) == true ? `CLOCK STOP\\n${$(scoreboard:match_clock)}` : `CLOCK START\\n${$(scoreboard:match_clock)}`)",
+						"textExpression": true,
+						"size": "auto",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [
+						{
+							"id": "Fnylhw-Aj2icVgF2wprIj",
+							"definitionId": "timer_running",
+							"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+							"options": {
+								"timer_id": {
+									"isExpression": false,
+									"value": "match_clock"
+								}
+							},
+							"upgradeIndex": -1,
+							"type": "feedback",
+							"style": {
+								"bgcolor": 38400,
+								"color": 16777215
+							},
+							"isInverted": {
+								"value": false,
+								"isExpression": false
+							}
+						},
+						{
+							"id": "Z6EShVg49nudeI4W3YHLu",
+							"definitionId": "timer_paused",
+							"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+							"options": {
+								"timer_id": {
+									"isExpression": false,
+									"value": "match_clock"
+								}
+							},
+							"upgradeIndex": -1,
+							"type": "feedback",
+							"style": {
+								"bgcolor": 16744448,
+								"color": 16777215
+							},
+							"isInverted": {
+								"value": false,
+								"isExpression": false
+							}
+						}
+					],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "63Al_lUj1oJkp9c0use_B",
+										"definitionId": "logic_if",
+										"connectionId": "internal",
+										"options": {},
+										"type": "action",
+										"children": {
+											"condition": [
+												{
+													"id": "1ALcEoI4g2NKMX7HS7gIu",
+													"definitionId": "timer_running",
+													"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+													"options": {
+														"timer_id": {
+															"isExpression": false,
+															"value": "match_clock"
+														}
+													},
+													"upgradeIndex": -1,
+													"type": "feedback",
+													"style": {
+														"bgcolor": 38400,
+														"color": 16777215
+													},
+													"isInverted": {
+														"isExpression": false,
+														"value": false
+													}
+												}
+											],
+											"actions": [
+												{
+													"id": "jsmAQLSemmJQbnoqaTZTl",
+													"definitionId": "timer_control",
+													"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+													"options": {
+														"widget_id": {
+															"isExpression": false,
+															"value": "match_clock"
+														},
+														"action": {
+															"isExpression": false,
+															"value": "stop"
+														}
+													},
+													"upgradeIndex": -1,
+													"type": "action"
+												}
+											],
+											"else_actions": [
+												{
+													"id": "tm6xJWsJ720QaBKPb7oDo",
+													"definitionId": "timer_control",
+													"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+													"options": {
+														"widget_id": {
+															"isExpression": false,
+															"value": "match_clock"
+														},
+														"action": {
+															"isExpression": false,
+															"value": "start"
+														}
+													},
+													"upgradeIndex": -1,
+													"type": "action"
+												}
+											]
+										}
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				}
+			},
+			"1": {
+				"0": {
+					"type": "pagenum"
+				},
+				"1": {
+					"type": "button",
+					"style": {
+						"text": "$(scoreboard:home_score)",
+						"textExpression": false,
+						"size": "auto",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"3": {
+					"type": "button",
+					"style": {
+						"text": "$(scoreboard:away_score)",
+						"textExpression": false,
+						"size": "auto",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"5": {
+					"type": "button",
+					"style": {
+						"text": "PREV QTR",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "0Bt46xzIjznV0t-pC6F9i",
+										"definitionId": "list_nav",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": {
+												"isExpression": false,
+												"value": "period"
+											},
+											"action": {
+												"value": "prev",
+												"isExpression": false
+											}
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"7": {
+					"type": "button",
+					"style": {
+						"text": "PERIOD\\nTIMEOFF\\n$(scoreboard:match_clock_paused_formatted)",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [
+						{
+							"id": "a-6l5uLFzITFg803htBsD",
+							"definitionId": "timer_paused",
+							"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+							"options": {
+								"timer_id": {
+									"isExpression": false,
+									"value": "match_clock"
+								}
+							},
+							"upgradeIndex": -1,
+							"type": "feedback",
+							"style": {
+								"bgcolor": 16728128,
+								"color": 16777215
+							},
+							"isInverted": {
+								"value": false,
+								"isExpression": false
+							}
+						}
+					],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "HYFxPGSmWkL5iia0j3P1p",
+										"definitionId": "timer_control",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": {
+												"value": "match_clock",
+												"isExpression": false
+											},
+											"action": {
+												"value": "pause",
+												"isExpression": false
+											}
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				}
+			},
+			"2": {
+				"0": {
+					"type": "pagedown"
+				},
+				"1": {
+					"type": "button",
+					"style": {
+						"text": "$(scoreboard:home_team)\\nGOAL\\n+",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "GJL3E5q8nO_VOREgNyNTZ",
+										"definitionId": "increment_score",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": {
+												"value": "home_score",
+												"isExpression": false
+											},
+											"amount": {
+												"isExpression": false,
+												"value": 1
+											},
+											"value": {
+												"value": 1,
+												"isExpression": false
+											}
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"3": {
+					"type": "button",
+					"style": {
+						"text": "$(scoreboard:away_team)\\nGOAL\\n+",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "1WKrCS7zjLcCypKulAaSq",
+										"definitionId": "increment_score",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": {
+												"value": "away_score",
+												"isExpression": false
+											},
+											"amount": {
+												"isExpression": false,
+												"value": 1
+											},
+											"value": {
+												"value": 1,
+												"isExpression": false
+											}
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				}
+			},
+			"3": {
+				"2": {
+					"type": "button",
+					"style": {
+						"text": "CP\\n$(scoreboard:pass_display)",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "8_cfvAzAwKl6i1LYUqy7O",
+										"definitionId": "set",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": {
+												"isExpression": false,
+												"value": "pass"
+											},
+											"action": {
+												"isExpression": false,
+												"value": "toggle"
+											}
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				}
+			}
+		},
+		"gridSize": {
+			"minColumn": 0,
+			"maxColumn": 7,
+			"minRow": 0,
+			"maxRow": 3
+		}
+	},
+	"instances": {
+		"MsJcZXr-oSALS1ZKNQncF": {
+			"moduleInstanceType": "connection",
+			"moduleVersionId": "dev",
+			"updatePolicy": "stable",
+			"sortOrder": 3,
+			"label": "scoreboard",
+			"isFirstInit": false,
+			"config": {
+				"host": "127.0.0.1",
+				"port": "3000",
+				"verbose": false
+			},
+			"secrets": {},
+			"lastUpgradeIndex": -1,
+			"enabled": true,
+			"moduleId": "scoreboard-engine"
+		}
+	},
+	"connectionCollections": [],
+	"oldPageNumber": 6
+}
