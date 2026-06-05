@@ -1,11 +1,11 @@
 # Scoreboard Engine Change Log
 
-## [v0.10.0] - 2026-05-24 - Team Release
+## [v0.10.0] - 2026-05-24 (That's My Team Release)
 
 ### Breaking Changes
 
 - Timers and Counters used `amount` on some actions for thier `value`, these are now `value`.
-- Updated companion module and web dashboard to use `value` instead.
+- Updated companion module and web dashboard to use `value` instead on switch.
 
 ### New Features
 
@@ -18,6 +18,7 @@
 - Fixed but in reset counter using first increment value instead of initial\_value
 - Expand widget documentation and move to github wiki.
 - Added `total_time` and `total_formatted` to Timers, these always count up and contain total seconds ticked (paused + main).
+- Add netball example to examples folder
 
 ### Bug Fixes
 
