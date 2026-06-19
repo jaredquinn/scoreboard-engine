@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basketball Scorebug Broadcast Test</title>
+    <link rel="stylesheet" href="/pages/examples.css">
+    <style>
+        .team-meta-wrapper {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+            padding-top: 6px;
+        }
+
+        .timeout-container {
+            display: flex;
+            gap: 3px;
+            padding: 4px 10px 0 10px;
+            width: 70%;
+            box-sizing: border-box;
+            position: absolute;
+            bottom: 6px;
+        }
+        .timeout-dot {
+            flex: 1;
+            height: 3px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 1px;
+            transition: background 0.3s ease;
+        }
+        .timeout-dot.active {
+            background: white;
+        }
+        
+        .basketball-meta .team-badge {
+            padding-bottom: 12px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .shot-clock-container {
+            transition: max-width 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+            opacity: 1;
+            overflow: hidden;
+        }
+        
+        .shot-clock-container.hidden {
+            max-width: 0 !important;
+            min-width: 0 !important;
+            padding: 0 !important;
+            opacity: 0 !important;
+            border-left: none !important;
+        }
+
+        .possession-indicator-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #111;
+            width: 24px;
+            height: 55px;
+            position: relative;
+            z-index: 5;
+        }
+
+        .possession-arrow {
+            width: 0;
+            height: 0;
+            border-top: 12px solid transparent;
+            border-bottom: 12px solid transparent;
+            border-right: 16px solid #aaa;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s ease;
+        }
+
+        .possession-indicator-box.possession-home .possession-arrow {
+            opacity: 1;
+            transform: scale(1) rotate(180deg); /* Flips arrow to point Left toward Home */
+        }
+
+        .possession-indicator-box.possession-away .possession-arrow {
+            opacity: 1;
+            transform: scale(1) rotate(0deg); /* Points Right toward Away */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="scorebug">
+        <div class="match-info">
+            <div class="period" data-bind="period">PRE GAME</div>
+            <div class="clock" data-bind="match_clock_formatted">00:00</div>
+        </div>
+
+        <div class="team-container" id="team-home" data-background="home_team_primary_color">
+            <div class="basketball-meta">
+                <div class="team-badge"
+                     data-bind="home_team"
+                     data-foreground="home_team_secondary_color">
+                     HOME
+                </div>
+                <div class="timeout-container" id="home-timeouts-track">
+                    <div class="timeout-dot"></div>
+                    <div class="timeout-dot"></div>
+                    <div class="timeout-dot"></div>
+                </div>
+            </div>
+            <div class="team-score" data-bind="home_score">0</div>
+        </div>
+
+        <div class="possession-indicator-box" id="possession-box">
+            <div class="possession-arrow"></div>
+        </div>
+
+        <div class="team-container" id="team-away" data-background="away_team_primary_color">
+            <div class="team-score" data-bind="away_score">0</div>
+            <div class="basketball-meta">
+                <div class="team-badge"
+                     data-bind="away_team"
+                     data-foreground="away_team_secondary_color">
+                     AWAY
+                </div>
+                <div class="timeout-container" id="away-timeouts-track">
+                    <div class="timeout-dot"></div>
+                    <div class="timeout-dot"></div>
+                    <div class="timeout-dot"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="shot-clock-container" id="shot-clock-box" data-bind="shot_clock_formatted">
+            0
+        </div>
+    </div>
+
+    <script src="/scoreboard.js"></script>
+
+    <script>
+        document.addEventListener('scoreboard:update', (e) => {
+            const { id, value } = e.detail;
+            
+            if (id === 'possession') {
+                const possessionBox = document.getElementById('possession-box');
+
+                if (value === 'HOME') {
+                    possessionBox.className = 'possession-indicator-box possession-home';
+                } else if (value === 'AWAY') {
+                    possessionBox.className = 'possession-indicator-box possession-away';
+                } else {
+                    possessionBox.className = 'possession-indicator-box';
+                }
+            }
+
+            if (id === 'home_timeouts' || id === 'away_timeouts') {
+                const targetTrack = id === 'home_timeouts' ? 'home-timeouts-track' : 'away-timeouts-track';
+                const dots = document.getElementById(targetTrack).querySelectorAll('.timeout-dot');
+                const timeoutsRemaining = parseInt(value, 10) || 0;
+
+                dots.forEach((dot, index) => {
+                    if (index < timeoutsRemaining) {
+                        dot.classList.add('active');
+                    } else {
+                        dot.classList.remove('active');
+                    }
+                });
+            }
+
+            if (id === 'shot_clock') {
+                const clockBox = document.getElementById('shot-clock-box');
+                if (parseInt(value, 10) <= 5) {
+                    clockBox.classList.add('danger');
+                } else {
+                    clockBox.classList.remove('danger');
+                }
+            }
+
+            if (id === 'shot_clock_running') {
+                const clockBox = document.getElementById('shot-clock-box');
+                if (value === false || value === 'false') {
+                    clockBox.classList.add('hidden');
+                } else {
+                    clockBox.classList.remove('hidden');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
