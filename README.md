@@ -44,8 +44,9 @@ See the wiki page [Widgets](https://github.com/jaredquinn/scoreboard-engine/wiki
 Ready to run configurations, companion pages and HTML scorebug for
 
 * [Australian Rules Football](examples/afl)
-* [Rugby League](examples/rugbyleague)
+* [Basketball](examples/basketball)
 * [Netball](examples/netball)
+* [Rugby League](examples/rugbyleague)
 
   
 # Quickstart
