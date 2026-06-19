@@ -56,6 +56,8 @@ pub enum WidgetValue {
         value: i64,
         initial_value: i64,
         increments: Vec<i64>,
+        min_value: i64,
+        max_value: i64,
         #[serde(rename = "dashboard-ui", default = "default_true")]
         dashboard_ui: bool,
     },
@@ -214,6 +216,8 @@ impl Widget for SwitchWidget {
 pub struct CounterWidget {
     pub value: i64,
     pub initial_value: i64,
+    pub min_value: i64,
+    pub max_value: i64,
     pub increments: Vec<i64>,
     pub dashboard_ui: bool,
 }
@@ -224,9 +228,22 @@ impl Widget for CounterWidget {
             UpdatePayload::Action { action, value, .. } => {
                 let amt = value.and_then(|v| v.as_i64()).unwrap_or(1);
                 match action.as_str() {
-                    "increment" => self.value += amt,
-                    "decrement" => self.value -= amt,
-                    "set" => self.value = amt,
+                    "increment" => {
+                        if self.value + amt > self.max_value { return (false, String::new()); }
+                        self.value += amt
+                    },
+                    "decrement" => {
+                        if self.value - amt < self.min_value { return (false, String::new()); }
+                        self.value -= amt
+                    },
+                    "set_min" => self.min_value = amt,
+                    "set_max" => self.max_value = amt,
+                    "set" => {
+                        if amt < self.min_value || amt > self.max_value {
+                            return (false, String::new());
+                        }
+                        self.value = amt
+                    }
                     "reset" => self.value = self.increments.first().cloned().unwrap_or(0),
                     _ => return (false, String::new()),
                 }
@@ -256,12 +273,20 @@ impl Widget for CounterWidget {
         WidgetValue::Counter {
             value: self.value,
             initial_value: self.initial_value,
+            min_value: self.min_value,
+            max_value: self.max_value,
             increments: self.increments.clone(),
             dashboard_ui: self.dashboard_ui,
         }
     }
 
-    fn extra_values(&self) -> HashMap<String, serde_json::Value> { let extras = HashMap::new(); extras }
+    fn extra_values(&self) -> HashMap<String, serde_json::Value> { 
+        let mut extras = HashMap::new();
+        extras.insert("min".to_string(), serde_json::Value::from(self.min_value));
+        extras.insert("max".to_string(), serde_json::Value::from(self.max_value));
+        extras
+    }
+
 }
 
 // Timer
@@ -722,10 +747,12 @@ impl Widget for CalculationWidget {
 // Helper factory to dynamically instantiate widget from its data representation
 fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
     match value {
-        WidgetValue::Counter { value, increments, initial_value, dashboard_ui } => Box::new(CounterWidget {
+        WidgetValue::Counter { value, increments, initial_value, max_value, min_value, dashboard_ui } => Box::new(CounterWidget {
             value: *value,
             initial_value: *initial_value,
             increments: increments.clone(),
+            max_value: *max_value,
+            min_value: *min_value,
             dashboard_ui: *dashboard_ui,
         }),
         WidgetValue::Timer {
@@ -889,6 +916,16 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
                     .and_then(|n| n.text()?.parse().ok())
                     .unwrap_or(0);
 
+                let max = node.children()
+                    .find(|n| n.has_tag_name("max_value"))
+                    .and_then(|n| n.text()?.parse().ok())
+                    .unwrap_or(65535);
+
+                let min = node.children()
+                    .find(|n| n.has_tag_name("min_value"))
+                    .and_then(|n| n.text()?.parse().ok())
+                    .unwrap_or(0);
+
                 let increments: Vec<i64> = node.descendants()
                     .filter(|n| n.has_tag_name("value"))
                     .filter_map(|n| n.text()?.parse().ok())
@@ -900,6 +937,8 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
                     value: initial,
                     initial_value: initial,
                     increments: final_increments,
+                    min_value: min,
+                    max_value: max,
                     dashboard_ui,
                 }
             }

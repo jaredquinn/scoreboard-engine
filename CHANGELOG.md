@@ -1,5 +1,16 @@
 # Scoreboard Engine Change Log
 
+## [v0.11.0] - 
+
+### New Features
+
+- Sub-second ticking (100ms) for all Timers
+- New s.auto and m:s.auto to change to seconds.milliseconds when value is less than 5.
+- Major enhancements to the JS client library with custom events.
+- Add min\_value and max\_value to Counters
+- Major Dashboard Overhaul
+- Add basketball example to examples folder
+
 ## [v0.10.0] - 2026-05-24 (That's My Team Release)
 
 ### Breaking Changes
