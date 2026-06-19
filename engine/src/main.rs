@@ -29,7 +29,7 @@ use axum::{
 use axum_extra::response::JavaScript;
 
 use chrono::Local;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serializer, Serialize};
 
 use tokio::sync::broadcast;
 use tokio::fs::OpenOptions;
@@ -62,17 +62,23 @@ pub enum WidgetValue {
     Timer {
         formatted_time: String,
         paused_formatted: String,
-        paused_time: i64,
+        #[serde(serialize_with = "serialize_two_decimals")]
+        paused_time: f64,
         total_formatted: String,
-        total_time: i64,
-        seconds: i64,
+        #[serde(serialize_with = "serialize_two_decimals")]
+        total_time: f64,
+        #[serde(serialize_with = "serialize_two_decimals")]
+        seconds: f64,
         running: bool,
         paused: bool,
         reset_on_start: bool,
-        initial_seconds: i64,
+        #[serde(serialize_with = "serialize_two_decimals")]
+        initial_seconds: f64,
         is_down: bool,
-        min_value: i64,
-        max_value: i64,
+        #[serde(serialize_with = "serialize_two_decimals")]
+        min_value: f64,
+        #[serde(serialize_with = "serialize_two_decimals")]
+        max_value: f64,
         format: String,
         #[serde(rename = "dashboard-ui", default = "default_true")]
         dashboard_ui: bool,
@@ -110,6 +116,16 @@ pub enum WidgetValue {
         #[serde(rename = "dashboard-ui", default = "default_true")]
         dashboard_ui: bool,
     }
+}
+
+// Serde serializer
+pub fn serialize_two_decimals<S>(value: &f64, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let s = format!("{:.2}", value);
+    let parsed: f64 = s.parse().unwrap_or(*value);
+    serializer.serialize_f64(parsed)
 }
 
 // Helper function to handle serde defaults to true
@@ -249,20 +265,26 @@ impl Widget for CounterWidget {
 }
 
 // Timer
+#[derive(Serialize)]
 pub struct TimerWidget {
-    pub seconds: i64,
-    pub paused_time: i64,
+    #[serde(serialize_with = "serialize_two_decimals")]
+    pub seconds: f64,
+    #[serde(serialize_with = "serialize_two_decimals")]
+    pub paused_time: f64,
     pub paused_formatted: String,
-    pub total_time: i64,
+    #[serde(serialize_with = "serialize_two_decimals")]
+    pub total_time: f64,
     pub total_formatted: String,
-    pub initial_seconds: i64,
+    pub initial_seconds: f64,
     pub formatted_time: String,
     pub running: bool,
     pub reset_on_start: bool,
     pub paused: bool,
     pub is_down: bool,
-    pub min_value: i64,
-    pub max_value: i64,
+    #[serde(serialize_with = "serialize_two_decimals")]
+    pub min_value: f64,
+    #[serde(serialize_with = "serialize_two_decimals")]
+    pub max_value: f64,
     pub format: String,
     pub dashboard_ui: bool,
 }
@@ -276,9 +298,9 @@ impl Widget for TimerWidget {
                         if self.reset_on_start {
                             self.seconds = self.initial_seconds;
                             self.formatted_time = format_timer(self.seconds, &self.format);
-                            self.paused_time = 0;
+                            self.paused_time = 0.0;
                             self.paused_formatted = format_timer(self.paused_time, &self.format);
-                            self.total_time = 0;
+                            self.total_time = 0.0;
                             self.total_formatted = format_timer(self.total_time, &self.format);
                         }
                         self.paused = false;
@@ -322,7 +344,7 @@ impl Widget for TimerWidget {
                         self.seconds = self.initial_seconds;
                         self.formatted_time = format_timer(self.seconds, &self.format);
                         self.paused = false;
-                        self.paused_time = 0;
+                        self.paused_time = 0.0;
                         self.paused_formatted = format_timer(self.paused_time, &self.format);
                         self.running = false;
                     }
@@ -354,26 +376,26 @@ impl Widget for TimerWidget {
     fn tick(&mut self, _flat_context: &IndexMap<String, JsonValue>) -> (bool, String) {
         if self.running {
             if self.paused {
-                self.paused_time += 1;
-                self.total_time += 1;
+                self.paused_time += 0.1;
+                self.total_time += 0.1;
                 self.paused_formatted = format_timer(self.paused_time, &self.format);
                 self.total_formatted = format_timer(self.total_time, &self.format);
                 (true, format!("PAUSED {}",self.paused_formatted.clone()))
             } else {
                 if self.is_down {
-                    if self.seconds > self.min_value {
-                        self.seconds -= 1;
+                    if self.seconds - 0.1 > self.min_value {
+                        self.seconds -= 0.1;
                     } else {
                         self.running = false;
                     }
                 } else {
                     if self.seconds < self.max_value {
-                        self.seconds += 1;
+                        self.seconds += 0.1;
                     } else {
                         self.running = false;
                     }
                 }
-                self.total_time += 1;
+                self.total_time += 0.1;
                 self.total_formatted = format_timer(self.total_time, &self.format);
                 self.formatted_time = format_timer(self.seconds, &self.format);
                 (true, format!("RUNNING {}",self.formatted_time.clone()))
@@ -410,10 +432,15 @@ impl Widget for TimerWidget {
     fn extra_values(&self) -> HashMap<String, serde_json::Value> { 
         let mut extras = HashMap::new();
         extras.insert("formatted".to_string(), serde_json::Value::String(self.formatted_time.clone()));
+
+        let truncated_paused_time = (self.paused_time * 100.0).trunc() / 100.0;
+        extras.insert("paused_time".to_string(), serde_json::Value::from(truncated_paused_time));
         extras.insert("paused_formatted".to_string(), serde_json::Value::String(self.paused_formatted.clone()));
-        extras.insert("paused_time".to_string(), serde_json::Value::from(self.paused_time));
+
+        let truncated_total_time = (self.total_time * 100.0).trunc() / 100.0;
+        extras.insert("total_time".to_string(), serde_json::Value::from(truncated_total_time));
         extras.insert("total_formatted".to_string(), serde_json::Value::String(self.total_formatted.clone()));
-        extras.insert("total_time".to_string(), serde_json::Value::from(self.total_time));
+
         extras.insert("paused".to_string(), serde_json::Value::from(self.paused));
         extras.insert("running".to_string(), serde_json::Value::from(self.running));
         extras
@@ -879,20 +906,20 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
             "Timer" => {
                 let secs = node.children()
                     .find(|n| n.has_tag_name("initial_seconds"))
-                    .and_then(|n| n.text()?.parse().ok())
-                    .unwrap_or(0);
+                    .and_then(|n| n.text()?.parse::<f64>().ok())
+                    .unwrap_or(0.0);
                 let down = node.children()
                     .find(|n| n.has_tag_name("is_down"))
                     .and_then(|n| n.text()?.parse().ok())
                     .unwrap_or(true);
                 let min = node.children()
                     .find(|n| n.has_tag_name("min_value"))
-                    .and_then(|n| n.text()?.parse().ok())
-                    .unwrap_or(0);
+                    .and_then(|n| n.text()?.parse::<f64>().ok())
+                    .unwrap_or(0.0);
                 let max = node.children()
                     .find(|n| n.has_tag_name("max_value"))
-                    .and_then(|n| n.text()?.parse().ok())
-                    .unwrap_or(3600);
+                    .and_then(|n| n.text()?.parse::<f64>().ok())
+                    .unwrap_or(3600.0);
 
                 let fmt = node.children()
                     .find(|n| n.has_tag_name("format"))
@@ -909,10 +936,10 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
                 WidgetValue::Timer {
                     seconds: secs,
                     initial_seconds: secs,
-                    paused_time: 0,
-                    paused_formatted: format_timer(0, &fmt),
-                    total_time: 0,
-                    total_formatted: format_timer(0, &fmt),
+                    paused_time: 0.0,
+                    paused_formatted: format_timer(0.0, &fmt),
+                    total_time: 0.0,
+                    total_formatted: format_timer(0.0, &fmt),
                     formatted_time: format_timer(secs, &fmt),
                     reset_on_start: ros,
                     running: false,
@@ -1021,40 +1048,51 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
     (data, save_file)
 }
 
-fn parse_time_string(input: &str) -> Option<i64> {
-    if let Ok(raw_seconds) = input.parse::<i64>() {
+fn parse_time_string(input: &str) -> Option<f64> {
+    if let Ok(raw_seconds) = input.parse::<f64>() {
         return Some(raw_seconds);
     }
 
     let parts: Vec<&str> = input.split(':').collect();
     match parts.len() {
         2 => {
-            let m = parts[0].parse::<i64>().ok()?;
-            let s = parts[1].parse::<i64>().ok()?;
-            Some((m * 60) + s)
+            let m = parts[0].parse::<f64>().ok()?;
+            let s = parts[1].parse::<f64>().ok()?;
+            Some((m*60.0) + s)
         }
         3 => {
-            let h = parts[0].parse::<i64>().ok()?;
-            let m = parts[1].parse::<i64>().ok()?;
-            let s = parts[2].parse::<i64>().ok()?;
-            Some((h * 3600) + (m * 60) + s)
+            let h = parts[0].parse::<f64>().ok()?;
+            let m = parts[1].parse::<f64>().ok()?;
+            let s = parts[2].parse::<f64>().ok()?;
+            Some((h * 3600.0) + (m * 60.0) + s)
         }
         _ => None,
     }
 }
 
-fn format_timer(total_seconds: i64, format: &str) -> String {
-    let abs_secs = total_seconds.abs();
-    let sign = if total_seconds < 0 { "-" } else { "" };
+fn format_timer(total_seconds: f64, format: &str) -> String {
+    let abs_secs = total_seconds.abs() as i64;
+    let sign = if (total_seconds*100.0).trunc() < 0.0 { "-" } else { "" };
 
     let hours = abs_secs / 3600;
     let minutes = (abs_secs % 3600) / 60;
     let seconds = abs_secs % 60;
+    //let millis = (total_seconds-abs_secs)*100.0;
+    let truncated_total_seconds = (total_seconds * 100.0).trunc() / 100.0;
 
     match format {
         "hh:mm:ss" => format!("{}{:02}:{:02}:{:02}", sign, hours, minutes, seconds),
         "m:ss" => format!("{}{}:{:02}", sign, (hours * 60) + minutes, seconds),
-        "s" => format!("{}{}", sign, total_seconds),
+        "s.auto" => {
+            let mut res = abs_secs as f64;
+            if abs_secs < 5  {
+                res = truncated_total_seconds;
+                return format!("{}{:.02}", sign, res);
+            }
+            format!("{}{}", sign, res)
+        },
+        "s" => format!("{}{}", sign, abs_secs),
+        "s.ms" => format!("{}{}", sign, truncated_total_seconds),
         _ => format!("{}{:02}:{:02}", sign, (hours * 60) + minutes, seconds),
     }
 }
@@ -1088,7 +1126,10 @@ fn flatten_state(data: &IndexMap<String, WidgetValue>) -> IndexMap<String, JsonV
     for (id, val) in data.iter() {
         let v = match val {
             WidgetValue::Counter { value, .. } => serde_json::Value::from(*value),
-            WidgetValue::Timer { seconds, .. } => serde_json::Value::from(*seconds),
+            WidgetValue::Timer { seconds, .. } => {
+                let truncated_seconds = (seconds * 100.0).trunc() / 100.0;
+                serde_json::Value::from(truncated_seconds)
+            }
             WidgetValue::List { index, options, .. } => {
                 let s = options.get(*index).cloned().unwrap_or_default();
                 serde_json::Value::from(s)
@@ -1265,7 +1306,7 @@ async fn main() {
 
     let timer_state = Arc::clone(&state);
     tokio::spawn(async move {
-        let mut interval = tokio::time::interval(Duration::from_secs(1));
+        let mut interval = tokio::time::interval(Duration::from_millis(100));
         loop {
             interval.tick().await;
 
