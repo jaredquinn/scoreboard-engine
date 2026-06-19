@@ -300,8 +300,8 @@ impl Widget for TimerWidget {
                             self.formatted_time = format_timer(self.seconds, &self.format);
                             self.paused_time = 0.0;
                             self.paused_formatted = format_timer(self.paused_time, &self.format);
-                            self.total_time = 0.0;
-                            self.total_formatted = format_timer(self.total_time, &self.format);
+                            //self.total_time = 0.0;
+                            //self.total_formatted = format_timer(self.total_time, &self.format);
                         }
                         self.paused = false;
                         self.running = true;
@@ -1087,7 +1087,7 @@ fn format_timer(total_seconds: f64, format: &str) -> String {
             let mut res = abs_secs as f64;
             if abs_secs < 5  {
                 res = truncated_total_seconds;
-                return format!("{}{:.02}", sign, res);
+                return format!("{}{:.01}", sign, res);
             }
             format!("{}{}", sign, res)
         },
