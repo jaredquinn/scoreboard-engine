@@ -1,0 +1,1140 @@
+{
+	"version": 12,
+	"type": "page",
+	"companionBuild": "4.3.3+9230-stable-06a7406709",
+	"page": {
+		"id": "X8441-y9QuZDcB5fgqJuK",
+		"name": "BASKETBALL",
+		"controls": {
+			"0": {
+				"0": {
+					"type": "pageup"
+				},
+				"1": {
+					"type": "button",
+					"style": {
+						"text": "$(scoreboard:home_team)\\nGOAL\\n-",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "7Yn14uwOsGS0N2wnMYxtH",
+										"definitionId": "increment_score",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": {
+												"value": "home_score",
+												"isExpression": false
+											},
+											"amount": {
+												"isExpression": false,
+												"value": 1
+											},
+											"value": {
+												"value": -1,
+												"isExpression": false
+											}
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"3": {
+					"type": "button",
+					"style": {
+						"text": "$(scoreboard:away_team)\\nGOAL\\n-",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "21tGn9m0YoSXbqD6_46_q",
+										"definitionId": "increment_score",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": {
+												"value": "away_score",
+												"isExpression": false
+											},
+											"amount": {
+												"isExpression": false,
+												"value": 1
+											},
+											"value": {
+												"value": -1,
+												"isExpression": false
+											}
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"5": {
+					"type": "button",
+					"style": {
+						"text": "$(scoreboard:period)",
+						"textExpression": false,
+						"size": "auto",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 153,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "IfQ44jrHWAvGYnz6RTpCt",
+										"definitionId": "list_nav",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": {
+												"isExpression": false,
+												"value": "period"
+											},
+											"action": {
+												"isExpression": false,
+												"value": "next"
+											}
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"6": {
+					"type": "button",
+					"style": {
+						"text": "CLOCK RESET",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "L0TYXN4zPWkmC7sgoMB0d",
+										"definitionId": "timer_control",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": {
+												"isExpression": false,
+												"value": "match_clock"
+											},
+											"action": {
+												"isExpression": false,
+												"value": "reset"
+											}
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"7": {
+					"type": "button",
+					"style": {
+						"text": "($(scoreboard:match_clock_running) == true ? `CLOCK STOP\\n${$(scoreboard:match_clock)}` : `CLOCK START\\n${$(scoreboard:match_clock)}`)",
+						"textExpression": true,
+						"size": "auto",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [
+						{
+							"id": "PwkDlM6L2FOo3dUXouZ-g",
+							"definitionId": "timer_running",
+							"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+							"options": {
+								"timer_id": {
+									"isExpression": false,
+									"value": "match_clock"
+								}
+							},
+							"upgradeIndex": -1,
+							"type": "feedback",
+							"style": {
+								"bgcolor": 38400,
+								"color": 16777215
+							},
+							"isInverted": {
+								"value": false,
+								"isExpression": false
+							}
+						},
+						{
+							"id": "9hs82zuNDqs5RK4c9_RCB",
+							"definitionId": "timer_paused",
+							"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+							"options": {
+								"timer_id": {
+									"isExpression": false,
+									"value": "match_clock"
+								}
+							},
+							"upgradeIndex": -1,
+							"type": "feedback",
+							"style": {
+								"bgcolor": 16744448,
+								"color": 16777215
+							},
+							"isInverted": {
+								"value": false,
+								"isExpression": false
+							}
+						}
+					],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "4CjYbJnkCpIT7BTmuUa-R",
+										"definitionId": "logic_if",
+										"connectionId": "internal",
+										"options": {},
+										"type": "action",
+										"children": {
+											"condition": [
+												{
+													"id": "isxm_gL8PyALVcHWlLUGx",
+													"definitionId": "timer_running",
+													"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+													"options": {
+														"timer_id": {
+															"isExpression": false,
+															"value": "match_clock"
+														}
+													},
+													"upgradeIndex": -1,
+													"type": "feedback",
+													"style": {
+														"bgcolor": 38400,
+														"color": 16777215
+													},
+													"isInverted": {
+														"isExpression": false,
+														"value": false
+													}
+												}
+											],
+											"actions": [
+												{
+													"id": "hjlEjlGHVZWhMjpriGADO",
+													"definitionId": "timer_control",
+													"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+													"options": {
+														"widget_id": {
+															"isExpression": false,
+															"value": "match_clock"
+														},
+														"action": {
+															"isExpression": false,
+															"value": "stop"
+														}
+													},
+													"upgradeIndex": -1,
+													"type": "action"
+												}
+											],
+											"else_actions": [
+												{
+													"id": "ud5U5euQ1Lnf37zhaodWa",
+													"definitionId": "timer_control",
+													"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+													"options": {
+														"widget_id": {
+															"isExpression": false,
+															"value": "match_clock"
+														},
+														"action": {
+															"isExpression": false,
+															"value": "start"
+														}
+													},
+													"upgradeIndex": -1,
+													"type": "action"
+												}
+											]
+										}
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				}
+			},
+			"1": {
+				"0": {
+					"type": "pagenum"
+				},
+				"1": {
+					"type": "button",
+					"style": {
+						"text": "$(scoreboard:home_score)",
+						"textExpression": false,
+						"size": "auto",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"3": {
+					"type": "button",
+					"style": {
+						"text": "$(scoreboard:away_score)",
+						"textExpression": false,
+						"size": "auto",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"5": {
+					"type": "button",
+					"style": {
+						"text": "PREV QTR",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "-wtAy796IPKb6lcBPaldk",
+										"definitionId": "list_nav",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": {
+												"isExpression": false,
+												"value": "period"
+											},
+											"action": {
+												"value": "prev",
+												"isExpression": false
+											}
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"7": {
+					"type": "button",
+					"style": {
+						"text": "PERIOD\\nTIMEOFF\\n$(scoreboard:match_clock_paused_formatted)",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [
+						{
+							"id": "8bie3Ri-BOXA0Cb2niKZf",
+							"definitionId": "timer_paused",
+							"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+							"options": {
+								"timer_id": {
+									"isExpression": false,
+									"value": "match_clock"
+								}
+							},
+							"upgradeIndex": -1,
+							"type": "feedback",
+							"style": {
+								"bgcolor": 16728128,
+								"color": 16777215
+							},
+							"isInverted": {
+								"value": false,
+								"isExpression": false
+							}
+						}
+					],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "9ZPRHwYjEPM_kL3x-utlj",
+										"definitionId": "timer_control",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": {
+												"value": "match_clock",
+												"isExpression": false
+											},
+											"action": {
+												"value": "pause",
+												"isExpression": false
+											}
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				}
+			},
+			"2": {
+				"0": {
+					"type": "pagedown"
+				},
+				"1": {
+					"type": "button",
+					"style": {
+						"text": "$(scoreboard:home_team)\\nGOAL\\n+3",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "fcN2qI7s-loT5x6SEf0wp",
+										"definitionId": "increment_score",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": {
+												"value": "home_score",
+												"isExpression": false
+											},
+											"amount": {
+												"isExpression": false,
+												"value": 1
+											},
+											"value": {
+												"value": 3,
+												"isExpression": false
+											}
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"3": {
+					"type": "button",
+					"style": {
+						"text": "$(scoreboard:away_team)\\nGOAL\\n+3",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "S7BRV3Jr4js8CgsQzC5BU",
+										"definitionId": "increment_score",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": {
+												"value": "away_score",
+												"isExpression": false
+											},
+											"amount": {
+												"isExpression": false,
+												"value": 1
+											},
+											"value": {
+												"value": 3,
+												"isExpression": false
+											}
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"5": {
+					"type": "button",
+					"style": {
+						"text": "$(scoreboard:home_team)\\nTO +1",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "60zI0uh_PTacnr8HvEmSq",
+										"definitionId": "increment_score",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": {
+												"value": "home_timeouts",
+												"isExpression": false
+											},
+											"amount": {
+												"isExpression": false,
+												"value": 1
+											},
+											"value": {
+												"value": 1,
+												"isExpression": false
+											}
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"6": {
+					"type": "button",
+					"style": {
+						"text": "HOME TO LEFT\\n$(scoreboard:home_timeouts)",
+						"textExpression": false,
+						"size": "auto",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"7": {
+					"type": "button",
+					"style": {
+						"text": "$(scoreboard:home_team)\\nTO -1",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "yEq3sbSvmkvu-yR-VE95E",
+										"definitionId": "increment_score",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": {
+												"value": "home_timeouts",
+												"isExpression": false
+											},
+											"amount": {
+												"isExpression": false,
+												"value": 1
+											},
+											"value": {
+												"value": -1,
+												"isExpression": false
+											}
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				}
+			},
+			"3": {
+				"0": {
+					"type": "button",
+					"style": {
+						"text": "POSS\\n$(scoreboard:possession_display)",
+						"textExpression": false,
+						"size": "18",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 204,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "OjuhIvuhE1fJHh_WdrEVL",
+										"definitionId": "set",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": {
+												"value": "possession",
+												"isExpression": false
+											},
+											"action": {
+												"isExpression": false,
+												"value": "toggle"
+											}
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"1": {
+					"type": "button",
+					"style": {
+						"text": "$(scoreboard:home_team)\\nGOAL\\n+1",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "2lhIZlu1hKFd9NmUzZzBm",
+										"definitionId": "increment_score",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": {
+												"value": "home_score",
+												"isExpression": false
+											},
+											"amount": {
+												"isExpression": false,
+												"value": 1
+											},
+											"value": {
+												"value": 1,
+												"isExpression": false
+											}
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"3": {
+					"type": "button",
+					"style": {
+						"text": "$(scoreboard:away_team)\\nGOAL\\n+",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "0CPXlJy0TX7bAkdAZtfRY",
+										"definitionId": "increment_score",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": {
+												"value": "away_score",
+												"isExpression": false
+											},
+											"amount": {
+												"isExpression": false,
+												"value": 1
+											},
+											"value": {
+												"value": 1,
+												"isExpression": false
+											}
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"5": {
+					"type": "button",
+					"style": {
+						"text": "$(scoreboard:away_team)\\nTO +1",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "26C9BQ_RiYJmgxrZA2kU-",
+										"definitionId": "increment_score",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": {
+												"value": "away_timeouts",
+												"isExpression": false
+											},
+											"amount": {
+												"isExpression": false,
+												"value": 1
+											},
+											"value": {
+												"value": 1,
+												"isExpression": false
+											}
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"6": {
+					"type": "button",
+					"style": {
+						"text": "AWAY TO LEFT\\n$(scoreboard:away_timeouts)",
+						"textExpression": false,
+						"size": "auto",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				},
+				"7": {
+					"type": "button",
+					"style": {
+						"text": "$(scoreboard:away_team)\\nTO -1",
+						"textExpression": false,
+						"size": "14",
+						"png64": null,
+						"alignment": "center:center",
+						"pngalignment": "center:center",
+						"color": 16777215,
+						"bgcolor": 0,
+						"show_topbar": "default"
+					},
+					"options": {
+						"stepProgression": "auto",
+						"stepExpression": "",
+						"rotaryActions": false
+					},
+					"feedbacks": [],
+					"steps": {
+						"0": {
+							"action_sets": {
+								"down": [
+									{
+										"id": "W5pEkGh7E8nxb3Y-hO2eO",
+										"definitionId": "increment_score",
+										"connectionId": "MsJcZXr-oSALS1ZKNQncF",
+										"options": {
+											"widget_id": {
+												"value": "away_timeouts",
+												"isExpression": false
+											},
+											"amount": {
+												"isExpression": false,
+												"value": 1
+											},
+											"value": {
+												"value": -1,
+												"isExpression": false
+											}
+										},
+										"upgradeIndex": -1,
+										"type": "action"
+									}
+								],
+								"up": []
+							},
+							"options": {
+								"runWhileHeld": []
+							}
+						}
+					},
+					"localVariables": []
+				}
+			}
+		},
+		"gridSize": {
+			"minColumn": 0,
+			"maxColumn": 7,
+			"minRow": 0,
+			"maxRow": 3
+		}
+	},
+	"instances": {
+		"MsJcZXr-oSALS1ZKNQncF": {
+			"moduleInstanceType": "connection",
+			"moduleVersionId": "dev",
+			"updatePolicy": "stable",
+			"sortOrder": 3,
+			"label": "scoreboard",
+			"isFirstInit": false,
+			"config": {
+				"host": "127.0.0.1",
+				"port": "3000",
+				"verbose": false
+			},
+			"lastUpgradeIndex": -1,
+			"enabled": true,
+			"moduleId": "scoreboard-engine"
+		}
+	},
+	"connectionCollections": [],
+	"oldPageNumber": 7
+}
