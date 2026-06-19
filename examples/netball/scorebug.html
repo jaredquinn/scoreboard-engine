@@ -1,79 +1,262 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-	<script src="/scoreboard.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Netball Scorebug Broadcast Test</title>
+    <style>
+    body {
+        margin: 0;
+        padding: 40px;
+        background-color: transparent;
+	box-sizing: contain;
+        font-family: 'Helvetica Neue', Arial, sans-serif;
+	width: 1920px; height: 1080px;
+        color: #ffffff;
+        font-weight: bold;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    .scorebug {
+        display: flex;
+        align-items: center;
+        background: #111111;
+        border-radius: 6px;
+        overflow: hidden;
+        width: fit-content;
+        box-shadow: 0 6px 16px rgba(0,0,0,0.7);
+        font-size: 20px;
+        letter-spacing: 1px;
+    }
+
+    .match-info {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 0 20px;
+        min-width: 90px;
+        height: 55px;
+        background: #1a1a1a;
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .period {
+        color: #888;
+        text-transform: uppercase;
+        margin-bottom: 2px;
+	font-size: 1vh;
+    }
+    .clock {
+        font-variant-numeric: tabular-nums;
+        font-weight: 700;
+	font-size: 2vh;
+        color: #f5f5f5;
+    }
+
+    .team-container {
+        position: relative; /* Crucial for positioning the accent bar */
+        display: flex;
+        align-items: center;
+        height: 55px;
+    }
+
+    #team-home {
+        border-right: 1px solid rgba(0, 0, 0, 0.15);
+    }
+
+    .team-badge {
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 75px;
+        height: 100%;
+        text-transform: uppercase;
+        font-weight: 800;
+        font-size: 18px;
+        transition: all 0.3s ease;
+    }
+
+    .team-score {
+        background: #222222;
+        color: #ffffff;
+        min-width: 50px;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3vh;
+        font-weight: 900;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .pass-indicator {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: #fff; /* High-visibility broadcast neon teal/cyan */
+        box-shadow: 0 -1px 3px #fff; /* Subtle premium glow */
+        opacity: 0;
+        transform: translateY(2px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        z-index: 10;
+    }
+
+    .has-pass .pass-indicator {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    </style>
 </head>
-<style>
-* 		{ box-sizing: border-box; }
-body	 	{ background-color: transparent; font-family: Sans-Serif; font-size: 32px; } 
-div		{ padding: 0; margin: 0; }
-#container	{ width: 1920px; height: 1080px; background-color: transparent; }
-
-#scorebar	{ position: absolute; top: 40px; right: 40px; 
-		  width: 400px; 
-		}
-
-#scorebar {
-		  display: grid;
-		  grid-template-columns: auto 8px auto auto;
-		  grid-template-rows: auto auto;
-		}
-#scorebar div   { text-align: center; padding: 8px 4px; }
-#shotclock	{ position: absolute; top: 40; left: 40px;
-		  width: 100px; background-color: black; color: white; text-align: center; }
-#shotclock span { font-size: 2em; }
-
-
-.period 	{ background-color: white; color: black; font-size: 24px; line-height: 32px; }
-.clock		{ background-color: white; color: black; font-weight: bold; }
-.score		{ background-color: black; color: white; }
-.total		{ font-weight: bold; }
-.pass	 	{ background-color: black; }
-</style>
 <body>
-	<div id="container">
 
-		<div id="shotclock" data-visible="shot_clock_running">
-			<span data-bind="shot_clock" />
-		</div>
+    <div class="scorebug">
+        <div class="match-info">
+            <div class="period" data-bind="period">---</div>
+            <div class="clock" data-bind="match_clock_formatted">00:00</div>
+        </div>
 
-		<div id="scorebar">
+        <div class="team-container" id="team-home">
+            <div class="team-badge" 
+                 data-bind="home_team" 
+                 data-background="home_team_primary_color" 
+                 data-foreground="home_team_secondary_color">
+                 HOME
+            </div>
+            <div class="team-score" data-bind="home_score">0</div>
+            <span class="pass-indicator"></span>
+        </div>
 
-			<div class="period">
-				<span data-bind="period"></span>
-			</div>
+        <div class="team-container" id="team-away">
+            <span class="pass-indicator"></span>
+            <div class="team-badge" 
+                 data-bind="away_team" 
+                 data-background="away_team_primary_color" 
+                 data-foreground="away_team_secondary_color">
+                 AWAY
+            </div>
+            <div class="team-score" data-bind="away_score">0</div>
+        </div>
+    </div>
 
-			<div style="padding: 0;">
-				<div style="height: 100%; width: 4px;" class="pass homepass" style="background-color: black;" data-invisible="pass_value" >
-				</div>
-			</div>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('𖣘  Scoreboard Engine Initializing');
+            let values = {};
+            let elementCache = {};
+            let reconnectDelay = 2000;
+            let es = null;
 
-			<div class="score homescore" data-background="home_team_primary_color" data-foreground="home_team_secondary_color">
-				<span data-bind="home_team"></span>
-			</div>
+            const indexElements = () => {
+                elementCache = {};
+                const elements = document.querySelectorAll('[data-foreground], [data-background], [data-bind], [data-visible], [data-invisible]');
+                
+                elements.forEach(el => {
+                    const attrs = ['foreground', 'background', 'bind', 'visible', 'invisible'];
+                    attrs.forEach(attr => {
+                        const id = el.dataset[attr];
+                        if (id) {
+                            if (!elementCache[id]) elementCache[id] = [];
+                            if (!elementCache[id].includes(el)) {
+                                elementCache[id].push(el);
+                            }
+                        }
+                    });
+                });
+            };
 
-			<div class="score homescore" data-background="home_team_primary_color" data-foreground="home_team_secondary_color">
-				<span data-bind="home_score"></span>
-			</div>
+            const connect = () => {
+                es = new EventSource('/sse');
 
-			<div class="clock">
-				<span data-bind="match_clock_formatted"></span>
-			</div>
+                es.onopen = () => {
+                    console.log("🔌 Connected to Scoreboard Engine");
+                    reconnectDelay = 2000;
+                    document.dispatchEvent(new CustomEvent('scoreboard:connected'));
+                };
 
-			<div style="padding: 0;">
-				<div style="height: 100%; width: 4px;" class="pass homepass" style="background-color: black;" data-visible="pass_value" >
-				</div>
-			</div>
+                es.onmessage = (e) => {
+                    const data = JSON.parse(e.data);
+                    const widgets = data[0];
 
-			<div class="score awayscore" data-background="away_team_primary_color" data-foreground="away_team_secondary_color">
-				<span data-bind="away_team"></span>
-			</div>
+                    Object.entries(widgets).forEach(([id, w]) => {
+                        if (values[id] != w) {
+                            values[id] = w;
+                            console.log('updated ' + id + ' to ' + w);
 
-			<div class="score awayscore" data-background="away_team_primary_color" data-foreground="away_team_secondary_color">
-				<span data-bind="away_score"></span>
-			</div>
+                            document.dispatchEvent(new CustomEvent('scoreboard:update', {
+                                detail: { id, value: w }
+                            }));
 
-		</div>
-	</div>
+                            const els = elementCache[id] || [];
+                            els.forEach(el => {
+                                const allowed = el.dispatchEvent(new CustomEvent('scoreboard:element-update', {
+                                    detail: { id, value: w },
+                                    cancelable: true
+                                }));
+
+                                if (!allowed) return;
+
+                                if (el.dataset.foreground === id) el.style.color = w;
+                                if (el.dataset.background === id) el.style.backgroundColor = w;
+                                if (el.dataset.bind === id) el.innerHTML = w;
+
+                                if (el.dataset.visible === id) {
+                                    if (w == true) { el.style.visibility = 'visible'; } else { el.style.visibility = 'hidden'; }
+                                }
+                                if (el.dataset.invisible === id) {
+                                    if (w == true) { el.style.visibility = 'hidden'; } else { el.style.visibility = 'visible'; }
+                                }
+                            });
+                        }
+                    });
+                };
+
+                es.onerror = () => {
+                    console.error("🔌 Connection lost. Retrying...");
+                    es.close();
+                    document.dispatchEvent(new CustomEvent('scoreboard:disconnected'));
+                    
+                    const jitter = Math.random() * 1000;
+                    setTimeout(() => {
+                        reconnectDelay = Math.min(reconnectDelay * 1.5, 15000);
+                        connect();
+                    }, reconnectDelay + jitter);
+                };
+            };
+
+            indexElements();
+            connect();
+        });
+    </script>
+
+    <script>
+        /**
+         * The standard engine updates colors and text automatically out of the box.
+         * Netball requires a 'Center Pass' indicator dot to show who serves next.
+         * We leverage the new 'scoreboard:update' global custom event to manage this seamlessly.
+         */
+        document.addEventListener('scoreboard:update', (e) => {
+            const { id, value } = e.detail;
+
+            if (id === 'pass') {
+                const homeBlock = document.getElementById('team-home');
+                const awayBlock = document.getElementById('team-away');
+
+                if (value === 'HOME') {
+                    homeBlock.classList.add('has-pass');
+                    awayBlock.classList.remove('has-pass');
+                } else if (value === 'AWAY') {
+                    awayBlock.classList.add('has-pass');
+                    homeBlock.classList.remove('has-pass');
+                } else {
+                    homeBlock.classList.remove('has-pass');
+                    awayBlock.classList.remove('has-pass');
+                }
+            }
+        });
+    </script>
+
 </body>
 </html>
-
