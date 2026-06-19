@@ -7,6 +7,8 @@ Refer to the main [README](/README.md) Quickstart guide for getting up and runni
 If you are using the web overlays copy the .html file(s) for your code to the `pages` folder in your engine directory.
 
 * [Aussie Rules Football](/examples/afl/README.md)
+* [Basketball](/examples/basketball/README.md)
+* [Netball](/examples/netball/README.md)
 * [Rugby League Football](/examples/rugbyleague/README.md)
 
 
