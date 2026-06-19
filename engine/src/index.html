@@ -275,9 +275,9 @@
                     structure += `
                         <div class="value field-display"></div>
                         <div class="controls">
-                            <button class="btn-off" onclick="updateWidget('${id}', {action:'set', value:false})">OFF</button>
-                            <button onclick="updateWidget('${id}', {action:'toggle'})">TOGGLE</button>
-                            <button class="btn-on" onclick="updateWidget('${id}', {action:'set', value:true})">ON</button>
+				<button class="btn" onclick="updateWidget('${id}', {action:'set', value:false})">${data.display_false}</button>
+				<button onclick="updateWidget('${id}', {action:'toggle'})">TOGGLE</button>
+				<button class="btn" onclick="updateWidget('${id}', {action:'set', value:true})">${data.display_true}</button>
                         </div>`;
                 }
                 else if (type === "Counter") {
@@ -385,16 +385,10 @@
                 container.appendChild(card);
             }
 
-            // 2. High-Efficiency Fine-Grained Value Mutation (Fires every SSE event)
             if (type === "Switch") {
                 const val = data.value ?? false;
                 const dsp = val ? data.display_true : data.display_false;
                 updateTextIfChanged(card, '.field-display', dsp);
-
-                const offBtn = card.querySelector('.btn-off');
-                const onBtn = card.querySelector('.btn-on');
-                if (offBtn) offBtn.className = val ? 'btn-main' : 'btn-stop';
-                if (onBtn) onBtn.className = val ? 'btn-stop' : 'btn-main';
             }
             else if (type === "Counter") {
                 updateTextIfChanged(card, '.field-value', data.value ?? 0);
@@ -404,7 +398,6 @@
                 updateTextIfChanged(card, '.field-short-name', short_name);
                 updateTextIfChanged(card, '.field-name', name);
 
-                // Update configuration attributes for structural modal prompt popups
                 const btnShort = card.querySelector('.btn-edit-short');
                 const btnName = card.querySelector('.btn-edit-name');
                 const btnPrimary = card.querySelector('.btn-edit-primary');
@@ -421,10 +414,10 @@
                 if (previewS && previewS.style.backgroundColor !== secondary_color) previewS.style.backgroundColor = secondary_color;
             }
             else if (type === "Timer") {
-                const { initial_seconds, value, paused, paused_time, formatted_time, running, is_down, min_value, max_value } = data;
+                const { initial_seconds, value, paused, paused_formatted, formatted_time, running, is_down, min_value, max_value } = data;
                 
                 updateTextIfChanged(card, '.field-formatted-time', formatted_time);
-                updateTextIfChanged(card, '.field-paused-time', `Stoppage Time: ${paused_time} seconds`);
+                updateTextIfChanged(card, '.field-paused-time', `Stoppage: ${paused_formatted}`);
                 updateTextIfChanged(card, '.field-min-value', `${min_value}s`);
                 updateTextIfChanged(card, '.field-initial-seconds', `${initial_seconds}s`);
                 updateTextIfChanged(card, '.field-max-value', `${max_value}s`);
