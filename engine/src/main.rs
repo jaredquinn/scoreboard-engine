@@ -143,6 +143,7 @@ pub trait Widget {
     fn to_value(&self) -> WidgetValue;
     fn is_visible(&self) -> bool;
     fn extra_values(&self) -> HashMap<String, serde_json::Value>;
+    fn primary_value(&self) -> serde_json::Value;
 }
 
 
@@ -157,6 +158,11 @@ pub struct SwitchWidget {
 
 
 impl Widget for SwitchWidget {
+
+    fn primary_value(&self) -> serde_json::Value {
+        serde_json::Value::from(if self.value { self.display_true.clone() } else { self.display_false.clone() })
+    }
+
     fn update(&mut self, payload: UpdatePayload) -> (bool, String) {
         match payload {
             UpdatePayload::Action { action, value, .. } => {
@@ -224,6 +230,11 @@ pub struct CounterWidget {
 }
 
 impl Widget for CounterWidget {
+
+    fn primary_value(&self) -> serde_json::Value {
+        serde_json::Value::from(self.value)
+    }
+
     fn update(&mut self, payload: UpdatePayload) -> (bool, String) {
         match payload {
             UpdatePayload::Action { action, value, .. } => {
@@ -316,6 +327,12 @@ pub struct TimerWidget {
 }
 
 impl Widget for TimerWidget {
+
+    fn primary_value(&self) -> serde_json::Value {
+        let truncated_seconds = (self.seconds * 10.0).trunc() / 10.0;
+        serde_json::Value::from(truncated_seconds)
+    }
+
     fn update(&mut self, payload: UpdatePayload) -> (bool, String) {
         match payload {
             UpdatePayload::Action { action, value, .. } => {
@@ -459,11 +476,11 @@ impl Widget for TimerWidget {
         let mut extras = HashMap::new();
         extras.insert("formatted".to_string(), serde_json::Value::String(self.formatted_time.clone()));
 
-        let truncated_paused_time = (self.paused_time * 100.0).trunc() / 100.0;
+        let truncated_paused_time = (self.paused_time * 10.0).trunc() / 10.0;
         extras.insert("paused_time".to_string(), serde_json::Value::from(truncated_paused_time));
         extras.insert("paused_formatted".to_string(), serde_json::Value::String(self.paused_formatted.clone()));
 
-        let truncated_total_time = (self.total_time * 100.0).trunc() / 100.0;
+        let truncated_total_time = (self.total_time * 10.0).trunc() / 10.0;
         extras.insert("total_time".to_string(), serde_json::Value::from(truncated_total_time));
         extras.insert("total_formatted".to_string(), serde_json::Value::String(self.total_formatted.clone()));
 
@@ -481,6 +498,12 @@ pub struct ListWidget {
 }
 
 impl Widget for ListWidget {
+
+    fn primary_value(&self) -> serde_json::Value {
+        let s = self.options.get(self.index).cloned().unwrap_or_default();
+        serde_json::Value::from(s)
+    }
+
     fn update(&mut self, payload: UpdatePayload) -> (bool, String) {
         match payload {
             UpdatePayload::Action { action, .. } => {
@@ -534,6 +557,7 @@ impl Widget for ListWidget {
             dashboard_ui: self.dashboard_ui,
         }
     }
+
     fn extra_values(&self) -> HashMap<String, serde_json::Value> { 
         let mut extras = HashMap::new();
         extras.insert("index".to_string(), serde_json::Value::from(self.index));
@@ -552,6 +576,11 @@ pub struct TeamWidget {
 }
 
 impl Widget for TeamWidget {
+
+    fn primary_value(&self) -> serde_json::Value {
+        serde_json::Value::from(self.short_name.clone())
+    }
+
     fn update(&mut self, payload: UpdatePayload) -> (bool, String) {
         match payload {
             UpdatePayload::Action { action, value, .. } => {
@@ -624,6 +653,11 @@ pub struct TextWidget {
 }
 
 impl Widget for TextWidget {
+
+    fn primary_value(&self) -> serde_json::Value {
+        serde_json::Value::from(self.content.clone())
+    }
+
     fn update(&mut self, payload: UpdatePayload) -> (bool, String) {
         match payload {
             UpdatePayload::Value(v) => {
@@ -664,6 +698,11 @@ pub struct CalculationWidget {
 }
 
 impl Widget for CalculationWidget {
+
+    fn primary_value(&self) -> serde_json::Value {
+        serde_json::Value::from(self.value.clone())
+    }
+
     fn update(&mut self, payload: UpdatePayload) -> (bool, String) {
         match payload {
             UpdatePayload::Value(v) => {
@@ -1166,25 +1205,12 @@ async fn get_all(State(state): State<Arc<ScoreboardState>>) -> Json<IndexMap<Str
 fn flatten_state(data: &IndexMap<String, WidgetValue>) -> IndexMap<String, JsonValue> {
     let mut flat = IndexMap::new();
     for (id, val) in data.iter() {
-        let v = match val {
-            WidgetValue::Counter { value, .. } => serde_json::Value::from(*value),
-            WidgetValue::Timer { seconds, .. } => {
-                let truncated_seconds = (seconds * 100.0).trunc() / 100.0;
-                serde_json::Value::from(truncated_seconds)
-            }
-            WidgetValue::List { index, options, .. } => {
-                let s = options.get(*index).cloned().unwrap_or_default();
-                serde_json::Value::from(s)
-            }
-            WidgetValue::Text { content, .. } => serde_json::Value::from(content.clone()),
-            WidgetValue::Team { short_name, .. } => serde_json::Value::from(short_name.clone()),
-            WidgetValue::Calculation { value, .. } => serde_json::Value::from(value.clone()),
-            WidgetValue::Switch{ value, display_true, display_false, .. } => serde_json::Value::from(if *value { display_true.clone() } else { display_false.clone() }),
-        };
-        flat.insert(id.clone(), v);
-
         // Fetch the extra values dictionary from the trait function
         let widget_obj = create_widget(val);
+        let v = widget_obj.primary_value();
+
+        flat.insert(id.clone(), v);
+
         let extra_vals = widget_obj.extra_values();
         for (key, xvalue) in extra_vals {
             let prefixed_key = format!("{}_{}", id.clone(), key);
