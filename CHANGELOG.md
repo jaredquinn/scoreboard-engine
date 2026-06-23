@@ -1,6 +1,6 @@
 # Scoreboard Engine Change Log
 
-## [v0.11.0] - 
+## [v0.11.0] -  2026-06-23 Harder, Better, Faster, Stronger Release
 
 ### New Features
 
@@ -10,6 +10,7 @@
 - Add min\_value and max\_value to Counters
 - Major Dashboard Overhaul
 - Add basketball example to examples folder
+- Add ms precision on audio and console logging
 
 ## [v0.10.0] - 2026-05-24 (That's My Team Release)
 
