@@ -10,7 +10,7 @@
 - Add min\_value and max\_value to Counters
 - Major Dashboard Overhaul
 - Add basketball example to examples folder
-- Add ms precision on audio and console logging
+- Add ms precision on audit and console logging
 
 ### Non Breaking Changes
 
