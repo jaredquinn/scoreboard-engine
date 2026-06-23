@@ -12,6 +12,10 @@
 - Add basketball example to examples folder
 - Add ms precision on audio and console logging
 
+### Non Breaking Changes
+
+- Primary value of widget moved to a function within the widget implentation
+
 ## [v0.10.0] - 2026-05-24 (That's My Team Release)
 
 ### Breaking Changes
