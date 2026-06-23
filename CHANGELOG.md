@@ -1,6 +1,6 @@
 # Scoreboard Engine Change Log
 
-## [v0.11.0] -  2026-06-23 Harder, Better, Faster, Stronger Release
+## [v0.11.0] -  2026-06-23 Time After Time Release
 
 ### New Features
 
