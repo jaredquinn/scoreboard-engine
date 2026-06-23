@@ -409,7 +409,7 @@ impl Widget for TimerWidget {
                 (true, format!("PAUSED {}",self.paused_formatted.clone()))
             } else {
                 if self.is_down {
-                    if self.seconds - 0.1 > self.min_value {
+                    if self.seconds - 0.1 >= self.min_value {
                         self.seconds -= 0.1;
                     } else {
                         self.running = false;
