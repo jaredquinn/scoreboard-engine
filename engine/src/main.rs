@@ -423,7 +423,8 @@ impl Widget for TimerWidget {
                 self.total_time += 0.1;
                 self.paused_formatted = format_timer(self.paused_time, &self.format);
                 self.total_formatted = format_timer(self.total_time, &self.format);
-                (true, format!("PAUSED {}",self.paused_formatted.clone()))
+                let truncated_seconds = (self.paused_time * 10.0).trunc() / 10.0;
+                (true, format!("PAUSED {truncated_seconds:02.1} [Formatted: {}]",self.paused_formatted.clone()))
             } else {
                 if self.is_down {
                     if self.seconds - 0.1 >= self.min_value {
@@ -441,7 +442,10 @@ impl Widget for TimerWidget {
                 self.total_time += 0.1;
                 self.total_formatted = format_timer(self.total_time, &self.format);
                 self.formatted_time = format_timer(self.seconds, &self.format);
-                (true, format!("RUNNING {}",self.formatted_time.clone()))
+
+                let truncated_seconds = (self.seconds * 10.0).trunc() / 10.0;
+
+                (true, format!("RUNNING {truncated_seconds:02.1} [Formatted: {}]",self.formatted_time.clone()))
             }
         } else {
             (false, String::new())
