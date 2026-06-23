@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daktronics 1080p Scoreboard</title>
+    <style>
+        /* Import a true 7-Segment Digital Font for authenticity */
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: 'Arial Black', 'Arial', sans-serif;
+            width: 1920px;
+            height: 1080px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* The Physical Daktronics Enclosure Box */
+        .daktronics-board {
+            width: 1860px;
+            height: 980px;
+            background-color: #0a0a0a;
+            border: 20px solid #1a1a1a;
+            border-radius: 4px;
+            box-shadow: inset 0 0 40px rgba(0,0,0,1), 0 30px 60px rgba(0,0,0,0.8);
+            padding: 40px;
+            display: grid;
+            grid-template-rows: 240px 1fr;
+            gap: 40px;
+        }
+
+        /* 7-Segment LED display styling */
+        .led-digits {
+            font-family: 'Orbitron', monospace;
+            font-weight: 900;
+            text-shadow: 0 0 15px currentColor;
+            line-height: 1;
+        }
+
+        /* Permanent printed vinyl layout text on scoreboard casing */
+        .vinyl-label {
+            font-size: 28px;
+            font-weight: 900;
+            color: #fcfcfc;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        /* --- TOP SECTION: Match Timing --- */
+        .top-row {
+            display: grid;
+            grid-template-columns: 1fr 2.5fr 1fr;
+            gap: 40px;
+            align-items: end;
+        }
+
+        .main-clock-box {
+            background: #000;
+            border: 5px solid #222;
+            padding: 15px 30px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .main-clock {
+            font-size: 160px;
+            color: #ff2222; /* Classic Daktronics Red LED */
+            font-variant-numeric: tabular-nums;
+        }
+
+        .sub-display-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #000;
+            border: 5px solid #222;
+            padding: 15px;
+            border-radius: 8px;
+            height: 100%;
+            justify-content: center;
+        }
+
+        .period-digit {
+            font-size: 110px;
+            color: #ffaa00; /* Amber LED */
+        }
+
+        /* --- MAIN BOTTOM SECTION --- */
+        .bottom-matrix {
+            display: grid;
+            grid-template-columns: 1fr 340px 1fr;
+            gap: 40px;
+        }
+
+        .team-side {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            gap: 20px;
+        }
+
+        .team-name-plate {
+            font-size: 90px;
+            font-weight: 900;
+            color: #ffffff;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border: 5px solid #222;
+            background: #000;
+            padding: 10px 30px;
+            text-align: center;
+        }
+
+        .score-and-meters {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #000;
+            border: 5px solid #222;
+            padding: 20px 40px;
+            border-radius: 8px;
+        }
+
+        .giant-score {
+            font-size: 320px;
+            color: #ff2222;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Daktronics Standard Timeout Bulbs */
+        .timeout-cluster {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .timeout-dot-grid {
+            display: flex;
+            gap: 10px;
+        }
+
+        .led-dot {
+            width: 30px;
+            height: 30px;
+            background-color: #1a0500;
+            border-radius: 50%;
+            border: 2px solid #222;
+            transition: all 0.2s ease;
+        }
+
+        .led-dot.active {
+            background-color: #ffaa00;
+            box-shadow: 0 0 15px #ffaa00;
+        }
+
+        /* --- CENTER PANEL: Possession & Shot Clock --- */
+        .center-tower {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .possession-box {
+            background: #000;
+            border: 5px solid #222;
+            padding: 20px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-radius: 8px;
+        }
+
+        /* True cluster arrow styling */
+        .poss-arrow {
+            font-size: 45px;
+            color: #221100;
+            transition: all 0.2s ease;
+        }
+
+        .possession-home .arrow-left,
+        .possession-away .arrow-right {
+            color: #ffaa00;
+            text-shadow: 0 0 15px #ffaa00;
+        }
+
+        .shot-clock-box {
+            background: #000;
+            border: 5px solid #222;
+            padding: 30px 10px;
+            border-radius: 8px;
+            text-align: center;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            transition: opacity 0.3s ease;
+        }
+
+        .shot-clock-digits {
+            font-size: 170px;
+            color: #ffaa00;
+        }
+
+        /* High-thresh Danger state switches to red */
+        .shot-clock-box.danger .shot-clock-digits {
+            color: #ff2222;
+        }
+
+        .shot-clock-box.hidden {
+            opacity: 0.05;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="daktronics-board">
+        
+        <div class="top-row">
+            <div class="sub-display-box">
+                <div class="vinyl-label">Match</div>
+                <div class="period-digit led-digits" data-bind="match_number" style="color: #555; font-size: 50px;">88</div>
+            </div>
+
+            <div class="main-clock-box">
+                <div class="vinyl-label">Game Clock</div>
+                <div class="main-clock led-digits" data-bind="match_clock_formatted">20:00</div>
+            </div>
+
+            <div class="sub-display-box">
+                <div class="vinyl-label">Period</div>
+                <div class="period-digit led-digits" data-bind="period">1</div>
+            </div>
+        </div>
+
+        <div class="bottom-matrix">
+            
+            <div class="team-side" id="home-side">
+                <div class="team-name-plate" data-bind="home_team" data-foreground="home_team_primary_color">HOME</div>
+                <div class="score-and-meters">
+                    <div class="giant-score led-digits" data-bind="home_score">0</div>
+                    <div class="timeout-cluster">
+                        <div class="vinyl-label" style="font-size: 16px;">Timeouts<br>Left</div>
+                        <div class="timeout-dot-grid" id="home-timeouts-track">
+                            <div class="led-dot"></div>
+                            <div class="led-dot"></div>
+                            <div class="led-dot"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="center-tower">
+                <div class="possession-box" id="possession-box">
+                    <div class="poss-arrow arrow-left">◀</div>
+                    <div class="vinyl-label" style="margin: 0;">POSS</div>
+                    <div class="poss-arrow arrow-right">▶</div>
+                </div>
+
+                <div class="shot-clock-box" id="shot-clock-box">
+                    <div class="vinyl-label">Shot Clock</div>
+                    <div class="shot-clock-digits led-digits" id="shot-clock-digits" data-bind="shot_clock_formatted">24</div>
+                </div>
+            </div>
+
+            <div class="team-side" id="away-side">
+                <div class="team-name-plate" data-bind="away_team" data-foreground="away_team_primary_color">AWAY</div>
+                <div class="score-and-meters">
+                    <div class="timeout-cluster">
+                        <div class="vinyl-label" style="font-size: 16px;">Timeouts<br>Left</div>
+                        <div class="timeout-dot-grid" id="away-timeouts-track">
+                            <div class="led-dot"></div>
+                            <div class="led-dot"></div>
+                            <div class="led-dot"></div>
+                        </div>
+                    </div>
+                    <div class="giant-score led-digits" data-bind="away_score">0</div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="/scoreboard.js"></script>
+
+    <script>
+        document.addEventListener('scoreboard:update', (e) => {
+            const { id, value } = e.detail;
+            
+            // Core Possession Tracker
+            if (id === 'possession') {
+                const possessionBox = document.getElementById('possession-box');
+                if (value === 'HOME') {
+                    possessionBox.className = 'possession-box possession-home';
+                } else if (value === 'AWAY') {
+                    possessionBox.className = 'possession-box possession-away';
+                } else {
+                    possessionBox.className = 'possession-box';
+                }
+            }
+
+            // Timeout Bulb Arrays
+            if (id === 'home_timeouts' || id === 'away_timeouts') {
+                const targetTrack = id === 'home_timeouts' ? 'home-timeouts-track' : 'away-timeouts-track';
+                const dots = document.getElementById(targetTrack).querySelectorAll('.led-dot');
+                const timeoutsRemaining = parseInt(value, 10) || 0;
+
+                dots.forEach((dot, index) => {
+                    if (index < timeoutsRemaining) {
+                        dot.classList.add('active');
+                    } else {
+                        dot.classList.remove('active');
+                    }
+                });
+            }
+
+            // Shot Clock Value Engine
+            if (id === 'shot_clock') {
+                const clockBox = document.getElementById('shot-clock-box');
+                if (parseInt(value, 10) <= 5) {
+                    clockBox.classList.add('danger');
+                } else {
+                    clockBox.classList.remove('danger');
+                }
+            }
+
+            // Shot Clock Power State
+            if (id === 'shot_clock_running') {
+                const clockBox = document.getElementById('shot-clock-box');
+                if (value === false || value === 'false') {
+                    clockBox.classList.add('hidden');
+                } else {
+                    clockBox.classList.remove('hidden');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
