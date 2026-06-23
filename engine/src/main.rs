@@ -41,6 +41,7 @@ use clap::Parser;
 use std::net::SocketAddr;
 use std::convert::Infallible;
 
+
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 // Renamed to avoid name clashes with evalexpr::Value
@@ -850,7 +851,9 @@ pub struct ScoreboardState {
 // --- PERSISTENCE & LOGGING ---
 
 async fn log_event(widget_id: String, action: String, value: String) {
-    let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S");
+    let ts_ms = time_format::now_ms().unwrap();
+    let timestamp = time_format::strftime_ms_local("%Y-%m-%d %H:%M:%S.{ms}", ts_ms).unwrap();
+
     let con_line = format!("[{}] ID: {:<12} | Action: {:<10} | Val: {}", timestamp, widget_id, action, value);
     eprintln!("{}", con_line);
 
