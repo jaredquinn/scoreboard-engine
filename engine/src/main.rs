@@ -50,6 +50,9 @@ use evalexpr::{eval_with_context, HashMapContext, };
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+const TICK_FREQ: u64 = 100;
+const TICK_FACTOR: f64 = 10.0;
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(tag = "type", content = "data")]
 pub enum WidgetValue {
@@ -329,7 +332,7 @@ pub struct TimerWidget {
 impl Widget for TimerWidget {
 
     fn primary_value(&self) -> serde_json::Value {
-        let truncated_seconds = (self.seconds * 10.0).trunc() / 10.0;
+        let truncated_seconds = (self.seconds * TICK_FACTOR).trunc() / TICK_FACTOR;
         serde_json::Value::from(truncated_seconds)
     }
 
@@ -423,7 +426,7 @@ impl Widget for TimerWidget {
                 self.total_time += 0.1;
                 self.paused_formatted = format_timer(self.paused_time, &self.format);
                 self.total_formatted = format_timer(self.total_time, &self.format);
-                let truncated_seconds = (self.paused_time * 10.0).trunc() / 10.0;
+                let truncated_seconds = (self.paused_time * TICK_FACTOR).trunc() / TICK_FACTOR;
                 (true, format!("PAUSED {truncated_seconds:02.1} [Formatted: {}]",self.paused_formatted.clone()))
             } else {
                 if self.is_down {
@@ -443,7 +446,7 @@ impl Widget for TimerWidget {
                 self.total_formatted = format_timer(self.total_time, &self.format);
                 self.formatted_time = format_timer(self.seconds, &self.format);
 
-                let truncated_seconds = (self.seconds * 10.0).trunc() / 10.0;
+                let truncated_seconds = (self.seconds * TICK_FACTOR).trunc() / TICK_FACTOR;
 
                 (true, format!("RUNNING {truncated_seconds:02.1} [Formatted: {}]",self.formatted_time.clone()))
             }
@@ -480,11 +483,11 @@ impl Widget for TimerWidget {
         let mut extras = HashMap::new();
         extras.insert("formatted".to_string(), serde_json::Value::String(self.formatted_time.clone()));
 
-        let truncated_paused_time = (self.paused_time * 10.0).trunc() / 10.0;
+        let truncated_paused_time = (self.paused_time * TICK_FACTOR).trunc() / TICK_FACTOR;
         extras.insert("paused_time".to_string(), serde_json::Value::from(truncated_paused_time));
         extras.insert("paused_formatted".to_string(), serde_json::Value::String(self.paused_formatted.clone()));
 
-        let truncated_total_time = (self.total_time * 10.0).trunc() / 10.0;
+        let truncated_total_time = (self.total_time * TICK_FACTOR).trunc() / TICK_FACTOR;
         extras.insert("total_time".to_string(), serde_json::Value::from(truncated_total_time));
         extras.insert("total_formatted".to_string(), serde_json::Value::String(self.total_formatted.clone()));
 
@@ -1157,13 +1160,13 @@ fn parse_time_string(input: &str) -> Option<f64> {
 
 fn format_timer(total_seconds: f64, format: &str) -> String {
     let abs_secs = total_seconds.abs() as i64;
-    let sign = if (total_seconds*100.0).trunc() < 0.0 { "-" } else { "" };
+    let sign = if (total_seconds*TICK_FACTOR).trunc() < 0.0 { "-" } else { "" };
 
     let hours = abs_secs / 3600;
     let minutes = (abs_secs % 3600) / 60;
     let seconds = abs_secs % 60;
     //let millis = (total_seconds-abs_secs)*100.0;
-    let truncated_total_seconds = (total_seconds * 100.0).trunc() / 100.0;
+    let truncated_total_seconds = (total_seconds * TICK_FACTOR).trunc() / TICK_FACTOR;
 
     match format {
         "hh:mm:ss" => format!("{}{:02}:{:02}:{:02}", sign, hours, minutes, seconds),
@@ -1378,7 +1381,7 @@ async fn main() {
 
     let timer_state = Arc::clone(&state);
     tokio::spawn(async move {
-        let mut interval = tokio::time::interval(Duration::from_millis(100));
+        let mut interval = tokio::time::interval(Duration::from_millis(TICK_FREQ));
         loop {
             interval.tick().await;
 
