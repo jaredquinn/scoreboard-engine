@@ -1,6 +1,10 @@
 # Scoreboard Engine Change Log
 
-## [v0.11.0] -  2026-06-23 Time After Time Release
+## [v0.11.1] -  2026-06-23 Time After Time Release
+
+### Bug Fixes 0.11.1
+
+- Add missing basketball example file to release
 
 ### New Features
 
