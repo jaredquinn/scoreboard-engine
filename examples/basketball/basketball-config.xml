@@ -1,0 +1,107 @@
+<!-- Example Scoreboard Configuration for Basketball
+
+     * Home & Away Scores
+     * Home & Away Names
+     * Match Clock
+     * Shot Clock
+     * Period
+-->
+<ScoreboardConfig>
+    <persistence_file>basketball.json</persistence_file>
+    <widget>
+        <id>home_score</id>
+        <type>Counter</type>
+        <initial_value>0</initial_value>
+    </widget>
+
+    <widget>
+        <id>away_score</id>
+        <type>Counter</type>
+        <initial_value>0</initial_value>
+    </widget>
+
+    <widget>
+        <id>match_clock</id>
+        <type>Timer</type>
+        <initial_seconds>720</initial_seconds>
+        <is_down>true</is_down>
+        <min_value>0</min_value>
+        <max_value>720</max_value>
+    </widget>
+
+    <widget>
+        <id>period</id>
+        <type>List</type>
+        <initial_index>0</initial_index>
+	<options>
+	    <option>PRE</option>
+            <option>1</option>
+	    <option>QT</option>
+            <option>2</option>
+            <option>HT</option>
+            <option>3</option>
+	    <option>QT</option>
+            <option>4</option>
+            <option>FT</option>
+        </options>
+    </widget>
+
+    <widget>
+        <id>home_team</id>
+        <type>Team</type>
+        <initial_short_name>HOME</initial_short_name>
+        <initial_name>HOME TEAM</initial_name>
+        <initial_primary_color>#7865ab</initial_primary_color>
+        <initial_secondary_color>#ffffff</initial_secondary_color>
+    </widget>
+
+    <widget>
+        <id>away_team</id>
+        <type>Team</type>
+        <initial_short_name>AWAY</initial_short_name>
+        <initial_name>AWAY TEAM</initial_name>
+        <initial_primary_color>#7a8888</initial_primary_color>
+        <initial_secondary_color>#000000</initial_secondary_color>
+    </widget>
+
+    <widget>
+        <id>possession</id>
+        <type>Switch</type>
+	<display_true>AWAY</display_true>
+	<display_false>HOME</display_false>
+    </widget>
+
+    <widget>
+        <id>shot_clock</id>
+        <type>Timer</type>
+        <initial_seconds>24</initial_seconds>
+        <is_down>true</is_down>
+        <min_value>0</min_value>
+        <max_value>24</max_value>
+	<reset_on_start>true</reset_on_start>
+	<format>s.auto</format>
+    </widget>
+
+    <widget>
+        <id>home_timeouts</id>
+        <type>Counter</type>
+	<max_value>3</max_value>
+        <initial_value>3</initial_value>
+    </widget>
+
+    <widget>
+        <id>away_timeouts</id>
+        <type>Counter</type>
+        <initial_value>3</initial_value>
+	<max_value>3</max_value>
+    </widget>
+
+    <widget>
+        <id>match_number</id>
+        <type>Counter</type>
+        <initial_value>1</initial_value>
+    </widget>
+
+
+</ScoreboardConfig>
+
