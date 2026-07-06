@@ -88,6 +88,12 @@ pub enum WidgetValue {
         format: String,
         #[serde(rename = "dashboard-ui", default = "default_true")]
         dashboard_ui: bool,
+        #[serde(default = "default_false")]
+        allow_additional: bool,
+        additional_time: f64,
+        additional_formatted: String,
+        additional_total_formatted: String,
+
     },
     List {
         index: usize,
@@ -121,8 +127,41 @@ pub enum WidgetValue {
         secondary_color: String,
         #[serde(rename = "dashboard-ui", default = "default_true")]
         dashboard_ui: bool,
-    }
+    },
+    PenaltyShots {
+        shots: Vec<ShotResult>,
+        current_round: usize,
+        #[serde(rename = "dashboard-ui", default = "default_true")]
+        dashboard_ui: bool,
+    },
 }
+
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+pub struct TriggerCondition {
+    pub widget_id: String,
+    pub operator: String, // "==", ">=", "<="
+    pub value: f64,
+}
+
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+pub struct TriggerAction {
+    pub target_id: String,
+    pub action: String,
+    pub value: Option<serde_json::Value>,
+}
+
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+pub struct AutomationTrigger {
+    pub condition: TriggerCondition,
+    pub actions: Vec<TriggerAction>,
+    #[serde(default = "default_true")]
+    pub active: bool,
+
+    // NEW ARCHITECTURE VALUE CACHE
+    #[serde(skip, default = "default_nan")]
+    pub last_value: f64, // Tracks the absolute last seen float value to guarantee true edge detection
+}
+
 
 // Serde serializer
 pub fn serialize_two_decimals<S>(value: &f64, serializer: S) -> Result<S::Ok, S::Error>
@@ -134,10 +173,9 @@ where
     serializer.serialize_f64(parsed)
 }
 
-// Helper function to handle serde defaults to true
-fn default_true() -> bool {
-    true
-}
+fn default_true() -> bool { true }
+fn default_false() -> bool { false }
+fn default_nan() -> f64 { f64::NAN }
 
 // Trait defining the shared behaviors for widgets
 pub trait Widget {
@@ -149,6 +187,110 @@ pub trait Widget {
     fn primary_value(&self) -> serde_json::Value;
 }
 
+#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum ShotResult {
+    Untaken,
+    Scored,
+    Missed,
+}
+
+// Pen Shots 
+pub struct PenaltyShotsWidget {
+    pub shots: Vec<ShotResult>,
+    pub current_round: usize,
+    pub dashboard_ui: bool,
+}
+
+impl Widget for PenaltyShotsWidget {
+    fn primary_value(&self) -> serde_json::Value {
+        let score = self.shots.iter().filter(|&s| *s == ShotResult::Scored).count();
+        serde_json::Value::from(score)
+    }
+
+    fn update(&mut self, payload: UpdatePayload) -> (bool, String) {
+        match payload {
+            UpdatePayload::Action { action, value } => {
+                match action.as_str() {
+                    "record_shot" => {
+                        let result_str = value
+                            .and_then(|v| v.as_str().map(String::from))
+                            .unwrap_or_else(|| "missed".to_string());
+
+                        let result = match result_str.as_str() {
+                            "scored" => ShotResult::Scored,
+                            _ => ShotResult::Missed,
+                        };
+
+                        // Sudden Death Extension: Automatically expand team array capacity dynamically
+                        if self.current_round >= self.shots.len() {
+                            self.shots.push(ShotResult::Untaken);
+                        }
+
+                        self.shots[self.current_round] = result;
+                        self.current_round += 1;
+                        
+                        let current_score = self.shots.iter().filter(|&&s| s == ShotResult::Scored).count();
+                        (true, format!("Shot recorded: {}. Total Score: {}", result_str, current_score))
+                    }
+                    "clear_last" => {
+                        if self.current_round > 0 {
+                            self.current_round -= 1;
+                            self.shots[self.current_round] = ShotResult::Untaken;
+
+                            // Contract sudden death padding if stepping back into baseline slots
+                            if self.shots.len() > 5 && self.current_round < self.shots.len() - 1 {
+                                self.shots.pop();
+                            }
+                            (true, format!("Reverted to shot index {}", self.current_round))
+                        } else {
+                            (false, "No shots taken to clear".to_string())
+                        }
+                    }
+                    "reset" => {
+                        self.shots = vec![ShotResult::Untaken; 5];
+                        self.current_round = 0;
+                        (true, "Reset".to_string())
+                    }
+                    _ => (false, String::new()),
+                }
+            }
+            UpdatePayload::Value(v) => {
+                if let Ok(new_shots) = serde_json::from_value::<Vec<ShotResult>>(v) {
+                    self.shots = new_shots;
+                    self.current_round = self.shots.iter().position(|s| *s == ShotResult::Untaken).unwrap_or(self.shots.len());
+                    (true, "Shots array directly updated".to_string())
+                } else {
+                    (false, String::new())
+                }
+            }
+        }
+    }
+
+    fn tick(&mut self, _flat_context: &IndexMap<String, JsonValue>) -> (bool, String) {
+        (false, String::new())
+    }
+
+    fn is_visible(&self) -> bool {
+        self.dashboard_ui
+    }
+
+    fn to_value(&self) -> WidgetValue {
+        WidgetValue::PenaltyShots {
+            shots: self.shots.clone(),
+            current_round: self.current_round,
+            dashboard_ui: self.dashboard_ui,
+        }
+    }
+
+    fn extra_values(&self) -> HashMap<String, serde_json::Value> {
+        let mut extras = HashMap::new();
+        let score = self.shots.iter().filter(|&s| *s == ShotResult::Scored).count();
+        extras.insert("score".to_string(), serde_json::Value::from(score));
+        extras.insert("current_round".to_string(), serde_json::Value::from(self.current_round));
+        extras
+    }
+}
 
 // Switch
 pub struct SwitchWidget {
@@ -327,6 +469,13 @@ pub struct TimerWidget {
     pub max_value: f64,
     pub format: String,
     pub dashboard_ui: bool,
+    #[serde(default = "default_false")]
+    pub allow_additional: bool, 
+    #[serde(default)]
+    pub additional_time: f64,
+    #[serde(default)]
+    pub additional_formatted: String,
+    pub additional_total_formatted: String,
 }
 
 impl Widget for TimerWidget {
@@ -363,24 +512,24 @@ impl Widget for TimerWidget {
                         }
                     },
                     "set_max" => {
-                        if let Some(val_str) = value.and_then(|v| v.as_str().map(String::from)) {
-                            if let Some(parsed_secs) = parse_time_string(&val_str) {
-                                self.max_value = parsed_secs
-                            }
+                        if let Some(val_str) = value.as_ref().and_then(|v| v.as_str()) {
+                            if let Some(parsed_secs) = parse_time_string(val_str) { self.max_value = parsed_secs; }
+                        } else if let Some(val_num) = value.as_ref().and_then(|v| v.as_f64()) {
+                            self.max_value = val_num;
                         }
                     },
                     "set_min" => {
-                        if let Some(val_str) = value.and_then(|v| v.as_str().map(String::from)) {
-                            if let Some(parsed_secs) = parse_time_string(&val_str) {
-                                self.min_value = parsed_secs
-                            }
+                        if let Some(val_str) = value.as_ref().and_then(|v| v.as_str()) {
+                            if let Some(parsed_secs) = parse_time_string(val_str) { self.min_value = parsed_secs; }
+                        } else if let Some(val_num) = value.as_ref().and_then(|v| v.as_f64()) {
+                            self.min_value = val_num;
                         }
                     },
                     "set_initial" => {
-                        if let Some(val_str) = value.and_then(|v| v.as_str().map(String::from)) {
-                            if let Some(parsed_secs) = parse_time_string(&val_str) {
-                                self.initial_seconds = parsed_secs
-                            }
+                        if let Some(val_str) = value.as_ref().and_then(|v| v.as_str()) {
+                            if let Some(parsed_secs) = parse_time_string(val_str) { self.initial_seconds = parsed_secs; }
+                        } else if let Some(val_num) = value.as_ref().and_then(|v| v.as_f64()) {
+                            self.initial_seconds = val_num;
                         }
                     },
                     "stop" => self.running = false,
@@ -394,14 +543,17 @@ impl Widget for TimerWidget {
                         self.paused_formatted = format_timer(self.paused_time, &self.format);
                         self.running = false;
                     }
-                    "set" => {
-                        if let Some(val_str) = value.and_then(|v| v.as_str().map(String::from)) {
-                            if let Some(parsed_secs) = parse_time_string(&val_str) {
+                    "set" | "set_time" => { // Support both labels natively
+                        if let Some(val_str) = value.as_ref().and_then(|v| v.as_str()) {
+                            if let Some(parsed_secs) = parse_time_string(val_str) {
                                 self.seconds = parsed_secs;
                                 self.formatted_time = format_timer(self.seconds, &self.format);
                             }
+                        } else if let Some(val_num) = value.as_ref().and_then(|v| v.as_f64()) {
+                            self.seconds = val_num;
+                            self.formatted_time = format_timer(self.seconds, &self.format);
                         }
-                    }
+                    },
                     _ => return (false, String::new()),
                 }
                 (true, self.formatted_time.clone())
@@ -419,41 +571,54 @@ impl Widget for TimerWidget {
         }
     }
 
-    fn tick(&mut self, _flat_context: &IndexMap<String, JsonValue>) -> (bool, String) {
-        if self.running {
-            if self.paused {
-                self.paused_time += 0.1;
-                self.total_time += 0.1;
-                self.paused_formatted = format_timer(self.paused_time, &self.format);
-                self.total_formatted = format_timer(self.total_time, &self.format);
-                let truncated_seconds = (self.paused_time * TICK_FACTOR).trunc() / TICK_FACTOR;
-                (true, format!("PAUSED {truncated_seconds:02.1} [Formatted: {}]",self.paused_formatted.clone()))
+
+    fn tick(&mut self, _flat_context: &IndexMap<String, serde_json::Value>) -> (bool, String) {
+        if !self.running { return (false, self.formatted_time.clone()); }
+        let delta = 0.1; 
+
+        if self.paused {
+            self.paused_time += delta;
+            self.total_time += delta;
+            self.paused_formatted = format_timer(self.paused_time, &self.format);
+            self.total_formatted = format_timer(self.total_time, &self.format);
+
+            let truncated_seconds = (self.paused_time * TICK_FACTOR).trunc() / TICK_FACTOR;
+            (true, format!("PAUSED {truncated_seconds:02.1} [Formatted: {}]", self.paused_formatted.clone()));
+            return (false, self.formatted_time.clone());
+        }
+
+        if self.is_down {
+            if self.seconds - delta >= self.min_value {
+                self.seconds -= delta;
             } else {
-                if self.is_down {
-                    if self.seconds - 0.1 >= self.min_value {
-                        self.seconds -= 0.1;
-                    } else {
-                        self.running = false;
-                    }
-                } else {
-                    if self.seconds < self.max_value {
-                        self.seconds += 0.1;
-                    } else {
-                        self.running = false;
-                    }
-                }
-                self.total_time += 0.1;
-                self.total_formatted = format_timer(self.total_time, &self.format);
-                self.formatted_time = format_timer(self.seconds, &self.format);
-
-                let truncated_seconds = (self.seconds * TICK_FACTOR).trunc() / TICK_FACTOR;
-
-                (true, format!("RUNNING {truncated_seconds:02.1} [Formatted: {}]",self.formatted_time.clone()))
+                self.seconds = self.min_value;
+                self.running = false;
             }
         } else {
-            (false, String::new())
+            if self.seconds < self.max_value {
+                self.seconds += delta;
+            } else {
+                if self.allow_additional {
+                    self.seconds = self.max_value;
+                    self.additional_time += delta;
+                } else {
+                    self.seconds = self.max_value;
+                    self.running = false;
+                }
+            }
         }
+
+        self.total_time = self.seconds + self.paused_time + self.additional_time;
+        
+        self.formatted_time = format_timer(self.seconds, &self.format);
+        self.additional_formatted = format_timer(self.additional_time, &self.format);
+        self.additional_total_formatted = format_timer(self.additional_time + self.seconds, &self.format);
+        self.total_formatted = format_timer(self.total_time, &self.format);
+
+        let truncated_seconds = (self.seconds * TICK_FACTOR).trunc() / TICK_FACTOR;
+        (true, format!("RUNNING {truncated_seconds:02.1} [Formatted: {}] [Additional: {}]", self.formatted_time.clone(), self.additional_total_formatted.clone()))
     }
+
 
     fn is_visible(&self) -> bool {
         self.dashboard_ui
@@ -476,12 +641,21 @@ impl Widget for TimerWidget {
             max_value: self.max_value,
             format: self.format.clone(),
             dashboard_ui: self.dashboard_ui,
+            allow_additional: self.allow_additional,
+            additional_time: self.additional_time,
+            additional_formatted: self.additional_formatted.clone(),
+            additional_total_formatted: self.additional_total_formatted.clone(),
         }
     }
 
     fn extra_values(&self) -> HashMap<String, serde_json::Value> { 
         let mut extras = HashMap::new();
         extras.insert("formatted".to_string(), serde_json::Value::String(self.formatted_time.clone()));
+
+        let truncated_additional = (self.additional_time * TICK_FACTOR).trunc() / TICK_FACTOR;
+        extras.insert("additional_time".to_string(), serde_json::Value::from(truncated_additional));
+        extras.insert("additional_formatted".to_string(), serde_json::Value::String(self.additional_formatted.clone()));
+        extras.insert("additional_total_formatted".to_string(), serde_json::Value::String(self.additional_total_formatted.clone()));
 
         let truncated_paused_time = (self.paused_time * TICK_FACTOR).trunc() / TICK_FACTOR;
         extras.insert("paused_time".to_string(), serde_json::Value::from(truncated_paused_time));
@@ -794,6 +968,11 @@ impl Widget for CalculationWidget {
 // Helper factory to dynamically instantiate widget from its data representation
 fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
     match value {
+        WidgetValue::PenaltyShots { shots, current_round, dashboard_ui } => Box::new(PenaltyShotsWidget {
+            shots: shots.clone(),
+            current_round: *current_round,
+            dashboard_ui: *dashboard_ui,
+        }),
         WidgetValue::Counter { value, increments, initial_value, max_value, min_value, dashboard_ui } => Box::new(CounterWidget {
             value: *value,
             initial_value: *initial_value,
@@ -818,6 +997,10 @@ fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
             max_value,
             format,
             dashboard_ui,
+            allow_additional,
+            additional_time,
+            additional_formatted,
+            additional_total_formatted,
         } => Box::new(TimerWidget {
             seconds: *seconds,
             initial_seconds: *initial_seconds,
@@ -829,6 +1012,10 @@ fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
             reset_on_start: *reset_on_start,
             running: *running,
             paused: *paused,
+            allow_additional: *allow_additional,
+            additional_time: *additional_time,
+            additional_formatted: additional_formatted.clone(),
+            additional_total_formatted: additional_total_formatted.clone(),
             is_down: *is_down,
             min_value: *min_value,
             max_value: *max_value,
@@ -867,8 +1054,7 @@ fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
 }
 
 // --- DATA STRUCTURES ---
-
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(untagged)]
 pub enum UpdatePayload {
     Action {
@@ -892,6 +1078,88 @@ pub struct ScoreboardState {
     pub tx: broadcast::Sender<IndexMap<String, WidgetValue>>,
     pub save_path: RwLock<String>,
     pub config_path: String,
+    pub automations: RwLock<Vec<AutomationTrigger>>,
+}
+
+fn process_automations(
+    data: &mut IndexMap<String, WidgetValue>,
+    automations: &mut Vec<AutomationTrigger>,
+) -> bool {
+    let fresh_flat_context = flatten_state(data);
+    let mut automation_triggered = false;
+    let mut needs_period_rearm = false;
+
+    for trigger in automations.iter_mut() {
+        if let Some(num) = fresh_flat_context.get(&trigger.condition.widget_id).and_then(|v| v.as_f64()) {
+            let current_val = num;
+            let target_val = trigger.condition.value;
+            let is_first_sample = trigger.last_value.is_nan();
+
+            let condition_met = match trigger.condition.operator.as_str() {
+                "==" => (current_val - target_val).abs() < 0.01,
+                ">=" => current_val >= target_val,
+                "<=" => current_val <= target_val,
+                "++" => {
+                    !is_first_sample && (current_val - target_val).abs() < 0.01 && current_val > trigger.last_value
+                },
+                "--" => {
+                    !is_first_sample && (current_val - target_val).abs() < 0.01 && current_val < trigger.last_value
+                },
+                _ => false,
+            };
+
+            let value_changed = is_first_sample || (current_val - trigger.last_value).abs() > 0.001;
+
+            if condition_met && value_changed {
+                if !is_first_sample {
+                    let mut target_widgets_to_sync = std::collections::HashSet::new();
+
+                    for act in &trigger.actions {
+                        if let Some(val) = data.get_mut(&act.target_id) {
+                            let mut widget_obj = create_widget(val);
+                            let payload = UpdatePayload::Action {
+                                action: act.action.clone(),
+                                value: act.value.clone(),
+                            };
+                            let (success, log_val) = widget_obj.update(payload);
+                            if success {
+                                *val = widget_obj.to_value();
+                                automation_triggered = true;
+                                target_widgets_to_sync.insert(act.target_id.clone());
+
+                                let act_id = act.target_id.clone();
+                                let act_name = act.action.clone();
+                                tokio::spawn(log_event(act_id, format!("AUTO_{}", act_name), log_val));
+                            }
+                        }
+                    }
+
+                    for target_id in target_widgets_to_sync {
+                        if let Some(val) = data.get_mut(&target_id) {
+                            let mut widget_obj = create_widget(val);
+                            let _ = widget_obj.tick(&fresh_flat_context);
+                            *val = widget_obj.to_value();
+                        }
+                    }
+
+                    if trigger.condition.widget_id == "match_period_index" {
+                        needs_period_rearm = true;
+                    }
+                }
+            }
+            trigger.last_value = current_val;
+        }
+    }
+
+    if needs_period_rearm {
+        for t in automations.iter_mut() {
+            if t.condition.widget_id == "match_clock" {
+                t.last_value = f64::NAN; 
+            }
+        }
+    }
+
+    automation_triggered
 }
 
 // --- PERSISTENCE & LOGGING ---
@@ -915,9 +1183,9 @@ async fn save_to_disk(data: IndexMap<String, WidgetValue>, path: &str) {
     }
 }
 
-fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
+fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String, Vec<AutomationTrigger>) {
     let mut data = IndexMap::new();
-
+    let mut automations = Vec::new();
 
     eprintln!("📁 Reading Configuration file {}", path);
     let xml_content = std::fs::read_to_string(path).unwrap_or_else(|_| {
@@ -929,7 +1197,7 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
         Ok(d) => d,
         Err(e) => {
             eprintln!("Error parsing XML: {}. Returning defaults.", e);
-            return (data, "state_persistence.json".to_string());
+            return (data, "state_persistence.json".to_string(), Vec::new());
         }
     };
 
@@ -939,6 +1207,8 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
         .and_then(|n| n.text())
         .unwrap_or("state_persistence.json")
         .to_string();
+
+
 
     for node in root.descendants().filter(|n| n.has_tag_name("widget")) {
         let id = node.children()
@@ -1004,6 +1274,7 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
                     .find(|n| n.has_tag_name("min_value"))
                     .and_then(|n| n.text()?.parse::<f64>().ok())
                     .unwrap_or(0.0);
+
                 let max = node.children()
                     .find(|n| n.has_tag_name("max_value"))
                     .and_then(|n| n.text()?.parse::<f64>().ok())
@@ -1021,6 +1292,13 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
                     .map(|t| t.trim().to_lowercase() == "true")
                     .unwrap_or(false);
 
+                let allow_additional = node.children()
+                    .find(|n| n.has_tag_name("allow_additional"))
+                    .and_then(|n| n.text())
+                    .and_then(|t| t.parse::<bool>().ok())
+                    .unwrap_or(false);
+
+
                 WidgetValue::Timer {
                     seconds: secs,
                     initial_seconds: secs,
@@ -1035,8 +1313,12 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
                     is_down: down,
                     min_value: min,
                     max_value: max,
-                    format: fmt,
                     dashboard_ui,
+                    allow_additional: allow_additional,
+                    additional_time: 0.0,
+                    additional_formatted: format_timer(0.0, &fmt),
+                    additional_total_formatted: format_timer(0.0, &fmt),
+                    format: fmt,
                 }
             }
             "Switch" => {
@@ -1125,15 +1407,97 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String) {
 
                 WidgetValue::Calculation { value: initial, expression, dashboard_ui }
             }
+            "PenaltyShots" => {
+                WidgetValue::PenaltyShots {
+                    shots: vec![ShotResult::Untaken; 5],
+                    current_round: 0,
+                    dashboard_ui,
+                }
+            }
             _ => continue,
         };
+
+
 
         eprintln!("🥅 Setting up widget {}:{} (UI Visible: {})", w_type, id, dashboard_ui);
         data.insert(id, val);
     }
+
+    for node in root.descendants().filter(|n| n.has_tag_name("trigger")) {
+        // Extract condition block safely
+        let cond_node = match node.children().find(|n| n.has_tag_name("condition")) {
+            Some(c) => c,
+            None => {
+                eprintln!("⚠️ Warning: Skipping <trigger> due to missing <condition> block.");
+                continue;
+            }
+        };
+
+        let widget_id = cond_node.children()
+            .find(|n| n.has_tag_name("widget_id"))
+            .and_then(|n| n.text())
+            .unwrap_or("unknown")
+            .to_string();
+
+        let operator = cond_node.children()
+            .find(|n| n.has_tag_name("operator"))
+            .and_then(|n| n.text())
+            .unwrap_or("==")
+            .to_string();
+
+        let value = cond_node.children()
+            .find(|n| n.has_tag_name("value"))
+            .and_then(|n| n.text()?.parse().ok())
+            .unwrap_or(0.0);
+
+        eprintln!("🤖 Setting up automation on {}:{} {}", widget_id.clone(), operator.clone(), value.clone());
+
+        // Extract actions safely
+        let mut actions = Vec::new();
+        if let Some(actions_node) = node.children().find(|n| n.has_tag_name("actions")) {
+            for act_node in actions_node.children().filter(|n| n.has_tag_name("action")) {
+                let target_id = match act_node.children().find(|n| n.has_tag_name("target_id")).and_then(|n| n.text()) {
+                    Some(t) => t.to_string(),
+                    None => continue, // Skip malformed action item
+                };
+
+                let command = match act_node.children().find(|n| n.has_tag_name("action")).and_then(|n| n.text()) {
+                    Some(c) => c.to_string(),
+                    None => continue,
+                };
+
+
+                let val_text = act_node.children().find(|n| n.has_tag_name("value")).and_then(|n| n.text());
+                let value = val_text.map(|v| {
+                    if let Ok(num) = v.parse::<i64>() {
+                        serde_json::Value::Number(num.into())
+                    } else if let Ok(num_f) = v.parse::<f64>() {
+                        if let Some(n) = serde_json::Number::from_f64(num_f) {
+                            serde_json::Value::Number(n)
+                        } else {
+                            serde_json::Value::String(v.to_string())
+                        }
+                    } else {
+                        serde_json::Value::String(v.to_string())
+                    }
+                });
+
+                eprintln!("  ⚡ Action on {} for {} with {:?}", target_id.clone(), command.clone(), value.clone());
+                actions.push(TriggerAction { target_id, action: command, value });
+            }
+        }
+
+        automations.push(AutomationTrigger {
+            condition: TriggerCondition { widget_id, operator, value },
+            actions,
+            active: true,
+            last_value: f64::NAN,
+        });
+    }
+
     tokio::spawn(log_event("core".to_string(), "loadconfig".to_string(), path.to_string()));
 
-    (data, save_file)
+    (data, save_file, automations)
 }
 
 fn parse_time_string(input: &str) -> Option<f64> {
@@ -1250,11 +1614,19 @@ async fn universal_update(
         let mut data = state.data.write().unwrap();
         if let Some(val) = data.get_mut(&id) {
             let mut widget_obj = create_widget(val);
-            let (success, log_val) = widget_obj.update(payload);
+            let (success, log_val) = widget_obj.update(payload.clone()); 
 
             if success {
                 *val = widget_obj.to_value();
-                (true, log_val, data.clone())
+
+                // 1. Evaluate triggers immediately on manual mutation
+                let mut automations = state.automations.write().unwrap();
+                process_automations(&mut data, &mut automations);
+
+                // 2. Capture the data snapshot AFTER the automation engine runs
+                let final_data_snapshot = data.clone();
+
+                (true, log_val, final_data_snapshot)
             } else {
                 (false, String::new(), data.clone())
             }
@@ -1266,26 +1638,44 @@ async fn universal_update(
     if success {
         let id_c = id.clone();
         let lv_c = log_val.clone();
-        let dt_c = current_data.clone();
+        let dt_c = current_data.clone(); 
         let path_clone = state.save_path.read().unwrap().clone();
+
+        let is_reset = match &payload {
+            UpdatePayload::Action { action, .. } => action == "reset",
+            _ => false,
+        };
+
+        if is_reset {
+            let mut automations = state.automations.write().unwrap();
+            for trigger in automations.iter_mut() {
+                if trigger.condition.widget_id.starts_with(&id_c) {
+                    // Reset the value cache to NAN so it treats the next tick as a fresh edge
+                    trigger.last_value = f64::NAN; 
+                }
+            }
+        }
 
         tokio::spawn(async move {
             log_event(id_c, "UPDATE".into(), lv_c).await;
             save_to_disk(dt_c, &path_clone).await;
         });
-        let _ = state.tx.send(current_data);
+        let _ = state.tx.send(current_data); 
     }
     Json(success)
 }
 
 async fn reset_all(State(state): State<Arc<ScoreboardState>>) -> Json<bool> {
-    let (new_widgets, new_path) = load_config(&state.config_path);
+    let (new_widgets, new_path, new_automations) = load_config(&state.config_path);
     {
         let mut data = state.data.write().unwrap_or_else(|e| e.into_inner());
         *data = new_widgets.clone();
 
         let mut path = state.save_path.write().unwrap_or_else(|e| e.into_inner());
         *path = new_path.clone();
+
+        let mut automations = state.automations.write().unwrap_or_else(|e| e.into_inner());
+        *automations = new_automations;
     }
     let _ = state.tx.send(new_widgets.clone());
     let path_to_save = state.save_path.read().unwrap_or_else(|e| e.into_inner()).clone();
@@ -1356,9 +1746,9 @@ async fn main() {
     println!("");
 
     let args = Args::parse();
-    let (xml_widgets, persistence_path) = load_config(&args.config);
+    let (xml_widgets, persistence_path, xml_automations) = load_config(&args.config);
 
-    let initial_data = if let Ok(content) = std::fs::read_to_string(&persistence_path) {
+    let initial_data = if let Ok(content) = std::fs::read_to_string(&persistence_path) { 
         eprintln!("📁 Restoring persistence data from {}", persistence_path);
         serde_json::from_str(&content).unwrap_or(xml_widgets)
     } else {
@@ -1367,11 +1757,13 @@ async fn main() {
     let addr = SocketAddr::from(([0, 0, 0, 0], args.port));
 
     let (tx, _rx) = broadcast::channel(16);
+
     let state = Arc::new(ScoreboardState {
         data: RwLock::new(initial_data),
         tx,
         save_path: RwLock::new(persistence_path),
         config_path: args.config.clone(),
+        automations: RwLock::new(xml_automations),
     });
 
     tracing_subscriber::registry()
@@ -1394,6 +1786,7 @@ async fn main() {
                 };
 
                 let mut data = timer_state.data.write().unwrap();
+
                 for (id, val) in data.iter_mut() {
                     let mut widget_obj = create_widget(val);
                     let (ticked, display_val) = widget_obj.tick(&current_flat_context);
@@ -1406,6 +1799,12 @@ async fn main() {
                         tokio::spawn(log_event(id_clone, "TICK".to_string(), display_val));
                     }
                 }
+
+                let mut automations = timer_state.automations.write().unwrap();
+                if process_automations(&mut data, &mut automations) {
+                    changed = true;
+                }
+
                 if changed {
                     snapshot = data.clone();
                 }

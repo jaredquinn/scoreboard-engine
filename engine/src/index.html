@@ -326,6 +326,7 @@
                     structure += `
                         <div class="value timer-display field-formatted-time"></div>
                         <div class="widget-label field-paused-time"></div>
+                        <div class="widget-label field-additional-time"></div>
                         <div class="controls">
                             <button class="btn-toggle-running" onclick="updateWidget('${id}', {action: this.getAttribute('data-action')})"></button>
                             <button class="btn-toggle-paused" onclick="updateWidget('${id}', {action: 'pause'})"></button>
@@ -380,9 +381,23 @@
                 else if (type === "Calculation") {
                     structure += `<div class="value field-value" style="font-size: 1.5rem; text-align:center;"></div>`;
                 }
+		else if (type === "PenaltyShots") {
+		    structure += `
+			<div class="value field-shots-score" style="font-size: 3rem; font-weight: 800; font-family: monospace; color: var(--text); line-height: 1; margin-bottom: 5px;"></div>
+			<div style="font-size: 0.65rem; color: #94a3b8; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Goals Scored</div>
+			
+			<div class="field-shots-dots-row" style="display: flex; justify-content: center; align-items: center; min-height: 32px; gap: 6px; margin-bottom: 1rem; width: 100%;"></div>
+			
+			<div class="controls" style="display: flex; gap: 6px; justify-content: center; width: 100%;">
+			    <button class="btn-main" style="background-color: var(--success); flex: 1;" onclick="updateWidget('${id}', {action:'record_shot', value:'scored'})">GOAL</button>
+			    <button class="btn-stop" style="background-color: var(--danger); flex: 1;" onclick="updateWidget('${id}', {action:'record_shot', value:'missed'})">MISS</button>
+			    <button class="btn-small" style="width: auto; padding: 0.5rem 0.8rem;" onclick="updateWidget('${id}', {action:'clear_last'})">⟲</button>
+			    <button class="btn-reset-card" style="width: auto; padding: 0.5rem; margin-top: 0;" onclick="if(confirm('Reset shootout slots?')) updateWidget('${id}', {action:'reset'})">☠</button>
+			</div>`;
+		}
 
-                card.innerHTML = structure;
-                container.appendChild(card);
+		card.innerHTML = structure;
+		container.appendChild(card);
             }
 
             if (type === "Switch") {
@@ -414,10 +429,11 @@
                 if (previewS && previewS.style.backgroundColor !== secondary_color) previewS.style.backgroundColor = secondary_color;
             }
             else if (type === "Timer") {
-                const { initial_seconds, value, paused, paused_formatted, formatted_time, running, is_down, min_value, max_value } = data;
+                const { initial_seconds, value, paused, paused_formatted, formatted_time, additional_total_formatted, running, is_down, min_value, max_value } = data;
                 
                 updateTextIfChanged(card, '.field-formatted-time', formatted_time);
                 updateTextIfChanged(card, '.field-paused-time', `Stoppage: ${paused_formatted}`);
+                updateTextIfChanged(card, '.field-additional-time', `With Additional: : ${additional_total_formatted}`);
                 updateTextIfChanged(card, '.field-min-value', `${min_value}s`);
                 updateTextIfChanged(card, '.field-initial-seconds', `${initial_seconds}s`);
                 updateTextIfChanged(card, '.field-max-value', `${max_value}s`);
@@ -470,7 +486,32 @@
             else if (type === "Calculation") {
                 updateTextIfChanged(card, '.field-value', data.value);
             }
-        }
+	    else if (type === "PenaltyShots") {
+		const { shots, current_round } = data;
+
+		const calculatedScore = shots.filter(s => s === "scored").length;
+		updateTextIfChanged(card, '.field-shots-score', calculatedScore);
+
+		const generatedDots = shots.map((shot, idx) => {
+		    let color = "#64748b"; // Untaken base template color
+		    let marker = "•";
+
+		    if (shot === "scored") { color = "var(--success)"; marker = "✓"; }
+		    else if (shot === "missed") { color = "var(--danger)"; marker = "✗"; }
+
+		    const isActive = (current_round === idx);
+		    const border = isActive ? "border: 2px solid var(--accent); transform: scale(1.1);" : "border: 1px solid var(--border);";
+		    const shadow = isActive ? "box-shadow: 0 0 8px rgba(96, 165, 250, 0.4);" : "";
+
+		    return `<span style="display: inline-block; width: 26px; height: 26px; line-height: 24px; text-align: center; border-radius: 50%; background: #0f172a; color: ${color}; ${border} ${shadow} font-weight: bold; font-size: 0.85rem; transition: all 0.2s;">${marker}</span>`;
+		}).join('');
+
+		const dotsRow = card.querySelector('.field-shots-dots-row');
+		if (dotsRow && dotsRow.innerHTML !== generatedDots) {
+		    dotsRow.innerHTML = generatedDots;
+		}
+	    }
+	}
 
         // --- SSE LIFECYCLE ---
         window.addEventListener('DOMContentLoaded', () => {
