@@ -1,0 +1,211 @@
+<!-- Example Scoreboard Configuration for Association Football (Soccer) 
+
+     * Home & Away Scores with 4,2,1 shortcuts in dashboard
+     * Home & Away Names
+     * Match Clock
+     * Tackle count
+     * Pen Shootout
+-->
+<ScoreboardConfig>
+    <persistence_file>football.json</persistence_file>
+    <widget>
+        <id>home_score</id>
+        <type>Counter</type>
+        <initial_value>0</initial_value>
+    </widget>
+
+    <widget>
+        <id>away_score</id>
+        <type>Counter</type>
+        <initial_value>0</initial_value>
+    </widget>
+
+    <widget>
+        <id>match_clock</id>
+        <type>Timer</type>
+        <initial_seconds>0</initial_seconds>
+        <is_down>false</is_down>
+        <min_value>0</min_value>
+        <max_value>10</max_value>
+	<allow_additional>true</allow_additional>
+    </widget>
+
+    <widget>
+        <id>period</id>
+        <type>List</type>
+        <initial_index>0</initial_index>
+	<options>
+            <option>PRE</option>
+            <option>1ST</option>
+            <option>HT</option>
+            <option>2ND</option>
+            <option>FT</option>
+            <option>ET1</option>
+            <option>ET2</option>
+            <option>PENS</option>
+        </options>
+    </widget>
+
+    <widget>
+        <id>home_team</id>
+        <type>Team</type>
+        <initial_short_name>HOME</initial_short_name>
+        <initial_name>HOME TEAM</initial_name>
+        <initial_primary_color>#7865ab</initial_primary_color>
+        <initial_secondary_color>#ffffff</initial_secondary_color>
+    </widget>
+
+    <widget>
+        <id>away_team</id>
+        <type>Team</type>
+        <initial_short_name>AWAY</initial_short_name>
+        <initial_name>AWAY TEAM</initial_name>
+        <initial_primary_color>#7a8888</initial_primary_color>
+        <initial_secondary_color>#000000</initial_secondary_color>
+    </widget>
+
+    <widget>
+        <id>home_shootout</id>
+        <type>PenaltyShots</type>
+        <dashboard-ui>true</dashboard-ui>
+    </widget>
+
+    <widget>
+        <id>away_shootout</id>
+        <type>PenaltyShots</type>
+        <dashboard-ui>true</dashboard-ui>
+    </widget>
+
+    <trigger>
+        <condition>
+            <widget_id>period_index</widget_id>
+            <operator>++</operator>
+            <value>1.0</value>
+        </condition>
+        <actions>
+            <action>
+                <target_id>match_clock</target_id>
+                <action>set_min</action>
+                <value>0</value>
+            </action>
+            <action>
+                <target_id>match_clock</target_id>
+                <action>set_max</action>
+                <value>2700</value> <!-- Lock ceiling at 45:00 -->
+            </action>
+            <action>
+                <target_id>match_clock</target_id>
+                <action>set_initial</action>
+                <value>0</value>
+            </action>
+            <action>
+                <target_id>match_clock</target_id>
+                <action>reset</action>
+            </action>
+        </actions>
+    </trigger>
+
+    <trigger>
+        <condition>
+            <widget_id>period_index</widget_id>
+            <operator>++</operator>
+            <value>2.0</value>
+	</condition>
+        <actions>
+            <action>
+                <target_id>match_clock</target_id>
+                <action>stop</action>
+            </action>
+        </actions>
+    </trigger>
+
+    <trigger>
+        <condition>
+            <widget_id>period_index</widget_id>
+	    <operator>++</operator>
+            <value>3.0</value>
+        </condition>
+        <actions>
+            <action>
+                <target_id>match_clock</target_id>
+                <action>set_min</action>
+                <value>2700</value>
+            </action>
+            <action>
+                <target_id>match_clock</target_id>
+                <action>set_max</action>
+                <value>5400</value>
+            </action>
+            <action>
+                <target_id>match_clock</target_id>
+                <action>set_initial</action>
+                <value>2700</value>
+            </action>
+            <action>
+                <target_id>match_clock</target_id>
+                <action>reset</action>
+            </action>
+        </actions>
+    </trigger>
+
+    <trigger>
+        <condition>
+            <widget_id>period_index</widget_id>
+            <operator>++</operator>
+            <value>5.0</value>
+        </condition>
+        <actions>
+            <action>
+                <target_id>match_clock</target_id>
+                <action>set_min</action>
+                <value>0</value>
+            </action>
+            <action>
+                <target_id>match_clock</target_id>
+                <action>set_max</action>
+                <value>900</value>
+            </action>
+            <action>
+                <target_id>match_clock</target_id>
+                <action>set_initial</action>
+                <value>0</value>
+            </action>
+            <action>
+                <target_id>match_clock</target_id>
+                <action>reset</action>
+	    </action>
+	  </actions>
+     </trigger>
+
+    <trigger>
+        <condition>
+            <widget_id>period_index</widget_id>
+            <operator>++</operator>
+            <value>6.0</value>
+        </condition>
+        <actions>
+            <action>
+                <target_id>match_clock</target_id>
+                <action>set_min</action>
+                <value>0</value>
+            </action>
+            <action>
+                <target_id>match_clock</target_id>
+                <action>set_max</action>
+                <value>900</value>
+            </action>
+            <action>
+                <target_id>match_clock</target_id>
+                <action>set_initial</action>
+                <value>0</value>
+            </action>
+            <action>
+                <target_id>match_clock</target_id>
+                <action>reset</action>
+	    </action>
+	  </actions>
+     </trigger>
+
+
+</ScoreboardConfig>
+
