@@ -1,5 +1,15 @@
 # Scoreboard Engine Change Log
 
+## [v0.12.0] -  2026-07-06 More Than Just a Game Release
+
+### New Features
+
+- Penalty Shootout Widget featuring success/fail count 
+- Penalty Shootout support for sudden death (infinite shots)
+- Automations - automatically call actions based on conditions
+- Example configuration for Association Football (Soccer)
+- Support for new widgets and features in companion module
+
 ## [v0.11.1] -  2026-06-23 Time After Time Release
 
 ### Bug Fixes 0.11.1
