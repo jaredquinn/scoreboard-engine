@@ -18,6 +18,10 @@ module.exports = {
 			.filter(([_, w]) => w.type === 'Switch')
 			.map(([id, _]) => ({ id: id, label: id }))
 
+		const penaltyChoices = Object.entries(self.widgets || {})
+			.filter(([_, w]) => w.type === 'PenaltyShots')
+			.map(([id, _]) => ({ id: id, label: id }))
+
 		return {
 			// --- SWITWCH FEEDBACKS ---
 			switch_on: {
@@ -29,6 +33,22 @@ module.exports = {
 				],
 				callback: (feedback) => {
 					return self.getVariableValue(`${feedback.options.switch_id}`)
+				}
+			},
+
+			penalty_active_turn: {
+				type: 'boolean',
+				name: 'Penalties: Active Turn Glow',
+				description: 'Highlights the button if this specific round matches the active kicker pointer index',
+				defaultStyle: { bgcolor: combineRgb(59, 130, 246), color: combineRgb(255, 255, 255) }, // Blue
+				options: [
+					{ type: 'dropdown', id: 'widget_id', label: 'Penalty Widget', default: penaltyChoices[0]?.id || '', choices: penaltyChoices },
+					{ type: 'number', id: 'target_round', label: 'Target Shot Index (1-5+)', default: 1 }
+				],
+				callback: (feedback) => {
+					const currentRound = self.getVariableValue(`${feedback.options.widget_id}_current_round`)
+					// Convert 1-indexed option user input down to 0-indexed engine logic
+					return currentRound === (feedback.options.target_round - 1)
 				}
 			},
 

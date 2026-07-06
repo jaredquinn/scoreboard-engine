@@ -22,7 +22,14 @@ module.exports = {
 				defs.push({ variableId: `${id}_paused_time`, name: `${id} Raw Stoppage Time` });
 				defs.push({ variableId: `${id}_total_formatted`, name: `${id} Formatted Total Time` });
 				defs.push({ variableId: `${id}_total_time`, name: `${id} Raw Total Time` });
+				defs.push({ variableId: `${id}_additional_total_formatted`, name: `${id} Formatted Total Time` });
+				defs.push({ variableId: `${id}_additional_time`, name: `${id} Raw Additional Time` });
+				defs.push({ variableId: `${id}_additional_formatted`, name: `${id} Additional Formatted Time` });
 				defs.push({ variableId: `${id}_paused`, name: `${id} Currently Paused` });
+			}
+			if (widgets[id].type === 'PenaltyShots') {
+				defs.push({ variableId: `${id}_score`, name: `${id} Total Score` });
+				defs.push({ variableId: `${id}_current_round`, name: `${id} Current Round Index` });
 			}
 		}
 		return defs;
@@ -47,6 +54,9 @@ module.exports = {
 			} else if (type === 'Timer') {
 				values[`${id}_paused_formatted`] = data.paused_formatted;
 				values[`${id}_paused_time`] = data.paused_time;
+				values[`${id}_additional_total_formatted`] = data.additional_total_formatted;
+				values[`${id}_additional_time`] = data.additional_time;
+				values[`${id}_additional_formatted`] = data.additional_formatted;
 				values[`${id}_total_formatted`] = data.total_formatted;
 				values[`${id}_total_time`] = data.total_time;
 				values[`${id}_paused`] = data.paused;
@@ -62,6 +72,11 @@ module.exports = {
 				values[id] = data.content;
 			} else if (type === 'Calculation') {
 				values[id] = data.value;
+			} else if (type === 'PenaltyShots') {
+				const score = data.shots.filter(s => s === 'scored').length;
+				values[id] = score; // Primary value maps directly to total score
+				values[`${id}_score`] = score;
+				values[`${id}_current_round`] = data.current_round;
 			}
 		}
 		return values;

@@ -20,6 +20,10 @@ module.exports = {
 			.filter(([_, w]) => w.type === 'Text')
 			.map(([id, _]) => ({ id: id, label: id }))
 
+		const penaltyChoices = Object.entries(self.widgets || {})
+			.filter(([_, w]) => w.type === 'PenaltyShots')
+			.map(([id, _]) => ({ id: id, label: id }))
+
 		return {
 
 			// --- SWITCH ACTIONS ----
@@ -144,6 +148,37 @@ module.exports = {
 				callback: async (event) => {
 					await self.sendUpdate(event.options.widget_id, event.options.text)
 				},
+			},
+
+			// --- PENALTY SHOTS ACTIONS ---
+			penalty_control: {
+				name: 'Penalties: Record or Clear Shot',
+				options: [
+					{ type: 'dropdown', id: 'widget_id', label: 'Penalty Widget', default: penaltyChoices[0]?.id || '', choices: penaltyChoices },
+					{
+						type: 'dropdown', id: 'action', label: 'Action', default: 'record_shot',
+						choices: [
+							{ id: 'record_shot', label: 'Record Shot' },
+							{ id: 'clear_last', label: 'Undo Last Shot (Clear)' },
+							{ id: 'reset', label: 'Reset Grid' }
+						]
+					},
+					{
+						type: 'dropdown', id: 'value', label: 'Result (Only for Record Shot)', default: 'scored',
+						choices: [
+							{ id: 'scored', label: 'Goal / Scored' },
+							{ id: 'missed', label: 'Missed / Saved' }
+						]
+					}
+				],
+				callback: async (event) => {
+					const { widget_id, action, value } = event.options
+					const payload = { action }
+					if (action === 'record_shot') {
+						payload.value = value
+					}
+					await self.sendUpdate(widget_id, payload)
+				}
 			},
 
 			// --- SYSTEM ACTIONS ---
