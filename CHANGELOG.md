@@ -7,6 +7,7 @@
 - Triggers - Call any action on any widget on state change
 - Penalty Shootout Widget featuring success/fail count 
 - Penalty Shootout support for sudden death (infinite shots)
+- Update Timer Widget to support overrun (additional time)
 * HTML Scorebug for football
 - Example configuration for Association Football (Soccer)
 - Support for all Penalties and additional time in companion module
