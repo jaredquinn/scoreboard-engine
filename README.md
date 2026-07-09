@@ -39,6 +39,7 @@ See the wiki page [Widgets](https://github.com/jaredquinn/scoreboard-engine/wiki
 * [List](https://github.com/jaredquinn/scoreboard-engine/wiki/Widgets/#list) (set, next, prev)
 * [Switch](https://github.com/jaredquinn/scoreboard-engine/wiki/Widgets/#switch) (toggle, on, off)
 * [Team](https://github.com/jaredquinn/scoreboard-engine/wiki/Widgets/#team) (name, short name, colours)
+* [PenaltyShots](https://github.com/jaredquinn/scoreboard-engine/wiki/Widgets/#penaltyshots) (penalty shot tracker)
 * [Calculation](https://github.com/jaredquinn/scoreboard-engine/wiki/Widgets/#calculation) (using evalexpr)
 
 Ready to run configurations, companion pages and HTML scorebug for
