@@ -45,6 +45,7 @@ Ready to run configurations, companion pages and HTML scorebug for
 
 * [Australian Rules Football](examples/afl)
 * [Basketball](examples/basketball)
+* [Football](examples/football)
 * [Netball](examples/netball)
 * [Rugby League](examples/rugbyleague)
 
