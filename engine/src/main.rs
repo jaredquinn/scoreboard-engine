@@ -401,8 +401,8 @@ impl Widget for CounterWidget {
                             return (false, String::new());
                         }
                         self.value = amt
-                    }
-                    "reset" => self.value = self.increments.first().cloned().unwrap_or(0),
+                    },
+                    "reset" => self.value = self.initial_value,
                     _ => return (false, String::new()),
                 }
                 (true, self.value.to_string())
@@ -1185,10 +1185,10 @@ async fn log_event(widget_id: String, action: String, value: String) {
     let ts_ms = time_format::now_ms().unwrap();
     let timestamp = time_format::strftime_ms_local("%Y-%m-%d %H:%M:%S.{ms}", ts_ms).unwrap();
 
-    let con_line = format!("[{}] ID: {:<18} | Action: {:<10} | Val: {}", timestamp, widget_id, action, value);
+    let con_line = format!("[{}] ID: {:<18} | {:<10} | Val: {}", timestamp, widget_id, action, value);
     eprintln!("{}", con_line);
 
-    let log_line = format!("[{}] ID: {:<18} | Action: {:<10} | Val: {}\n", timestamp, widget_id, action, value);
+    let log_line = format!("[{}] ID: {:<18} | {:<10} | Val: {}\n", timestamp, widget_id, action, value);
     if let Ok(mut file) = OpenOptions::new().create(true).append(true).open("match_log.txt").await {
         let _ = file.write_all(log_line.as_bytes()).await;
     }
