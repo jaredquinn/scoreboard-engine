@@ -73,4 +73,5 @@ _The quickstart guides have moved to the wiki_
 
 * [Quickstart OBS](https://github.com/jaredquinn/scoreboard-engine/wiki/Quickstart-OBS)
 * [Quickstart vMix](https://github.com/jaredquinn/scoreboard-engine/wiki/Quickstart-vMix)
-  
+* [Quickstart CasparCG](https://github.com/jaredquinn/scoreboard-engine/wiki/Quickstart-CasparCG)
+
