@@ -48,7 +48,7 @@ window.addEventListener('DOMContentLoaded', () => {
             Object.entries(widgets).forEach(([id, w]) => {
                 if (values[id] != w) {
                     values[id] = w;
-                    console.log('updated ' + id + ' to ' + w);
+                    //console.log('updated ' + id + ' to ' + w);
 
                     document.dispatchEvent(new CustomEvent('scoreboard:update', {
                         detail: { id, value: w }
