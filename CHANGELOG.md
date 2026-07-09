@@ -4,11 +4,12 @@
 
 ### New Features
 
+- Triggers - Call any action on any widget on state change
 - Penalty Shootout Widget featuring success/fail count 
 - Penalty Shootout support for sudden death (infinite shots)
-- Automations - automatically call actions based on conditions
+* HTML Scorebug for football
 - Example configuration for Association Football (Soccer)
-- Support for new widgets and features in companion module
+- Support for all Penalties and additional time in companion module
 
 ## [v0.11.1] -  2026-06-23 Time After Time Release
 
