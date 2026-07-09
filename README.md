@@ -17,6 +17,7 @@
 # Key Features
 
 * **Single-Binary**: Single executable, built in rust for speed and robustness.
+* **Automations**: Trigger any action on scoreboard conditions.
 * **Customisable**: Assemble your scoreboard from a collection of widgets and an XML configuration.
 * **Integrated Dashboard**: A HTML dashboard is baked directly into the executable.
 * **Disaster Recovery**: Live state is persisted on every change and tick.
@@ -73,4 +74,5 @@ _The quickstart guides have moved to the wiki_
 
 * [Quickstart OBS](https://github.com/jaredquinn/scoreboard-engine/wiki/Quickstart-OBS)
 * [Quickstart vMix](https://github.com/jaredquinn/scoreboard-engine/wiki/Quickstart-vMix)
-  
+* [Quickstart CasparCG](https://github.com/jaredquinn/scoreboard-engine/wiki/Quickstart-CasparCG)
+
