@@ -72,6 +72,18 @@
             font-variant-numeric: tabular-nums;
             border-top-left-radius: 5px;
             border-bottom-left-radius: 5px;
+            transition: max-width 0.5s cubic-bezier(0.19, 1, 0.22, 1), 
+                        padding 0.5s cubic-bezier(0.19, 1, 0.22, 1), 
+                        opacity 0.4s ease;
+            overflow: hidden;
+            max-width: 200px;
+        }
+
+        .clock-block.hidden-clock {
+            max-width: 0 !important;
+            padding: 0 !important;
+            opacity: 0 !important;
+            border: none !important;
         }
 
         .clock-block .period {
@@ -84,8 +96,7 @@
         .clock-block .time {
             font-size: 20px;
             font-weight: 800;
-	    min-width: 3em;
-
+            min-width: 3em;
         }
 
         /* Inline Slide-Out Stoppage Compartment */
@@ -117,7 +128,7 @@
         }
 
         .stoppage-slideout .additional-time-val {
-            color: var(--fail-color); /* Contrasting red/orange for active dynamic clock ticker */
+            color: var(--fail-color); 
             min-width: 3em;
         }
 
@@ -144,16 +155,25 @@
         }
 
         /* Score Modules */
-        .score-box {
+        .score-box-wrapper {
             display: flex;
             align-items: center;
-            justify-content: center;
-            width: 44px;
             height: 100%;
             font-size: 22px;
             font-weight: 800;
             font-variant-numeric: tabular-nums;
             background: rgba(255, 255, 255, 0.06);
+            padding: 0 12px;
+            min-width: 44px;
+            justify-content: center;
+            box-sizing: border-box;
+        }
+
+        .penalty-addon {
+            color: #00ffaa;
+            font-size: 14px;
+            font-weight: 700;
+            margin-left: 4px;
         }
 
         /* Central Crest/Divider Alternative */
@@ -302,7 +322,7 @@
 
     <div class="top-left-bug-anchor">
         <div class="scorebug-main">
-            <div class="clock-block">
+            <div class="clock-block" id="clock-module">
                 <div class="period" data-bind="period">PRE</div>
                 <div class="time" data-bind="match_clock_formatted">00:00</div>
             </div>
@@ -315,11 +335,17 @@
             <div class="team-identity" id="node-home" data-background="home_team_primary_color" data-foreground="home_team_secondary_color" data-bind="home_team">
                 HOME
             </div>
-            <div class="score-box" data-bind="home_score">0</div>
+            <div class="score-box-wrapper">
+                <span data-bind="home_score">0</span>
+                <span id="home-pen-addon" class="penalty-addon hidden"></span>
+            </div>
 
             <div class="brand-divider"></div>
 
-            <div class="score-box" data-bind="away_score">0</div>
+            <div class="score-box-wrapper">
+                <span data-bind="away_score">0</span>
+                <span id="away-pen-addon" class="penalty-addon hidden"></span>
+            </div>
             <div class="team-identity" id="node-away" data-background="away_team_primary_color" data-foreground="away_team_secondary_color" data-bind="away_team">
                 AWAY
             </div>
@@ -418,19 +444,32 @@
 
             if (id === 'period') {
                 const shootoutModule = document.getElementById('shootout-module');
+                const clockModule = document.getElementById('clock-module');
+                const homeAddon = document.getElementById('home-pen-addon');
+                const awayAddon = document.getElementById('away-pen-addon');
                 const cleanValue = String(value).toUpperCase().trim();
                 
                 if (cleanValue === 'PENS' || cleanValue === 'PENALTIES' || cleanValue === 'SHOOTOUT') {
                     shootoutModule.classList.remove('hidden');
+                    clockModule.classList.add('hidden-clock');
+                    homeAddon.classList.remove('hidden');
+                    awayAddon.classList.remove('hidden');
                     renderShotIndicators();
                 } else {
                     shootoutModule.classList.add('hidden');
+                    clockModule.classList.remove('hidden-clock');
+                    homeAddon.classList.add('hidden');
+                    awayAddon.classList.add('hidden');
                 }
             }
 
             if (['home_shootout', 'away_shootout', 'home_shootout_score', 'away_shootout_score'].includes(id)) {
                 state[id] = value;
                 renderShotIndicators();
+                
+                // Keep the live dashboard addons up to date
+                document.getElementById('home-pen-addon').textContent = ` (+${state.home_shootout_score})`;
+                document.getElementById('away-pen-addon').textContent = ` (+${state.away_shootout_score})`;
             }
         });
     </script>
