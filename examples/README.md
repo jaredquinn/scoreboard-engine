@@ -9,6 +9,7 @@ If you are using the web overlays copy the .html file(s) for your code to the `p
 * [Aussie Rules Football](/examples/afl/README.md)
 * [Basketball](/examples/basketball/README.md)
 * [Netball](/examples/netball/README.md)
+* [Football](/examples/football)
 * [Rugby League Football](/examples/rugbyleague/README.md)
 
 
