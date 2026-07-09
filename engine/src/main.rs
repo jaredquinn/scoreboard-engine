@@ -90,6 +90,7 @@ pub enum WidgetValue {
         dashboard_ui: bool,
         #[serde(default = "default_false")]
         allow_additional: bool,
+        additional_active: bool,
         additional_time: f64,
         additional_formatted: String,
         additional_total_formatted: String,
@@ -471,6 +472,7 @@ pub struct TimerWidget {
     pub dashboard_ui: bool,
     #[serde(default = "default_false")]
     pub allow_additional: bool, 
+    pub additional_active: bool,
     #[serde(default)]
     pub additional_time: f64,
     #[serde(default)]
@@ -541,6 +543,9 @@ impl Widget for TimerWidget {
                         self.paused = false;
                         self.paused_time = 0.0;
                         self.paused_formatted = format_timer(self.paused_time, &self.format);
+                        self.additional_time = 0.0;
+                        self.additional_formatted = format_timer(self.additional_time, &self.format);
+                        self.additional_total_formatted = format_timer(self.additional_time, &self.format);
                         self.running = false;
                     }
                     "set" | "set_time" => { // Support both labels natively
@@ -597,13 +602,16 @@ impl Widget for TimerWidget {
         } else {
             if self.seconds < self.max_value {
                 self.seconds += delta;
+                self.additional_active = false;
             } else {
                 if self.allow_additional {
                     self.seconds = self.max_value;
                     self.additional_time += delta;
+                    self.additional_active = true;
                 } else {
                     self.seconds = self.max_value;
                     self.running = false;
+                    self.additional_active = false;
                 }
             }
         }
@@ -616,7 +624,11 @@ impl Widget for TimerWidget {
         self.total_formatted = format_timer(self.total_time, &self.format);
 
         let truncated_seconds = (self.seconds * TICK_FACTOR).trunc() / TICK_FACTOR;
-        (true, format!("RUNNING {truncated_seconds:02.1} [Formatted: {}] [Additional: {}]", self.formatted_time.clone(), self.additional_total_formatted.clone()))
+
+        if self.additional_active {
+            return (true, format!("RUNNING {truncated_seconds:02.1} [Formatted: {}] [Additional: {}]", self.formatted_time.clone(), self.additional_total_formatted.clone()))
+        }
+        (true, format!("RUNNING {truncated_seconds:02.1} [Formatted: {}]", self.formatted_time.clone()))
     }
 
 
@@ -642,6 +654,7 @@ impl Widget for TimerWidget {
             format: self.format.clone(),
             dashboard_ui: self.dashboard_ui,
             allow_additional: self.allow_additional,
+            additional_active: self.additional_active,
             additional_time: self.additional_time,
             additional_formatted: self.additional_formatted.clone(),
             additional_total_formatted: self.additional_total_formatted.clone(),
@@ -656,6 +669,8 @@ impl Widget for TimerWidget {
         extras.insert("additional_time".to_string(), serde_json::Value::from(truncated_additional));
         extras.insert("additional_formatted".to_string(), serde_json::Value::String(self.additional_formatted.clone()));
         extras.insert("additional_total_formatted".to_string(), serde_json::Value::String(self.additional_total_formatted.clone()));
+
+        extras.insert("additional_active".to_string(), serde_json::Value::from(self.additional_active));
 
         let truncated_paused_time = (self.paused_time * TICK_FACTOR).trunc() / TICK_FACTOR;
         extras.insert("paused_time".to_string(), serde_json::Value::from(truncated_paused_time));
@@ -999,6 +1014,7 @@ fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
             dashboard_ui,
             allow_additional,
             additional_time,
+            additional_active,
             additional_formatted,
             additional_total_formatted,
         } => Box::new(TimerWidget {
@@ -1014,6 +1030,7 @@ fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
             paused: *paused,
             allow_additional: *allow_additional,
             additional_time: *additional_time,
+            additional_active: *additional_active,
             additional_formatted: additional_formatted.clone(),
             additional_total_formatted: additional_total_formatted.clone(),
             is_down: *is_down,
@@ -1129,7 +1146,7 @@ fn process_automations(
 
                                 let act_id = act.target_id.clone();
                                 let act_name = act.action.clone();
-                                tokio::spawn(log_event(act_id, format!("AUTO_{}", act_name), log_val));
+                                tokio::spawn(log_event(act_id, format!("{}*", act_name), log_val));
                             }
                         }
                     }
@@ -1168,10 +1185,10 @@ async fn log_event(widget_id: String, action: String, value: String) {
     let ts_ms = time_format::now_ms().unwrap();
     let timestamp = time_format::strftime_ms_local("%Y-%m-%d %H:%M:%S.{ms}", ts_ms).unwrap();
 
-    let con_line = format!("[{}] ID: {:<12} | Action: {:<10} | Val: {}", timestamp, widget_id, action, value);
+    let con_line = format!("[{}] ID: {:<18} | Action: {:<10} | Val: {}", timestamp, widget_id, action, value);
     eprintln!("{}", con_line);
 
-    let log_line = format!("[{}] ID: {:<12} | Action: {:<10} | Val: {}\n", timestamp, widget_id, action, value);
+    let log_line = format!("[{}] ID: {:<18} | Action: {:<10} | Val: {}\n", timestamp, widget_id, action, value);
     if let Ok(mut file) = OpenOptions::new().create(true).append(true).open("match_log.txt").await {
         let _ = file.write_all(log_line.as_bytes()).await;
     }
@@ -1315,6 +1332,7 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String, Vec<Automa
                     max_value: max,
                     dashboard_ui,
                     allow_additional: allow_additional,
+                    additional_active: false,
                     additional_time: 0.0,
                     additional_formatted: format_timer(0.0, &fmt),
                     additional_total_formatted: format_timer(0.0, &fmt),
@@ -1450,7 +1468,7 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String, Vec<Automa
             .and_then(|n| n.text()?.parse().ok())
             .unwrap_or(0.0);
 
-        eprintln!("🤖 Setting up automation on {}:{} {}", widget_id.clone(), operator.clone(), value.clone());
+        eprintln!("🤖 Setting up Trigger on {}:{} {}", widget_id.clone(), operator.clone(), value.clone());
 
         // Extract actions safely
         let mut actions = Vec::new();
@@ -1481,8 +1499,8 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String, Vec<Automa
                         serde_json::Value::String(v.to_string())
                     }
                 });
-
-                eprintln!("  ⚡ Action on {} for {} with {:?}", target_id.clone(), command.clone(), value.clone());
+                let log_display_val = val_text.unwrap_or("");
+                eprintln!("  ⚡ Action on {} for {} with {:?}", target_id.clone(), command.clone(), log_display_val);
                 actions.push(TriggerAction { target_id, action: command, value });
             }
         }
@@ -1618,12 +1636,8 @@ async fn universal_update(
 
             if success {
                 *val = widget_obj.to_value();
-
-                // 1. Evaluate triggers immediately on manual mutation
                 let mut automations = state.automations.write().unwrap();
                 process_automations(&mut data, &mut automations);
-
-                // 2. Capture the data snapshot AFTER the automation engine runs
                 let final_data_snapshot = data.clone();
 
                 (true, log_val, final_data_snapshot)
