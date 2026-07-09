@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soccer Scorebug Broadcast</title>
+    <link rel="stylesheet" href="/pages/examples.css">
+    <style>
+        :root {
+            --bg-dark: #0a0a0c;
+            --bg-light: #eef1f6;
+            --text-dark: #111115;
+            --text-light: #ffffff;
+            --accent-border: rgba(255, 255, 255, 0.15);
+            --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            --success-color: #24d15d;
+            --fail-color: #ff3344;
+            --neutral-color: #0b2240;
+            --panel-bg: rgba(13, 31, 28, 0.92);
+            --panel-border: rgba(0, 200, 150, 0.2);
+            --team-blue: #0519b3;
+            --stoppage-accent: #00ffaa;
+        }
+
+        /* Full 1920x1080 Broadcast Canvas Emulation */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 1920px;
+            height: 1080px;
+            background: transparent;
+            font-family: var(--font-family);
+            -webkit-font-smoothing: antialiased;
+            overflow: hidden;
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        /* Top Left Scorebug Alignment */
+        .top-left-bug-anchor {
+            position: absolute;
+            top: 40px;
+            left: 50px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Main Score Strip Wrapper */
+        .scorebug-main {
+            display: flex;
+            align-items: center;
+            background: var(--bg-dark);
+            color: var(--text-light);
+            border-radius: 6px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            height: 46px;
+            font-weight: 700;
+            border: 1px solid var(--accent-border);
+            z-index: 10;
+            position: relative;
+        }
+
+        /* Clock / Period Block */
+        .clock-block {
+            display: flex;
+            align-items: center;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            height: 100%;
+            padding: 0 16px;
+            gap: 8px;
+            font-variant-numeric: tabular-nums;
+            border-top-left-radius: 5px;
+            border-bottom-left-radius: 5px;
+        }
+
+        .clock-block .period {
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            opacity: 0.7;
+            text-transform: uppercase;
+        }
+
+        .clock-block .time {
+            font-size: 20px;
+            font-weight: 800;
+	    min-width: 3em;
+
+        }
+
+        /* Inline Slide-Out Stoppage Compartment */
+        .stoppage-slideout {
+            display: flex;
+            align-items: center;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            height: 100%;
+            font-size: 20px;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+            border-left: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 0;
+            max-width: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-width 0.5s cubic-bezier(0.19, 1, 0.22, 1), 
+                        padding 0.5s cubic-bezier(0.19, 1, 0.22, 1), 
+                        opacity 0.4s ease;
+            white-space: nowrap;
+            gap: 6px;
+        }
+
+        .stoppage-slideout.active {
+            max-width: 160px;
+            padding: 0 14px;
+            opacity: 1;
+        }
+
+        .stoppage-slideout .additional-time-val {
+            color: var(--fail-color); /* Contrasting red/orange for active dynamic clock ticker */
+            min-width: 3em;
+        }
+
+        .stoppage-slideout .min-label {
+            font-size: 20px;
+            opacity: 0.6;
+            text-transform: uppercase;
+            font-weight: 700;
+            padding: 1px 4px;
+            border-radius: 2px;
+        }
+
+        /* Team Structure */
+        .team-identity {
+            display: flex;
+            align-items: center;
+            padding: 0 14px;
+            height: 100%;
+            font-size: 16px;
+            letter-spacing: 0.5px;
+            transition: background-color 0.4s ease, color 0.4s ease;
+            min-width: 50px;
+            justify-content: center;
+        }
+
+        /* Score Modules */
+        .score-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 100%;
+            font-size: 22px;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        /* Central Crest/Divider Alternative */
+        .brand-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 100%;
+            background: var(--bg-dark);
+            position: relative;
+        }
+
+        .brand-divider::before {
+            content: '';
+            width: 4px;
+            height: 4px;
+            background: rgba(255,255,255,0.4);
+            border-radius: 50%;
+        }
+
+        /* ----------------------------------
+           Football Manager Inspired Bottom Overlay 
+        ------------------------------------- */
+        .bottom-shootout-overlay {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+            width: 680px;
+            box-sizing: border-box;
+            transition: opacity 0.4s ease;
+        }
+
+        .shootout-header {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: #00ffaa;
+            text-transform: uppercase;
+            width: 100%;
+            text-align: center;
+            padding: 8px 0;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .shootout-matrix-panel {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            padding: 16px 24px;
+            box-sizing: border-box;
+            gap: 12px;
+        }
+
+        .shot-trackers-wrapper {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            gap: 60px;
+        }
+
+        .shot-tracker {
+            display: flex;
+            gap: 6px;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .shot-dot {
+            width: 32px;
+            height: 26px;
+            background: var(--neutral-color);
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 12px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 2px;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+        }
+
+        .shot-dot.success {
+            background: var(--success-color);
+            color: #000;
+        }
+
+        .shot-dot.fail {
+            background: var(--fail-color);
+            color: #fff;
+        }
+
+        .shootout-teams-banner {
+            display: flex;
+            width: 100%;
+            background: var(--team-blue);
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .shootout-team-block {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 24px;
+            color: var(--text-light);
+            font-weight: 800;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+        }
+
+        .shootout-team-block.home-block {
+            border-right: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .shootout-team-label {
+            text-transform: uppercase;
+        }
+
+        .shootout-running-score {
+            font-size: 16px;
+            color: var(--text-light);
+            font-variant-numeric: tabular-nums;
+            background: rgba(0, 0, 0, 0.25);
+            padding: 2px 10px;
+            border-radius: 3px;
+        }
+
+        /* Visibility States */
+        .hidden {
+            display: none !important;
+            opacity: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-left-bug-anchor">
+        <div class="scorebug-main">
+            <div class="clock-block">
+                <div class="period" data-bind="period">PRE</div>
+                <div class="time" data-bind="match_clock_formatted">00:00</div>
+            </div>
+
+            <div class="stoppage-slideout" id="stoppage-module">
+                <span class="additional-time-val" data-bind="match_clock_additional_formatted">+00:00</span>
+                <span class="min-label">min. <span id="stoppage-counter" data-bind="mins_added">0</span></span>
+            </div>
+
+            <div class="team-identity" id="node-home" data-background="home_team_primary_color" data-foreground="home_team_secondary_color" data-bind="home_team">
+                HOME
+            </div>
+            <div class="score-box" data-bind="home_score">0</div>
+
+            <div class="brand-divider"></div>
+
+            <div class="score-box" data-bind="away_score">0</div>
+            <div class="team-identity" id="node-away" data-background="away_team_primary_color" data-foreground="away_team_secondary_color" data-bind="away_team">
+                AWAY
+            </div>
+        </div>
+    </div>
+
+    <!-- Centered Bottom Shootout Display Layout -->
+    <div class="bottom-shootout-overlay hidden" id="shootout-module">
+        <div class="shootout-header">Penalties</div>
+        
+        <div class="shootout-matrix-panel">
+            <div class="shot-trackers-wrapper">
+                <div class="shot-tracker" id="home-tracker">
+                    <div class="shot-dot">1</div>
+                    <div class="shot-dot">2</div>
+                    <div class="shot-dot">3</div>
+                    <div class="shot-dot">4</div>
+                    <div class="shot-dot">5</div>
+                </div>
+
+                <div class="shot-tracker" id="away-tracker">
+                    <div class="shot-dot">1</div>
+                    <div class="shot-dot">2</div>
+                    <div class="shot-dot">3</div>
+                    <div class="shot-dot">4</div>
+                    <div class="shot-dot">5</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="shootout-teams-banner">
+            <div class="shootout-team-block home-block">
+                <span class="shootout-team-label" data-bind="home_team_name">HOME TEAM</span>
+                <span class="shootout-running-score" data-bind="home_shootout_score">0</span>
+            </div>
+            <div class="shootout-team-block away-block">
+                <span class="shootout-running-score" data-bind="away_shootout_score">0</span>
+                <span class="shootout-team-label" data-bind="away_team_name">AWAY TEAM</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="/scoreboard.js"></script>
+    <script>
+        let state = {
+            home_shootout: 0,
+            away_shootout: 0,
+            home_shootout_score: 0,
+            away_shootout_score: 0,
+            match_clock_additional_active: false
+        };
+
+        const evaluateStoppageVisibility = () => {
+            const stoppageModule = document.getElementById('stoppage-module');
+            const isActive = state.match_clock_additional_active === true || state.match_clock_additional_active === 'true';
+
+            if (isActive) {
+                stoppageModule.classList.add('active');
+            } else {
+                stoppageModule.classList.remove('active');
+            }
+        };
+
+        const renderShotIndicators = () => {
+            const generateDots = (attempts, score, trackerId) => {
+                const dots = document.getElementById(trackerId).querySelectorAll('.shot-dot');
+                let successesLeft = score;
+                let missesLeft = attempts - score;
+
+                dots.forEach((dot, index) => {
+                    dot.className = 'shot-dot';
+                    
+                    if (index < attempts) {
+                        if (successesLeft > 0 && (missesLeft === 0 || Math.random() > 0.4)) {
+                            dot.classList.add('success');
+                            successesLeft--;
+                        } else if (missesLeft > 0) {
+                            dot.classList.add('fail');
+                            missesLeft--;
+                        }
+                    }
+                });
+            };
+
+            generateDots(parseInt(state.home_shootout, 10) || 0, parseInt(state.home_shootout_score, 10) || 0, 'home-tracker');
+            generateDots(parseInt(state.away_shootout, 10) || 0, parseInt(state.away_shootout_score, 10) || 0, 'away-tracker');
+        };
+
+        document.addEventListener('scoreboard:update', (e) => {
+            const { id, value } = e.detail;
+            
+            if (id === 'match_clock_additional_active') {
+                state.match_clock_additional_active = value;
+                evaluateStoppageVisibility();
+            }
+
+            if (id === 'period') {
+                const shootoutModule = document.getElementById('shootout-module');
+                const cleanValue = String(value).toUpperCase().trim();
+                
+                if (cleanValue === 'PENS' || cleanValue === 'PENALTIES' || cleanValue === 'SHOOTOUT') {
+                    shootoutModule.classList.remove('hidden');
+                    renderShotIndicators();
+                } else {
+                    shootoutModule.classList.add('hidden');
+                }
+            }
+
+            if (['home_shootout', 'away_shootout', 'home_shootout_score', 'away_shootout_score'].includes(id)) {
+                state[id] = value;
+                renderShotIndicators();
+            }
+        });
+    </script>
+</body>
+</html>
