@@ -1,10 +1,10 @@
 <!-- Example Scoreboard Configuration for Association Football (Soccer) 
 
-     * Home & Away Scores with 4,2,1 shortcuts in dashboard
+     * Home & Away Scores
      * Home & Away Names
      * Match Clock
-     * Tackle count
      * Pen Shootout
+     * Additional Time
 -->
 <ScoreboardConfig>
     <persistence_file>football.json</persistence_file>
