@@ -76,6 +76,12 @@
         <dashboard-ui>true</dashboard-ui>
     </widget>
 
+    <widget>
+        <id>mins_added</id>
+        <type>Counter</type>
+        <initial_value>0</initial_value>
+    </widget>
+
     <trigger>
         <condition>
             <widget_id>period_index</widget_id>
@@ -102,6 +108,10 @@
                 <target_id>match_clock</target_id>
                 <action>reset</action>
             </action>
+            <action>
+                <target_id>mins_added</target_id>
+                <action>reset</action>
+            </action>
         </actions>
     </trigger>
 
@@ -115,6 +125,10 @@
             <action>
                 <target_id>match_clock</target_id>
                 <action>stop</action>
+            </action>
+            <action>
+                <target_id>mins_added</target_id>
+                <action>reset</action>
             </action>
         </actions>
     </trigger>
@@ -143,6 +157,10 @@
             </action>
             <action>
                 <target_id>match_clock</target_id>
+                <action>reset</action>
+            </action>
+            <action>
+                <target_id>mins_added</target_id>
                 <action>reset</action>
             </action>
         </actions>
@@ -174,6 +192,10 @@
                 <target_id>match_clock</target_id>
                 <action>reset</action>
 	    </action>
+            <action>
+                <target_id>mins_added</target_id>
+                <action>reset</action>
+            </action>
 	  </actions>
      </trigger>
 
@@ -203,6 +225,10 @@
                 <target_id>match_clock</target_id>
                 <action>reset</action>
 	    </action>
+            <action>
+                <target_id>mins_added</target_id>
+                <action>reset</action>
+            </action>
 	  </actions>
      </trigger>
 
