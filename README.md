@@ -17,7 +17,7 @@
 # Key Features
 
 * **Single-Binary**: Single executable, built in rust for speed and robustness.
-* **Automations**: Trigger any action on scoreboard conditions.
+* **Automations**: Trigger any action on scoreboard conditions (see [Wiki](https://github.com/jaredquinn/scoreboard-engine/wiki/Automations)).
 * **Customisable**: Assemble your scoreboard from a collection of widgets and an XML configuration.
 * **Integrated Dashboard**: A HTML dashboard is baked directly into the executable.
 * **Disaster Recovery**: Live state is persisted on every change and tick.
