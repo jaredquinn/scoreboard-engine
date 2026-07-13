@@ -22,13 +22,12 @@
 
     <widget>
         <id>match_clock</id>
-        <type>Timer</type>
+        <type>timer</type>
         <initial_seconds>0</initial_seconds>
         <is_down>false</is_down>
         <min_value>0</min_value>
         <max_value>10</max_value>
 	<allow_additional>true</allow_additional>
-	<frequency>1000</frequency>
     </widget>
 
     <widget>

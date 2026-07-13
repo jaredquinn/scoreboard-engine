@@ -27,6 +27,7 @@
         <is_down>true</is_down>
         <min_value>0</min_value>
         <max_value>720</max_value>
+	<frequency>100</frequency>
     </widget>
 
     <widget>
@@ -80,6 +81,7 @@
         <max_value>24</max_value>
 	<reset_on_start>true</reset_on_start>
 	<format>s.auto</format>
+	<frequency>100</frequency>
     </widget>
 
     <widget>
