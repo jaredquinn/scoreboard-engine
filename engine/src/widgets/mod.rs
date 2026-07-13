@@ -42,7 +42,7 @@ pub enum WidgetValue {
 // Global defaults for serde instantiation
 pub fn default_true() -> bool { true }
 pub fn default_false() -> bool { false }
-pub fn default_frequency() -> i64 { 100 }
+pub fn default_frequency() -> i64 { 1000 }
 
 pub fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
     match value {
