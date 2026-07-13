@@ -11,7 +11,7 @@
 - Timers
   - Now anchored to system clock, providing more accuracy.
   - Anchor is persisted, allowing clocks to run "offline" recalculated at engine startup.
-  - New configuration option "frequency", setting duration between ticks to register a "change"
+  - New configuration option "frequency", setting duration between ticks to register a "change", default 1000ms
   - Fix inconsitencies with the way clocks were manually set, now universal [hh:]mm:ss.ms format.
   - Add missing ability to edit main, stoppage and additional clocks.
 

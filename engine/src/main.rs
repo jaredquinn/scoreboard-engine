@@ -38,7 +38,6 @@ pub mod automations;
 use widgets::{WidgetValue, UpdatePayload, create_widget, load_config};
 use automations::{AutomationTrigger, process_automations};
 
-
 type JsonValue = serde_json::Value;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -61,7 +60,6 @@ pub struct ScoreboardState {
     pub automations: RwLock<Vec<AutomationTrigger>>,
 }
 
-// --- PERSISTENCE & LOGGING ---
 async fn log_event(widget_id: String, action: String, value: String) {
     let ts_ms = time_format::now_ms().unwrap();
     let timestamp = time_format::strftime_ms_local("%Y-%m-%d %H:%M:%S.{ms}", ts_ms).unwrap();
@@ -79,7 +77,6 @@ async fn save_to_disk(data: IndexMap<String, WidgetValue>, path: &str) {
         let _ = tokio::fs::write(path, json).await;
     }
 }
-
 
 
 #[axum::debug_handler]
