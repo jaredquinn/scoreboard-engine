@@ -1,5 +1,18 @@
 # Scoreboard Engine Change Log
 
+## [v0.13.0] -  2026-07-06 - "Time Warp" Release
+
+### New Features
+
+- Timers - now anchored to system clock, providing more accuracy.
+- Timers - start time now persisted, clocks virtually tick when engine is not running.
+- Timers - new configuration option "frequency", determining minimum duration between ticks to register a "change"
+
+### Breaking Changes
+
+- Persistence structure for timers has significantly changed.  Perform a "System Reset" before operating.
+
+
 ## [v0.12.0] -  2026-07-06 More Than Just a Game Release
 
 ### New Features

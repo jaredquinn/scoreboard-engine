@@ -28,6 +28,7 @@
         <min_value>0</min_value>
         <max_value>10</max_value>
 	<allow_additional>true</allow_additional>
+	<frequency>1000</frequency>
     </widget>
 
     <widget>

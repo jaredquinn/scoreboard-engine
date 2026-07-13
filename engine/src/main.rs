@@ -6,14 +6,6 @@
 // by the Free Software Foundation...
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
 
 use std::{sync::{Arc, RwLock}, time::Duration};
 use indexmap::IndexMap;
@@ -29,7 +21,7 @@ use axum::{
 use axum_extra::response::JavaScript;
 
 use chrono::Local;
-use serde::{Deserialize, Serializer, Serialize};
+use serde::{Deserialize, Serialize};
 
 use tokio::sync::broadcast;
 use tokio::fs::OpenOptions;
@@ -41,17 +33,13 @@ use clap::Parser;
 use std::net::SocketAddr;
 use std::convert::Infallible;
 
-
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-// Renamed to avoid name clashes with evalexpr::Value
 type JsonValue = serde_json::Value;
-use evalexpr::{eval_with_context, HashMapContext, };
+use evalexpr::{eval_with_context, HashMapContext};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
-
 const TICK_FREQ: u64 = 100;
-const TICK_FACTOR: f64 = 10.0;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(tag = "type", content = "data")]
@@ -68,33 +56,32 @@ pub enum WidgetValue {
     Timer {
         formatted_time: String,
         paused_formatted: String,
-        #[serde(serialize_with = "serialize_two_decimals")]
-        paused_time: f64,
+        paused_time: i64,
         total_formatted: String,
-        #[serde(serialize_with = "serialize_two_decimals")]
-        total_time: f64,
-        #[serde(serialize_with = "serialize_two_decimals")]
-        seconds: f64,
+        total_time: i64,
+        seconds: i64,
         running: bool,
         paused: bool,
         reset_on_start: bool,
-        #[serde(serialize_with = "serialize_two_decimals")]
-        initial_seconds: f64,
+        initial_seconds: i64,
         is_down: bool,
-        #[serde(serialize_with = "serialize_two_decimals")]
-        min_value: f64,
-        #[serde(serialize_with = "serialize_two_decimals")]
-        max_value: f64,
+        min_value: i64,
+        max_value: i64,
         format: String,
         #[serde(rename = "dashboard-ui", default = "default_true")]
         dashboard_ui: bool,
         #[serde(default = "default_false")]
         allow_additional: bool,
         additional_active: bool,
-        additional_time: f64,
+        additional_time: i64,
         additional_formatted: String,
         additional_total_formatted: String,
-
+        #[serde(default = "default_frequency")]
+        frequency: i64,
+        #[serde(default)]
+        last_system_time: Option<i64>, 
+        #[serde(skip, default)]
+        start_time: Option<chrono::DateTime<chrono::Local>>,
     },
     List {
         index: usize,
@@ -140,8 +127,8 @@ pub enum WidgetValue {
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct TriggerCondition {
     pub widget_id: String,
-    pub operator: String, // "==", ">=", "<="
-    pub value: f64,
+    pub operator: String,
+    pub value: i64,
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
@@ -157,28 +144,16 @@ pub struct AutomationTrigger {
     pub actions: Vec<TriggerAction>,
     #[serde(default = "default_true")]
     pub active: bool,
-
-    // NEW ARCHITECTURE VALUE CACHE
-    #[serde(skip, default = "default_nan")]
-    pub last_value: f64, // Tracks the absolute last seen float value to guarantee true edge detection
-}
-
-
-// Serde serializer
-pub fn serialize_two_decimals<S>(value: &f64, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    let s = format!("{:.2}", value);
-    let parsed: f64 = s.parse().unwrap_or(*value);
-    serializer.serialize_f64(parsed)
+    #[serde(skip, default = "default_none_i64")]
+    pub last_value: Option<i64>,
 }
 
 fn default_true() -> bool { true }
 fn default_false() -> bool { false }
-fn default_nan() -> f64 { f64::NAN }
+fn default_none_i64() -> Option<i64> { None }
+fn default_frequency() -> i64 { 100 } 
 
-// Trait defining the shared behaviors for widgets
+
 pub trait Widget {
     fn update(&mut self, payload: UpdatePayload) -> (bool, String);
     fn tick(&mut self, flat_context: &IndexMap<String, JsonValue>) -> (bool, String);
@@ -196,7 +171,7 @@ pub enum ShotResult {
     Missed,
 }
 
-// Pen Shots 
+// --- PENALTY SHOTS WIDGET ---
 pub struct PenaltyShotsWidget {
     pub shots: Vec<ShotResult>,
     pub current_round: usize,
@@ -223,7 +198,6 @@ impl Widget for PenaltyShotsWidget {
                             _ => ShotResult::Missed,
                         };
 
-                        // Sudden Death Extension: Automatically expand team array capacity dynamically
                         if self.current_round >= self.shots.len() {
                             self.shots.push(ShotResult::Untaken);
                         }
@@ -239,7 +213,6 @@ impl Widget for PenaltyShotsWidget {
                             self.current_round -= 1;
                             self.shots[self.current_round] = ShotResult::Untaken;
 
-                            // Contract sudden death padding if stepping back into baseline slots
                             if self.shots.len() > 5 && self.current_round < self.shots.len() - 1 {
                                 self.shots.pop();
                             }
@@ -268,14 +241,8 @@ impl Widget for PenaltyShotsWidget {
         }
     }
 
-    fn tick(&mut self, _flat_context: &IndexMap<String, JsonValue>) -> (bool, String) {
-        (false, String::new())
-    }
-
-    fn is_visible(&self) -> bool {
-        self.dashboard_ui
-    }
-
+    fn tick(&mut self, _flat_context: &IndexMap<String, JsonValue>) -> (bool, String) { (false, String::new()) }
+    fn is_visible(&self) -> bool { self.dashboard_ui }
     fn to_value(&self) -> WidgetValue {
         WidgetValue::PenaltyShots {
             shots: self.shots.clone(),
@@ -283,7 +250,6 @@ impl Widget for PenaltyShotsWidget {
             dashboard_ui: self.dashboard_ui,
         }
     }
-
     fn extra_values(&self) -> HashMap<String, serde_json::Value> {
         let mut extras = HashMap::new();
         let score = self.shots.iter().filter(|&s| *s == ShotResult::Scored).count();
@@ -293,7 +259,7 @@ impl Widget for PenaltyShotsWidget {
     }
 }
 
-// Switch
+// --- SWITCH WIDGET ---
 pub struct SwitchWidget {
     pub value: bool,
     pub initial_value: bool,
@@ -302,9 +268,7 @@ pub struct SwitchWidget {
     pub dashboard_ui: bool,
 }
 
-
 impl Widget for SwitchWidget {
-
     fn primary_value(&self) -> serde_json::Value {
         serde_json::Value::from(if self.value { self.display_true.clone() } else { self.display_false.clone() })
     }
@@ -318,7 +282,7 @@ impl Widget for SwitchWidget {
                     "toggle" => self.value = !self.value,
                     "reset" => self.value = self.initial_value,
                     "set" => self.value = {
-                        if let Some(new_val) = value.expect("Value Required").as_bool() {
+                        if let Some(new_val) = value.and_then(|v| v.as_bool()) {
                             new_val
                         } else {
                             return (false, String::new())
@@ -339,15 +303,8 @@ impl Widget for SwitchWidget {
         }
     }
 
-    fn tick(&mut self, _flat_context: &IndexMap<String, JsonValue>) -> (bool, String) {
-        (false, String::new())
-    }
-
-
-    fn is_visible(&self) -> bool {
-        self.dashboard_ui
-    }
-
+    fn tick(&mut self, _flat_context: &IndexMap<String, JsonValue>) -> (bool, String) { (false, String::new()) }
+    fn is_visible(&self) -> bool { self.dashboard_ui }
     fn to_value(&self) -> WidgetValue {
         WidgetValue::Switch {
             value: self.value,
@@ -357,7 +314,6 @@ impl Widget for SwitchWidget {
             dashboard_ui: self.dashboard_ui,
         }
     }
-
     fn extra_values(&self) -> HashMap<String, serde_json::Value> { 
         let mut extras = HashMap::new();
         extras.insert("value".to_string(), serde_json::Value::from(self.value));
@@ -365,7 +321,7 @@ impl Widget for SwitchWidget {
     }
 }
 
-// Counter
+// --- COUNTER WIDGET ---
 pub struct CounterWidget {
     pub value: i64,
     pub initial_value: i64,
@@ -376,10 +332,7 @@ pub struct CounterWidget {
 }
 
 impl Widget for CounterWidget {
-
-    fn primary_value(&self) -> serde_json::Value {
-        serde_json::Value::from(self.value)
-    }
+    fn primary_value(&self) -> serde_json::Value { serde_json::Value::from(self.value) }
 
     fn update(&mut self, payload: UpdatePayload) -> (bool, String) {
         match payload {
@@ -397,9 +350,7 @@ impl Widget for CounterWidget {
                     "set_min" => self.min_value = amt,
                     "set_max" => self.max_value = amt,
                     "set" => {
-                        if amt < self.min_value || amt > self.max_value {
-                            return (false, String::new());
-                        }
+                        if amt < self.min_value || amt > self.max_value { return (false, String::new()); }
                         self.value = amt
                     },
                     "reset" => self.value = self.initial_value,
@@ -418,15 +369,8 @@ impl Widget for CounterWidget {
         }
     }
 
-    fn tick(&mut self, _flat_context: &IndexMap<String, JsonValue>) -> (bool, String) {
-        (false, String::new())
-    }
-
-
-    fn is_visible(&self) -> bool {
-        self.dashboard_ui
-    }
-
+    fn tick(&mut self, _flat_context: &IndexMap<String, JsonValue>) -> (bool, String) { (false, String::new()) }
+    fn is_visible(&self) -> bool { self.dashboard_ui }
     fn to_value(&self) -> WidgetValue {
         WidgetValue::Counter {
             value: self.value,
@@ -437,54 +381,48 @@ impl Widget for CounterWidget {
             dashboard_ui: self.dashboard_ui,
         }
     }
-
     fn extra_values(&self) -> HashMap<String, serde_json::Value> { 
         let mut extras = HashMap::new();
         extras.insert("min".to_string(), serde_json::Value::from(self.min_value));
         extras.insert("max".to_string(), serde_json::Value::from(self.max_value));
         extras
     }
-
 }
 
-// Timer
+// --- TIMER WIDGET (PURE INTEGER SYSTEM ANCHORED) ---
 #[derive(Serialize)]
 pub struct TimerWidget {
-    #[serde(serialize_with = "serialize_two_decimals")]
-    pub seconds: f64,
-    #[serde(serialize_with = "serialize_two_decimals")]
-    pub paused_time: f64,
+    pub seconds: i64,
+    pub paused_time: i64,
     pub paused_formatted: String,
-    #[serde(serialize_with = "serialize_two_decimals")]
-    pub total_time: f64,
+    pub total_time: i64,
     pub total_formatted: String,
-    pub initial_seconds: f64,
+    pub initial_seconds: i64,
     pub formatted_time: String,
     pub running: bool,
     pub reset_on_start: bool,
     pub paused: bool,
     pub is_down: bool,
-    #[serde(serialize_with = "serialize_two_decimals")]
-    pub min_value: f64,
-    #[serde(serialize_with = "serialize_two_decimals")]
-    pub max_value: f64,
+    pub min_value: i64,
+    pub max_value: i64,
     pub format: String,
     pub dashboard_ui: bool,
     #[serde(default = "default_false")]
     pub allow_additional: bool, 
     pub additional_active: bool,
-    #[serde(default)]
-    pub additional_time: f64,
-    #[serde(default)]
+    pub additional_time: i64,
     pub additional_formatted: String,
     pub additional_total_formatted: String,
+    #[serde(default = "default_frequency")]
+    pub frequency: i64,
+    pub last_system_time: Option<i64>,
+    #[serde(skip)]
+    pub start_time: Option<chrono::DateTime<chrono::Local>>,
 }
 
 impl Widget for TimerWidget {
-
     fn primary_value(&self) -> serde_json::Value {
-        let truncated_seconds = (self.seconds * TICK_FACTOR).trunc() / TICK_FACTOR;
-        serde_json::Value::from(truncated_seconds)
+        serde_json::Value::from((self.seconds as f64) / 1000.0)
     }
 
     fn update(&mut self, payload: UpdatePayload) -> (bool, String) {
@@ -495,67 +433,79 @@ impl Widget for TimerWidget {
                         if self.reset_on_start {
                             self.seconds = self.initial_seconds;
                             self.formatted_time = format_timer(self.seconds, &self.format);
-                            self.paused_time = 0.0;
+                            self.paused_time = 0;
                             self.paused_formatted = format_timer(self.paused_time, &self.format);
-                            //self.total_time = 0.0;
-                            //self.total_formatted = format_timer(self.total_time, &self.format);
+                            self.additional_time = 0;
+                            self.additional_formatted = format_timer(0, &self.format);
+                            self.additional_total_formatted = format_timer(0, &self.format);
                         }
                         self.paused = false;
                         self.running = true;
+                        self.start_time = Some(chrono::Local::now());
+                        self.last_system_time = Some(chrono::Local::now().timestamp_millis());
+
                     },
                     "set_direction" => {
                         if let Some(val_str) = value.and_then(|v| v.as_str().map(String::from)) {
-                            if val_str == "UP" {
-                                self.is_down = false;
-                            }
-                            if val_str == "DOWN" {
-                                self.is_down = true;
-                            }
+                            self.is_down = val_str == "DOWN";
                         }
                     },
                     "set_max" => {
                         if let Some(val_str) = value.as_ref().and_then(|v| v.as_str()) {
-                            if let Some(parsed_secs) = parse_time_string(val_str) { self.max_value = parsed_secs; }
+                            if let Some(parsed_ms) = parse_time_string(val_str) { self.max_value = parsed_ms; }
                         } else if let Some(val_num) = value.as_ref().and_then(|v| v.as_f64()) {
-                            self.max_value = val_num;
+                            self.max_value = (val_num * 1000.0) as i64;
                         }
                     },
                     "set_min" => {
                         if let Some(val_str) = value.as_ref().and_then(|v| v.as_str()) {
-                            if let Some(parsed_secs) = parse_time_string(val_str) { self.min_value = parsed_secs; }
+                            if let Some(parsed_ms) = parse_time_string(val_str) { self.min_value = parsed_ms; }
                         } else if let Some(val_num) = value.as_ref().and_then(|v| v.as_f64()) {
-                            self.min_value = val_num;
+                            self.min_value = (val_num * 1000.0) as i64;
                         }
                     },
                     "set_initial" => {
                         if let Some(val_str) = value.as_ref().and_then(|v| v.as_str()) {
-                            if let Some(parsed_secs) = parse_time_string(val_str) { self.initial_seconds = parsed_secs; }
+                            if let Some(parsed_ms) = parse_time_string(val_str) { self.initial_seconds = parsed_ms; }
                         } else if let Some(val_num) = value.as_ref().and_then(|v| v.as_f64()) {
-                            self.initial_seconds = val_num;
+                            self.initial_seconds = (val_num * 1000.0) as i64;
                         }
                     },
-                    "stop" => self.running = false,
-                    "toggle" => self.running = !self.running,
-                    "pause" => self.paused = !self.paused,
+                    "stop" => {
+                        self.running = false;
+                        self.start_time = None;
+                    },
+                    "toggle" => {
+                        self.running = !self.running;
+                        self.start_time = if self.running { Some(chrono::Local::now()) } else { None };
+                        self.last_system_time = Some(chrono::Local::now().timestamp_millis());
+                    },
+                    "pause" => {
+                        self.paused = !self.paused;
+                        self.start_time = Some(chrono::Local::now());
+                        self.last_system_time = Some(chrono::Local::now().timestamp_millis());
+                    },
                     "reset" => {
                         self.seconds = self.initial_seconds;
                         self.formatted_time = format_timer(self.seconds, &self.format);
                         self.paused = false;
-                        self.paused_time = 0.0;
+                        self.paused_time = 0;
                         self.paused_formatted = format_timer(self.paused_time, &self.format);
-                        self.additional_time = 0.0;
+                        self.additional_time = 0;
                         self.additional_formatted = format_timer(self.additional_time, &self.format);
                         self.additional_total_formatted = format_timer(self.additional_time, &self.format);
                         self.running = false;
+                        self.start_time = None;
+                        self.last_system_time = None;
                     }
-                    "set" | "set_time" => { // Support both labels natively
+                    "set" | "set_time" => {
                         if let Some(val_str) = value.as_ref().and_then(|v| v.as_str()) {
-                            if let Some(parsed_secs) = parse_time_string(val_str) {
-                                self.seconds = parsed_secs;
+                            if let Some(parsed_ms) = parse_time_string(val_str) {
+                                self.seconds = parsed_ms;
                                 self.formatted_time = format_timer(self.seconds, &self.format);
                             }
                         } else if let Some(val_num) = value.as_ref().and_then(|v| v.as_f64()) {
-                            self.seconds = val_num;
+                            self.seconds = (val_num * 1000.0) as i64;
                             self.formatted_time = format_timer(self.seconds, &self.format);
                         }
                     },
@@ -565,8 +515,8 @@ impl Widget for TimerWidget {
             }
             UpdatePayload::Value(v) => {
                 if let Some(val_str) = v.as_str() {
-                    if let Some(parsed_secs) = parse_time_string(val_str) {
-                        self.seconds = parsed_secs;
+                    if let Some(parsed_ms) = parse_time_string(val_str) {
+                        self.seconds = parsed_ms;
                         self.formatted_time = format_timer(self.seconds, &self.format);
                         return (true, self.formatted_time.clone());
                     }
@@ -576,65 +526,122 @@ impl Widget for TimerWidget {
         }
     }
 
-
     fn tick(&mut self, _flat_context: &IndexMap<String, serde_json::Value>) -> (bool, String) {
-        if !self.running { return (false, self.formatted_time.clone()); }
-        let delta = 0.1; 
-
-        if self.paused {
-            self.paused_time += delta;
-            self.total_time += delta;
-            self.paused_formatted = format_timer(self.paused_time, &self.format);
-            self.total_formatted = format_timer(self.total_time, &self.format);
-
-            let truncated_seconds = (self.paused_time * TICK_FACTOR).trunc() / TICK_FACTOR;
-            (true, format!("PAUSED {truncated_seconds:02.1} [Formatted: {}]", self.paused_formatted.clone()));
+        if !self.running {
+            self.start_time = None;
+            self.last_system_time = None;
             return (false, self.formatted_time.clone());
         }
 
+        let now = chrono::Local::now();
+        let now_ms = now.timestamp_millis();
+
+        let delta_ms = match self.start_time {
+            Some(last_tick) => (now - last_tick).num_milliseconds(),
+            None => {
+                let computed_delta = match self.last_system_time {
+                    Some(persisted_ms) if now_ms > persisted_ms => now_ms - persisted_ms,
+                    _ => 0,
+                };
+
+                self.start_time = Some(now);
+                self.last_system_time = Some(now_ms);
+
+                if computed_delta > 0 {
+                    computed_delta
+                } else {
+                    return (true, self.formatted_time.clone());
+                }
+            }
+        };
+
+        let prev_seconds_bucket = self.seconds / self.frequency;
+        let prev_additional_bucket = self.additional_time / self.frequency;
+        let prev_paused_bucket = self.paused_time / self.frequency;
+
+        self.start_time = Some(now);
+        self.last_system_time = Some(now_ms);
+
+        if delta_ms <= 0 {
+            return (false, self.formatted_time.clone());
+        }
+
+        if self.paused {
+            self.paused_time += delta_ms;
+            self.total_time += delta_ms;
+
+            if self.paused_time / self.frequency == prev_paused_bucket {
+                return (false, self.formatted_time.clone());
+            }
+
+            self.paused_formatted = format_timer(self.paused_time, &self.format);
+            self.total_formatted = format_timer(self.total_time, &self.format);
+            return (true, format!("PAUSED {} ms [Formatted: {}]", self.paused_time, self.paused_formatted.clone()));
+        }
+
         if self.is_down {
-            if self.seconds - delta >= self.min_value {
-                self.seconds -= delta;
+            if self.seconds - delta_ms >= self.min_value {
+                self.seconds -= delta_ms;
             } else {
                 self.seconds = self.min_value;
                 self.running = false;
+                self.start_time = None;
+                self.last_system_time = None;
             }
         } else {
             if self.seconds < self.max_value {
-                self.seconds += delta;
+                self.seconds += delta_ms;
                 self.additional_active = false;
+
+                if self.seconds > self.max_value {
+                    let overflow = self.seconds - self.max_value;
+                    self.seconds = self.max_value;
+                    if self.allow_additional {
+                        self.additional_time += overflow;
+                        self.additional_active = true;
+                    } else {
+                        self.running = false;
+                        self.start_time = None;
+                        self.last_system_time = None;
+                    }
+                }
             } else {
                 if self.allow_additional {
-                    self.seconds = self.max_value;
-                    self.additional_time += delta;
+                    self.additional_time += delta_ms;
                     self.additional_active = true;
                 } else {
                     self.seconds = self.max_value;
                     self.running = false;
                     self.additional_active = false;
+                    self.start_time = None;
+                    self.last_system_time = None;
                 }
             }
         }
 
         self.total_time = self.seconds + self.paused_time + self.additional_time;
-        
+
+        let core_changed = (self.seconds / self.frequency) != prev_seconds_bucket;
+        let additional_changed = (self.additional_time / self.frequency) != prev_additional_bucket;
+        let engine_halted = !self.running; // Always force sync if the engine stopped this frame
+
+        if !core_changed && !additional_changed && !engine_halted {
+            return (false, self.formatted_time.clone());
+        }
+
         self.formatted_time = format_timer(self.seconds, &self.format);
         self.additional_formatted = format_timer(self.additional_time, &self.format);
         self.additional_total_formatted = format_timer(self.additional_time + self.seconds, &self.format);
         self.total_formatted = format_timer(self.total_time, &self.format);
 
-        let truncated_seconds = (self.seconds * TICK_FACTOR).trunc() / TICK_FACTOR;
-
+        let current_secs = self.seconds / 1000;
         if self.additional_active {
-            return (true, format!("RUNNING {truncated_seconds:02.1} [Formatted: {}] [Additional: {}]", self.formatted_time.clone(), self.additional_total_formatted.clone()))
+            return (true, format!("RUNNING {}s [Raw: {}] [Formatted: {}] [Additional: {}]", self.seconds, current_secs, self.formatted_time.clone(), self.additional_total_formatted.clone()))
         }
-        (true, format!("RUNNING {truncated_seconds:02.1} [Formatted: {}]", self.formatted_time.clone()))
+        (true, format!("RUNNING {}s [Formatted: {}]", current_secs, self.formatted_time.clone()))
     }
 
-
-    fn is_visible(&self) -> bool {
-        self.dashboard_ui
-    }
+    fn is_visible(&self) -> bool { self.dashboard_ui }
 
     fn to_value(&self) -> WidgetValue {
         WidgetValue::Timer {
@@ -658,35 +665,30 @@ impl Widget for TimerWidget {
             additional_time: self.additional_time,
             additional_formatted: self.additional_formatted.clone(),
             additional_total_formatted: self.additional_total_formatted.clone(),
+            frequency: self.frequency,
+            last_system_time: self.last_system_time,
+            start_time: self.start_time,
         }
     }
 
-    fn extra_values(&self) -> HashMap<String, serde_json::Value> { 
+    fn extra_values(&self) -> HashMap<String, serde_json::Value> {
         let mut extras = HashMap::new();
         extras.insert("formatted".to_string(), serde_json::Value::String(self.formatted_time.clone()));
-
-        let truncated_additional = (self.additional_time * TICK_FACTOR).trunc() / TICK_FACTOR;
-        extras.insert("additional_time".to_string(), serde_json::Value::from(truncated_additional));
+        extras.insert("additional_time".to_string(), serde_json::Value::from((self.additional_time as f64) / 1000.0));
         extras.insert("additional_formatted".to_string(), serde_json::Value::String(self.additional_formatted.clone()));
         extras.insert("additional_total_formatted".to_string(), serde_json::Value::String(self.additional_total_formatted.clone()));
-
         extras.insert("additional_active".to_string(), serde_json::Value::from(self.additional_active));
-
-        let truncated_paused_time = (self.paused_time * TICK_FACTOR).trunc() / TICK_FACTOR;
-        extras.insert("paused_time".to_string(), serde_json::Value::from(truncated_paused_time));
+        extras.insert("paused_time".to_string(), serde_json::Value::from((self.paused_time as f64) / 1000.0));
         extras.insert("paused_formatted".to_string(), serde_json::Value::String(self.paused_formatted.clone()));
-
-        let truncated_total_time = (self.total_time * TICK_FACTOR).trunc() / TICK_FACTOR;
-        extras.insert("total_time".to_string(), serde_json::Value::from(truncated_total_time));
+        extras.insert("total_time".to_string(), serde_json::Value::from((self.total_time as f64) / 1000.0));
         extras.insert("total_formatted".to_string(), serde_json::Value::String(self.total_formatted.clone()));
-
         extras.insert("paused".to_string(), serde_json::Value::from(self.paused));
         extras.insert("running".to_string(), serde_json::Value::from(self.running));
         extras
     }
 }
 
-// List
+// --- LIST WIDGET ---
 pub struct ListWidget {
     pub index: usize,
     pub options: Vec<String>,
@@ -694,7 +696,6 @@ pub struct ListWidget {
 }
 
 impl Widget for ListWidget {
-
     fn primary_value(&self) -> serde_json::Value {
         let s = self.options.get(self.index).cloned().unwrap_or_default();
         serde_json::Value::from(s)
@@ -705,14 +706,10 @@ impl Widget for ListWidget {
             UpdatePayload::Action { action, .. } => {
                 match action.as_str() {
                     "next" => {
-                        if !self.options.is_empty() {
-                            self.index = (self.index + 1) % self.options.len();
-                        }
+                        if !self.options.is_empty() { self.index = (self.index + 1) % self.options.len(); }
                     }
                     "prev" => {
-                        if !self.options.is_empty() {
-                            self.index = if self.index == 0 { self.options.len() - 1 } else { self.index - 1 };
-                        }
+                        if !self.options.is_empty() { self.index = if self.index == 0 { self.options.len() - 1 } else { self.index - 1 }; }
                     }
                     "reset" => self.index = 0,
                     _ => return (false, String::new()),
@@ -738,14 +735,8 @@ impl Widget for ListWidget {
         }
     }
 
-    fn tick(&mut self, _flat_context: &IndexMap<String, JsonValue>) -> (bool, String) {
-        (false, String::new())
-    }
-
-    fn is_visible(&self) -> bool {
-        self.dashboard_ui
-    }
-
+    fn tick(&mut self, _flat_context: &IndexMap<String, JsonValue>) -> (bool, String) { (false, String::new()) }
+    fn is_visible(&self) -> bool { self.dashboard_ui }
     fn to_value(&self) -> WidgetValue {
         WidgetValue::List {
             index: self.index,
@@ -753,16 +744,14 @@ impl Widget for ListWidget {
             dashboard_ui: self.dashboard_ui,
         }
     }
-
     fn extra_values(&self) -> HashMap<String, serde_json::Value> { 
         let mut extras = HashMap::new();
         extras.insert("index".to_string(), serde_json::Value::from(self.index));
         extras
     }
-
 }
 
-// Team
+// --- TEAM WIDGET ---
 pub struct TeamWidget {
     pub short_name: String,
     pub name: String,
@@ -772,10 +761,7 @@ pub struct TeamWidget {
 }
 
 impl Widget for TeamWidget {
-
-    fn primary_value(&self) -> serde_json::Value {
-        serde_json::Value::from(self.short_name.clone())
-    }
+    fn primary_value(&self) -> serde_json::Value { serde_json::Value::from(self.short_name.clone()) }
 
     fn update(&mut self, payload: UpdatePayload) -> (bool, String) {
         match payload {
@@ -783,25 +769,25 @@ impl Widget for TeamWidget {
                 match action.as_str() {
                     "set" => {
                         if let Some(val_str) = value.and_then(|v| v.as_str().map(String::from)) {
-                            self.short_name = val_str.to_string();
+                            self.short_name = val_str;
                             return (true, self.short_name.clone())
                         }
                     }
                     "set_name" => {
                         if let Some(val_str) = value.and_then(|v| v.as_str().map(String::from)) {
-                            self.name = val_str.to_string();
+                            self.name = val_str;
                             return (true, self.name.clone())
                         }
                     }
                     "set_primary" => {
                         if let Some(val_str) = value.and_then(|v| v.as_str().map(String::from)) {
-                            self.primary_color = val_str.to_string();
+                            self.primary_color = val_str;
                             return (true, self.primary_color.clone())
                         }
                     }
                     "set_secondary" => {
                         if let Some(val_str) = value.and_then(|v| v.as_str().map(String::from)) {
-                            self.secondary_color = val_str.to_string();
+                            self.secondary_color = val_str;
                             return (true, self.secondary_color.clone())
                         }
                     }
@@ -809,19 +795,12 @@ impl Widget for TeamWidget {
                 }
                 (true, self.short_name.clone())
             }
-
             _ => (false, String::new()),
         }
     }
 
-    fn tick(&mut self, _flat_context: &IndexMap<String, JsonValue>) -> (bool, String) {
-        (false, String::new())
-    }
-
-    fn is_visible(&self) -> bool {
-        self.dashboard_ui
-    }
-
+    fn tick(&mut self, _flat_context: &IndexMap<String, JsonValue>) -> (bool, String) { (false, String::new()) }
+    fn is_visible(&self) -> bool { self.dashboard_ui }
     fn to_value(&self) -> WidgetValue {
         WidgetValue::Team {
             short_name: self.short_name.clone(),
@@ -831,7 +810,6 @@ impl Widget for TeamWidget {
             dashboard_ui: self.dashboard_ui,
         }
     }
-
     fn extra_values(&self) -> HashMap<String, serde_json::Value> { 
         let mut extras = HashMap::new();
         extras.insert("name".to_string(), serde_json::Value::String(self.name.clone()));
@@ -841,19 +819,14 @@ impl Widget for TeamWidget {
     }
 }
 
-
-// Text
+// --- TEXT WIDGET ---
 pub struct TextWidget {
     pub content: String,
     pub dashboard_ui: bool,
 }
 
 impl Widget for TextWidget {
-
-    fn primary_value(&self) -> serde_json::Value {
-        serde_json::Value::from(self.content.clone())
-    }
-
+    fn primary_value(&self) -> serde_json::Value { serde_json::Value::from(self.content.clone()) }
     fn update(&mut self, payload: UpdatePayload) -> (bool, String) {
         match payload {
             UpdatePayload::Value(v) => {
@@ -867,26 +840,15 @@ impl Widget for TextWidget {
             _ => (false, String::new()),
         }
     }
-
-    fn tick(&mut self, _flat_context: &IndexMap<String, JsonValue>) -> (bool, String) {
-        (false, String::new())
-    }
-
-    fn is_visible(&self) -> bool {
-        self.dashboard_ui
-    }
-
+    fn tick(&mut self, _flat_context: &IndexMap<String, JsonValue>) -> (bool, String) { (false, String::new()) }
+    fn is_visible(&self) -> bool { self.dashboard_ui }
     fn to_value(&self) -> WidgetValue {
-        WidgetValue::Text {
-            content: self.content.clone(),
-            dashboard_ui: self.dashboard_ui,
-        }
+        WidgetValue::Text { content: self.content.clone(), dashboard_ui: self.dashboard_ui }
     }
-
-    fn extra_values(&self) -> HashMap<String, serde_json::Value> { let extras = HashMap::new(); extras }
+    fn extra_values(&self) -> HashMap<String, serde_json::Value> { HashMap::new() }
 }
 
-// Calculation
+// --- CALCULATION WIDGET ---
 pub struct CalculationWidget {
     pub value: String,
     pub expression: String,
@@ -894,11 +856,7 @@ pub struct CalculationWidget {
 }
 
 impl Widget for CalculationWidget {
-
-    fn primary_value(&self) -> serde_json::Value {
-        serde_json::Value::from(self.value.clone())
-    }
-
+    fn primary_value(&self) -> serde_json::Value { serde_json::Value::from(self.value.clone()) }
     fn update(&mut self, payload: UpdatePayload) -> (bool, String) {
         match payload {
             UpdatePayload::Value(v) => {
@@ -914,13 +872,9 @@ impl Widget for CalculationWidget {
     }
 
     fn tick(&mut self, flat_context: &IndexMap<String, JsonValue>) -> (bool, String) {
-        if self.expression.is_empty() {
-            return (false, String::new());
-        }
+        if self.expression.is_empty() { return (false, String::new()); }
 
-        // Build execution context cleanly without trait ambiguity
         let mut context = HashMapContext::<evalexpr::DefaultNumericTypes>::new();
-
         for (key, val) in flat_context.iter() {
             let var_name: String = key.clone();
             if let Some(i) = val.as_i64() {
@@ -934,19 +888,12 @@ impl Widget for CalculationWidget {
             }
         }
 
-        // Evaluate the mathematical/logical expression
         match eval_with_context(&self.expression, &context) {
             Ok(eval_val) => {
                 let new_value: String = match eval_val {
                     evalexpr::Value::String(s) => s,
-                    evalexpr::Value::Float(f) => {
-                        let f: f64 = f;
-                        f.to_string()
-                    },
-                    evalexpr::Value::Int(i) => {
-                        let i: i64 = i;
-                        i.to_string()
-                    },
+                    evalexpr::Value::Float(f) => f.to_string(),
+                    evalexpr::Value::Int(i) => i.to_string(),
                     evalexpr::Value::Boolean(b) => b.to_string(),
                     _ => return (false, String::new()),
                 };
@@ -965,22 +912,13 @@ impl Widget for CalculationWidget {
         }
     }
 
-    fn is_visible(&self) -> bool {
-        self.dashboard_ui
-    }
-
+    fn is_visible(&self) -> bool { self.dashboard_ui }
     fn to_value(&self) -> WidgetValue {
-        WidgetValue::Calculation {
-            value: self.value.clone(),
-            expression: self.expression.clone(),
-            dashboard_ui: self.dashboard_ui,
-        }
+        WidgetValue::Calculation { value: self.value.clone(), expression: self.expression.clone(), dashboard_ui: self.dashboard_ui }
     }
-
-    fn extra_values(&self) -> HashMap<String, serde_json::Value> { let extras = HashMap::new(); extras }
+    fn extra_values(&self) -> HashMap<String, serde_json::Value> { HashMap::new() }
 }
 
-// Helper factory to dynamically instantiate widget from its data representation
 fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
     match value {
         WidgetValue::PenaltyShots { shots, current_round, dashboard_ui } => Box::new(PenaltyShotsWidget {
@@ -1017,6 +955,9 @@ fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
             additional_active,
             additional_formatted,
             additional_total_formatted,
+            frequency,
+            last_system_time,
+            start_time,
         } => Box::new(TimerWidget {
             seconds: *seconds,
             initial_seconds: *initial_seconds,
@@ -1038,16 +979,16 @@ fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
             max_value: *max_value,
             format: format.clone(),
             dashboard_ui: *dashboard_ui,
+            frequency: *frequency,
+            last_system_time: *last_system_time,
+            start_time: *start_time,
         }),
         WidgetValue::List { index, options, dashboard_ui } => Box::new(ListWidget {
             index: *index,
             options: options.clone(),
             dashboard_ui: *dashboard_ui,
         }),
-        WidgetValue::Text { content, dashboard_ui } => Box::new(TextWidget {
-            content: content.clone(),
-            dashboard_ui: *dashboard_ui,
-        }),
+        WidgetValue::Text { content, dashboard_ui } => Box::new(TextWidget { content: content.clone(), dashboard_ui: *dashboard_ui }),
         WidgetValue::Calculation { value, expression , dashboard_ui } => Box::new(CalculationWidget {
             value: value.clone(),
             expression: expression.clone(),
@@ -1074,10 +1015,7 @@ fn create_widget(value: &WidgetValue) -> Box<dyn Widget> {
 #[derive(Deserialize, Debug, Clone)]
 #[serde(untagged)]
 pub enum UpdatePayload {
-    Action {
-        action: String,
-        value: Option<serde_json::Value>,
-    },
+    Action { action: String, value: Option<serde_json::Value> },
     Value(serde_json::Value),
 }
 
@@ -1108,24 +1046,22 @@ fn process_automations(
 
     for trigger in automations.iter_mut() {
         if let Some(num) = fresh_flat_context.get(&trigger.condition.widget_id).and_then(|v| v.as_f64()) {
-            let current_val = num;
+            // Evaluated calculations translate programmatically into milli-scaled representations
+            let current_val = (num * 1000.0).round() as i64;
             let target_val = trigger.condition.value;
-            let is_first_sample = trigger.last_value.is_nan();
+            let is_first_sample = trigger.last_value.is_none();
+            let last_val_unwrapped = trigger.last_value.unwrap_or(0);
 
             let condition_met = match trigger.condition.operator.as_str() {
-                "==" => (current_val - target_val).abs() < 0.01,
+                "==" => current_val == target_val,
                 ">=" => current_val >= target_val,
                 "<=" => current_val <= target_val,
-                "++" => {
-                    !is_first_sample && (current_val - target_val).abs() < 0.01 && current_val > trigger.last_value
-                },
-                "--" => {
-                    !is_first_sample && (current_val - target_val).abs() < 0.01 && current_val < trigger.last_value
-                },
+                "++" => !is_first_sample && current_val == target_val && current_val > last_val_unwrapped,
+                "--" => !is_first_sample && current_val == target_val && current_val < last_val_unwrapped,
                 _ => false,
             };
 
-            let value_changed = is_first_sample || (current_val - trigger.last_value).abs() > 0.001;
+            let value_changed = is_first_sample || current_val != last_val_unwrapped;
 
             if condition_met && value_changed {
                 if !is_first_sample {
@@ -1164,14 +1100,14 @@ fn process_automations(
                     }
                 }
             }
-            trigger.last_value = current_val;
+            trigger.last_value = Some(current_val);
         }
     }
 
     if needs_period_rearm {
         for t in automations.iter_mut() {
             if t.condition.widget_id == "match_clock" {
-                t.last_value = f64::NAN; 
+                t.last_value = None; 
             }
         }
     }
@@ -1180,11 +1116,9 @@ fn process_automations(
 }
 
 // --- PERSISTENCE & LOGGING ---
-
 async fn log_event(widget_id: String, action: String, value: String) {
     let ts_ms = time_format::now_ms().unwrap();
     let timestamp = time_format::strftime_ms_local("%Y-%m-%d %H:%M:%S.{ms}", ts_ms).unwrap();
-
     let con_line = format!("[{}] ID: {:<18} | {:<10} | Val: {}", timestamp, widget_id, action, value);
     eprintln!("{}", con_line);
 
@@ -1225,268 +1159,122 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String, Vec<Automa
         .unwrap_or("state_persistence.json")
         .to_string();
 
-
-
     for node in root.descendants().filter(|n| n.has_tag_name("widget")) {
-        let id = node.children()
-            .find(|n| n.has_tag_name("id"))
-            .and_then(|n| n.text())
-            .unwrap_or("unknown")
-            .to_string();
-
-        let w_type = node.children()
-            .find(|n| n.has_tag_name("type"))
-            .and_then(|n| n.text())
-            .unwrap_or("");
-
-        let dashboard_ui = node.children()
-            .find(|n| n.has_tag_name("dashboard-ui"))
-            .and_then(|n| n.text())
-            .map(|t| t.trim().to_lowercase() != "false")
-            .unwrap_or(true);
+        let id = node.children().find(|n| n.has_tag_name("id")).and_then(|n| n.text()).unwrap_or("unknown").to_string();
+        let w_type = node.children().find(|n| n.has_tag_name("type")).and_then(|n| n.text()).unwrap_or("");
+        let dashboard_ui = node.children().find(|n| n.has_tag_name("dashboard-ui")).and_then(|n| n.text())
+            .map(|t| t.trim().to_lowercase() != "false").unwrap_or(true);
 
         let val = match w_type {
             "Counter" => {
-                let initial = node.children()
-                    .find(|n| n.has_tag_name("initial_value"))
-                    .and_then(|n| n.text()?.parse().ok())
-                    .unwrap_or(0);
-
-                let max = node.children()
-                    .find(|n| n.has_tag_name("max_value"))
-                    .and_then(|n| n.text()?.parse().ok())
-                    .unwrap_or(65535);
-
-                let min = node.children()
-                    .find(|n| n.has_tag_name("min_value"))
-                    .and_then(|n| n.text()?.parse().ok())
-                    .unwrap_or(0);
-
-                let increments: Vec<i64> = node.descendants()
-                    .filter(|n| n.has_tag_name("value"))
-                    .filter_map(|n| n.text()?.parse().ok())
-                    .collect();
-
+                let initial = node.children().find(|n| n.has_tag_name("initial_value")).and_then(|n| n.text()?.parse().ok()).unwrap_or(0);
+                let max = node.children().find(|n| n.has_tag_name("max_value")).and_then(|n| n.text()?.parse().ok()).unwrap_or(65535);
+                let min = node.children().find(|n| n.has_tag_name("min_value")).and_then(|n| n.text()?.parse().ok()).unwrap_or(0);
+                let increments: Vec<i64> = node.descendants().filter(|n| n.has_tag_name("value")).filter_map(|n| n.text()?.parse().ok()).collect();
                 let final_increments = if increments.is_empty() { vec![1] } else { increments };
 
-                WidgetValue::Counter {
-                    value: initial,
-                    initial_value: initial,
-                    increments: final_increments,
-                    min_value: min,
-                    max_value: max,
-                    dashboard_ui,
-                }
+                WidgetValue::Counter { value: initial, initial_value: initial, increments: final_increments, min_value: min, max_value: max, dashboard_ui }
             }
             "Timer" => {
-                let secs = node.children()
-                    .find(|n| n.has_tag_name("initial_seconds"))
-                    .and_then(|n| n.text()?.parse::<f64>().ok())
-                    .unwrap_or(0.0);
-                let down = node.children()
-                    .find(|n| n.has_tag_name("is_down"))
-                    .and_then(|n| n.text()?.parse().ok())
-                    .unwrap_or(true);
-                let min = node.children()
-                    .find(|n| n.has_tag_name("min_value"))
-                    .and_then(|n| n.text()?.parse::<f64>().ok())
-                    .unwrap_or(0.0);
+                let secs = node.children().find(|n| n.has_tag_name("initial_seconds")).and_then(|n| n.text()?.parse::<f64>().ok()).unwrap_or(0.0);
+                let down = node.children().find(|n| n.has_tag_name("is_down")).and_then(|n| n.text()?.parse().ok()).unwrap_or(true);
+                let min = node.children().find(|n| n.has_tag_name("min_value")).and_then(|n| n.text()?.parse::<f64>().ok()).unwrap_or(0.0);
+                let max = node.children().find(|n| n.has_tag_name("max_value")).and_then(|n| n.text()?.parse::<f64>().ok()).unwrap_or(3600.0);
+                let fmt = node.children().find(|n| n.has_tag_name("format")).and_then(|n| n.text()).unwrap_or("mm:ss").to_string();
+                let ros = node.children().find(|n| n.has_tag_name("reset_on_start")).and_then(|n| n.text()).map(|t| t.trim().to_lowercase() == "true").unwrap_or(false);
+                let frequency = node.children().find(|n| n.has_tag_name("frequency")).and_then(|n| n.text()?.parse::<i64>().ok()).unwrap_or(100);
+                let allow_additional = node.children().find(|n| n.has_tag_name("allow_additional")).and_then(|n| n.text()).and_then(|t| t.parse::<bool>().ok()).unwrap_or(false);
 
-                let max = node.children()
-                    .find(|n| n.has_tag_name("max_value"))
-                    .and_then(|n| n.text()?.parse::<f64>().ok())
-                    .unwrap_or(3600.0);
-
-                let fmt = node.children()
-                    .find(|n| n.has_tag_name("format"))
-                    .and_then(|n| n.text())
-                    .unwrap_or("mm:ss")
-                    .to_string();
-
-                let ros = node.children()
-                    .find(|n| n.has_tag_name("reset_on_start"))
-                    .and_then(|n| n.text())
-                    .map(|t| t.trim().to_lowercase() == "true")
-                    .unwrap_or(false);
-
-                let allow_additional = node.children()
-                    .find(|n| n.has_tag_name("allow_additional"))
-                    .and_then(|n| n.text())
-                    .and_then(|t| t.parse::<bool>().ok())
-                    .unwrap_or(false);
-
+                let secs_ms = (secs * 1000.0) as i64;
+                let min_ms = (min * 1000.0) as i64;
+                let max_ms = (max * 1000.0) as i64;
 
                 WidgetValue::Timer {
-                    seconds: secs,
-                    initial_seconds: secs,
-                    paused_time: 0.0,
-                    paused_formatted: format_timer(0.0, &fmt),
-                    total_time: 0.0,
-                    total_formatted: format_timer(0.0, &fmt),
-                    formatted_time: format_timer(secs, &fmt),
+                    seconds: secs_ms,
+                    initial_seconds: secs_ms,
+                    paused_time: 0,
+                    paused_formatted: format_timer(0, &fmt),
+                    total_time: 0,
+                    total_formatted: format_timer(0, &fmt),
+                    formatted_time: format_timer(secs_ms, &fmt),
                     reset_on_start: ros,
                     running: false,
                     paused: false,
                     is_down: down,
-                    min_value: min,
-                    max_value: max,
+                    min_value: min_ms,
+                    max_value: max_ms,
                     dashboard_ui,
-                    allow_additional: allow_additional,
+                    allow_additional,
                     additional_active: false,
-                    additional_time: 0.0,
-                    additional_formatted: format_timer(0.0, &fmt),
-                    additional_total_formatted: format_timer(0.0, &fmt),
+                    additional_time: 0,
+                    additional_formatted: format_timer(0, &fmt),
+                    additional_total_formatted: format_timer(0, &fmt),
                     format: fmt,
+                    frequency: frequency,
+                    last_system_time: None,
+                    start_time: None,
                 }
             }
             "Switch" => {
-                let iv = node.children()
-                    .find(|n| n.has_tag_name("initial_value"))
-                    .and_then(|n| n.text())
-                    .map(|t| t.trim().to_lowercase() != "false")
-                    .unwrap_or(true);
-
-                let dt = node.children()
-                    .find(|n| n.has_tag_name("display_true"))
-                    .and_then(|n| n.text())
-                    .unwrap_or("ON")
-                    .to_string();
-
-                let df = node.children()
-                    .find(|n| n.has_tag_name("display_false"))
-                    .and_then(|n| n.text())
-                    .unwrap_or("OFF")
-                    .to_string();
-
-                WidgetValue::Switch {
-                    value: iv,
-                    initial_value: iv,
-                    display_true: dt,
-                    display_false: df,
-                    dashboard_ui,
-                }
-
+                let iv = node.children().find(|n| n.has_tag_name("initial_value")).and_then(|n| n.text()).map(|t| t.trim().to_lowercase() != "false").unwrap_or(true);
+                let dt = node.children().find(|n| n.has_tag_name("display_true")).and_then(|n| n.text()).unwrap_or("ON").to_string();
+                let df = node.children().find(|n| n.has_tag_name("display_false")).and_then(|n| n.text()).unwrap_or("OFF").to_string();
+                WidgetValue::Switch { value: iv, initial_value: iv, display_true: dt, display_false: df, dashboard_ui }
             }
             "List" => {
-                let options: Vec<String> = node.descendants()
-                    .filter(|n| n.has_tag_name("option"))
-                    .filter_map(|n| n.text())
-                    .map(|s| s.to_string())
-                    .collect();
+                let options: Vec<String> = node.descendants().filter(|n| n.has_tag_name("option")).filter_map(|n| n.text()).map(|s| s.to_string()).collect();
                 WidgetValue::List { index: 0, options, dashboard_ui }
             }
             "Team" => {
-                let short_name = node.children()
-                    .find(|n| n.has_tag_name("initial_short_name"))
-                    .and_then(|n| n.text())
-                    .unwrap_or("")
-                    .to_string();
-
-                let name = node.children()
-                    .find(|n| n.has_tag_name("initial_name"))
-                    .and_then(|n| n.text())
-                    .unwrap_or("")
-                    .to_string();
-
-                let primary_color = node.children()
-                    .find(|n| n.has_tag_name("initial_primary_color"))
-                    .and_then(|n| n.text())
-                    .unwrap_or("")
-                    .to_string();
-
-                let secondary_color = node.children()
-                    .find(|n| n.has_tag_name("initial_secondary_color"))
-                    .and_then(|n| n.text())
-                    .unwrap_or("")
-                    .to_string();
-
+                let short_name = node.children().find(|n| n.has_tag_name("initial_short_name")).and_then(|n| n.text()).unwrap_or("").to_string();
+                let name = node.children().find(|n| n.has_tag_name("initial_name")).and_then(|n| n.text()).unwrap_or("").to_string();
+                let primary_color = node.children().find(|n| n.has_tag_name("initial_primary_color")).and_then(|n| n.text()).unwrap_or("").to_string();
+                let secondary_color = node.children().find(|n| n.has_tag_name("initial_secondary_color")).and_then(|n| n.text()).unwrap_or("").to_string();
                 WidgetValue::Team { short_name, name, primary_color, secondary_color, dashboard_ui }
             }
             "Text" => {
-                let content = node.children()
-                    .find(|n| n.has_tag_name("content"))
-                    .and_then(|n| n.text())
-                    .unwrap_or("")
-                    .to_string();
+                let content = node.children().find(|n| n.has_tag_name("content")).and_then(|n| n.text()).unwrap_or("").to_string();
                 WidgetValue::Text { content, dashboard_ui }
             }
             "Calculation" => {
-                let initial = node.children()
-                    .find(|n| n.has_tag_name("initial_value"))
-                    .and_then(|n| n.text())
-                    .unwrap_or("")
-                    .to_string();
-
-                let expression = node.children()
-                    .find(|n| n.has_tag_name("expression"))
-                    .and_then(|n| n.text())
-                    .unwrap_or("")
-                    .to_string();
-
+                let initial = node.children().find(|n| n.has_tag_name("initial_value")).and_then(|n| n.text()).unwrap_or("").to_string();
+                let expression = node.children().find(|n| n.has_tag_name("expression")).and_then(|n| n.text()).unwrap_or("").to_string();
                 WidgetValue::Calculation { value: initial, expression, dashboard_ui }
             }
             "PenaltyShots" => {
-                WidgetValue::PenaltyShots {
-                    shots: vec![ShotResult::Untaken; 5],
-                    current_round: 0,
-                    dashboard_ui,
-                }
+                WidgetValue::PenaltyShots { shots: vec![ShotResult::Untaken; 5], current_round: 0, dashboard_ui }
             }
             _ => continue,
         };
-
-
-
         eprintln!("🥅 Setting up widget {}:{} (UI Visible: {})", w_type, id, dashboard_ui);
         data.insert(id, val);
     }
 
     for node in root.descendants().filter(|n| n.has_tag_name("trigger")) {
-        // Extract condition block safely
         let cond_node = match node.children().find(|n| n.has_tag_name("condition")) {
             Some(c) => c,
-            None => {
-                eprintln!("⚠️ Warning: Skipping <trigger> due to missing <condition> block.");
-                continue;
-            }
+            None => continue,
         };
 
-        let widget_id = cond_node.children()
-            .find(|n| n.has_tag_name("widget_id"))
-            .and_then(|n| n.text())
-            .unwrap_or("unknown")
-            .to_string();
+        let widget_id = cond_node.children().find(|n| n.has_tag_name("widget_id")).and_then(|n| n.text()).unwrap_or("unknown").to_string();
+        let operator = cond_node.children().find(|n| n.has_tag_name("operator")).and_then(|n| n.text()).unwrap_or("==").to_string();
+        let val_sec = cond_node.children().find(|n| n.has_tag_name("value")).and_then(|n| n.text()?.parse::<f64>().ok()).unwrap_or(0.0);
+        let value = (val_sec * 1000.0) as i64;
 
-        let operator = cond_node.children()
-            .find(|n| n.has_tag_name("operator"))
-            .and_then(|n| n.text())
-            .unwrap_or("==")
-            .to_string();
-
-        let value = cond_node.children()
-            .find(|n| n.has_tag_name("value"))
-            .and_then(|n| n.text()?.parse().ok())
-            .unwrap_or(0.0);
-
-        eprintln!("🤖 Setting up Trigger on {}:{} {}", widget_id.clone(), operator.clone(), value.clone());
-
-        // Extract actions safely
         let mut actions = Vec::new();
         if let Some(actions_node) = node.children().find(|n| n.has_tag_name("actions")) {
             for act_node in actions_node.children().filter(|n| n.has_tag_name("action")) {
                 let target_id = match act_node.children().find(|n| n.has_tag_name("target_id")).and_then(|n| n.text()) {
                     Some(t) => t.to_string(),
-                    None => continue, // Skip malformed action item
+                    None => continue,
                 };
-
                 let command = match act_node.children().find(|n| n.has_tag_name("action")).and_then(|n| n.text()) {
                     Some(c) => c.to_string(),
                     None => continue,
                 };
 
-
                 let val_text = act_node.children().find(|n| n.has_tag_name("value")).and_then(|n| n.text());
-                let value = val_text.map(|v| {
+                let val_json = val_text.map(|v| {
                     if let Ok(num) = v.parse::<i64>() {
                         serde_json::Value::Number(num.into())
                     } else if let Ok(num_f) = v.parse::<f64>() {
@@ -1499,9 +1287,7 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String, Vec<Automa
                         serde_json::Value::String(v.to_string())
                     }
                 });
-                let log_display_val = val_text.unwrap_or("");
-                eprintln!("  ⚡ Action on {} for {} with {:?}", target_id.clone(), command.clone(), log_display_val);
-                actions.push(TriggerAction { target_id, action: command, value });
+                actions.push(TriggerAction { target_id, action: command, value: val_json });
             }
         }
 
@@ -1509,95 +1295,72 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String, Vec<Automa
             condition: TriggerCondition { widget_id, operator, value },
             actions,
             active: true,
-            last_value: f64::NAN,
+            last_value: None,
         });
     }
 
     tokio::spawn(log_event("core".to_string(), "loadconfig".to_string(), path.to_string()));
-
     (data, save_file, automations)
 }
 
-fn parse_time_string(input: &str) -> Option<f64> {
-    if let Ok(raw_seconds) = input.parse::<f64>() {
-        return Some(raw_seconds);
+fn parse_time_string(input: &str) -> Option<i64> {
+    if let Ok(raw_secs) = input.parse::<f64>() {
+        return Some((raw_secs * 1000.0) as i64);
     }
-
     let parts: Vec<&str> = input.split(':').collect();
     match parts.len() {
         2 => {
-            let m = parts[0].parse::<f64>().ok()?;
-            let s = parts[1].parse::<f64>().ok()?;
-            Some((m*60.0) + s)
+            let m = parts[0].parse::<i64>().ok()?;
+            let s = parts[1].parse::<i64>().ok()?;
+            Some(((m * 60) + s) * 1000)
         }
         3 => {
-            let h = parts[0].parse::<f64>().ok()?;
-            let m = parts[1].parse::<f64>().ok()?;
-            let s = parts[2].parse::<f64>().ok()?;
-            Some((h * 3600.0) + (m * 60.0) + s)
+            let h = parts[0].parse::<i64>().ok()?;
+            let m = parts[1].parse::<i64>().ok()?;
+            let s = parts[2].parse::<i64>().ok()?;
+            Some(((h * 3600) + (m * 60) + s) * 1000)
         }
         _ => None,
     }
 }
 
-fn format_timer(total_seconds: f64, format: &str) -> String {
-    let abs_secs = total_seconds.abs() as i64;
-    let sign = if (total_seconds*TICK_FACTOR).trunc() < 0.0 { "-" } else { "" };
-
-    let hours = abs_secs / 3600;
-    let minutes = (abs_secs % 3600) / 60;
-    let seconds = abs_secs % 60;
-    //let millis = (total_seconds-abs_secs)*100.0;
-    let truncated_total_seconds = (total_seconds * TICK_FACTOR).trunc() / TICK_FACTOR;
+fn format_timer(total_ms: i64, format: &str) -> String {
+    let sign = if total_ms < 0 { "-" } else { "" };
+    let abs_ms = total_ms.abs();
+    let total_secs = abs_ms / 1000;
+    let hours = total_secs / 3600;
+    let minutes = (total_secs % 3600) / 60;
+    let seconds = total_secs % 60;
+    let tenths = (abs_ms % 1000) / 100;
 
     match format {
         "hh:mm:ss" => format!("{}{:02}:{:02}:{:02}", sign, hours, minutes, seconds),
         "m:ss" => format!("{}{}:{:02}", sign, (hours * 60) + minutes, seconds),
         "s.auto" => {
-            let mut res = abs_secs as f64;
-            if abs_secs < 5  {
-                res = truncated_total_seconds;
-                return format!("{}{:.01}", sign, res);
-            }
-            format!("{}{}", sign, res)
+            if total_secs < 5 { format!("{}{}.{}", sign, total_secs, tenths) } else { format!("{}{}", sign, total_secs) }
         },
-        "s" => format!("{}{}", sign, abs_secs),
-        "s.ms" => format!("{}{}", sign, truncated_total_seconds),
+        "s" => format!("{}{}", sign, total_secs),
+        "s.ms" => format!("{}{}.{:01}", sign, total_secs, tenths),
         _ => format!("{}{:02}:{:02}", sign, (hours * 60) + minutes, seconds),
     }
 }
 
 #[axum::debug_handler]
-async fn serve_index() -> Html<&'static str> {
-    Html(include_str!("index.html"))
-}
-
+async fn serve_index() -> Html<&'static str> { Html(include_str!("index.html")) }
 #[axum::debug_handler]
-async fn serve_js() -> JavaScript<&'static str> {
-    JavaScript(include_str!("scoreboard.js"))
-}
-
-pub async fn get_script() -> JavaScript<&'static str> {
-    JavaScript("console.log('Hello from Axum!');")
-}
+async fn serve_js() -> JavaScript<&'static str> { JavaScript(include_str!("scoreboard.js")) }
 
 async fn get_all(State(state): State<Arc<ScoreboardState>>) -> Json<IndexMap<String, WidgetValue>> {
     let data = state.data.read().unwrap();
-    let parsed_data: IndexMap<String, WidgetValue> = data.iter()
-        .map(|(k, v)| (k.clone(), v.clone()))
-        .collect();
-
+    let parsed_data: IndexMap<String, WidgetValue> = data.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
     Json(parsed_data)
 }
 
-// Flatten the state
 fn flatten_state(data: &IndexMap<String, WidgetValue>) -> IndexMap<String, JsonValue> {
     let mut flat = IndexMap::new();
     for (id, val) in data.iter() {
-        // Fetch the extra values dictionary from the trait function
         let widget_obj = create_widget(val);
         let v = widget_obj.primary_value();
-
         flat.insert(id.clone(), v);
 
         let extra_vals = widget_obj.extra_values();
@@ -1605,7 +1368,6 @@ fn flatten_state(data: &IndexMap<String, WidgetValue>) -> IndexMap<String, JsonV
             let prefixed_key = format!("{}_{}", id.clone(), key);
             flat.insert(prefixed_key, xvalue);
         }
-
     }
     flat.insert("_last_updated".into(), serde_json::Value::String(Local::now().format("%H:%M:%S").to_string()));
     flat
@@ -1639,7 +1401,6 @@ async fn universal_update(
                 let mut automations = state.automations.write().unwrap();
                 process_automations(&mut data, &mut automations);
                 let final_data_snapshot = data.clone();
-
                 (true, log_val, final_data_snapshot)
             } else {
                 (false, String::new(), data.clone())
@@ -1664,8 +1425,7 @@ async fn universal_update(
             let mut automations = state.automations.write().unwrap();
             for trigger in automations.iter_mut() {
                 if trigger.condition.widget_id.starts_with(&id_c) {
-                    // Reset the value cache to NAN so it treats the next tick as a fresh edge
-                    trigger.last_value = f64::NAN; 
+                    trigger.last_value = None;
                 }
             }
         }
@@ -1684,17 +1444,14 @@ async fn reset_all(State(state): State<Arc<ScoreboardState>>) -> Json<bool> {
     {
         let mut data = state.data.write().unwrap_or_else(|e| e.into_inner());
         *data = new_widgets.clone();
-
         let mut path = state.save_path.write().unwrap_or_else(|e| e.into_inner());
         *path = new_path.clone();
-
         let mut automations = state.automations.write().unwrap_or_else(|e| e.into_inner());
         *automations = new_automations;
     }
     let _ = state.tx.send(new_widgets.clone());
     let path_to_save = state.save_path.read().unwrap_or_else(|e| e.into_inner()).clone();
     save_to_disk(new_widgets, &path_to_save).await;
-
     Json(true)
 }
 
@@ -1708,7 +1465,6 @@ async fn web_sse_handler(
     let stream = async_stream::stream! {
         let initial_json = get_flattened_snapshot(&stream_state);
         yield Ok::<Event, Infallible>(Event::default().data(initial_json));
-
         while let Ok(_notification) = rx.recv().await {
             let json = get_flattened_snapshot(&stream_state);
             yield Ok::<Event, Infallible>(Event::default().data(json));
@@ -1724,10 +1480,7 @@ async fn full_sse_handler(
     let mut rx = state.tx.subscribe();
     let stream = async_stream::stream! {
         while let Ok(data) = rx.recv().await {
-            let filtered_data: IndexMap<String, WidgetValue> = data.iter()
-                .map(|(k, v)| (k.clone(), v.clone()))
-                .collect();
-
+            let filtered_data: IndexMap<String, WidgetValue> = data.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
             if let Ok(json) = serde_json::to_string(&filtered_data) {
                 yield Ok::<Event, Infallible>(Event::default().data(json));
             }
@@ -1740,7 +1493,6 @@ fn print_listening_urls(port: u16) {
     println!("🎯 Scoreboard Engine is live!");
     println!("---------------------------------------");
     println!("Local: http://localhost:{}", port);
-
     if let Ok(interfaces) = get_if_addrs::get_if_addrs() {
         for interface in interfaces {
             if !interface.is_loopback() {
@@ -1753,7 +1505,6 @@ fn print_listening_urls(port: u16) {
     println!("---------------------------------------");
 }
 
-// --- MAIN ---
 #[tokio::main]
 async fn main() {
     eprintln!("⭐ Scoreboard Engine {}", VERSION);
@@ -1769,7 +1520,6 @@ async fn main() {
         xml_widgets
     };
     let addr = SocketAddr::from(([0, 0, 0, 0], args.port));
-
     let (tx, _rx) = broadcast::channel(16);
 
     let state = Arc::new(ScoreboardState {
@@ -1808,7 +1558,6 @@ async fn main() {
                     if ticked {
                         *val = widget_obj.to_value();
                         changed = true;
-
                         let id_clone = id.clone();
                         tokio::spawn(log_event(id_clone, "TICK".to_string(), display_val));
                     }
@@ -1819,17 +1568,13 @@ async fn main() {
                     changed = true;
                 }
 
-                if changed {
-                    snapshot = data.clone();
-                }
+                if changed { snapshot = data.clone(); }
             }
 
             if changed {
                 let _ = timer_state.tx.send(snapshot.clone());
                 let current_path = timer_state.save_path.read().unwrap().clone();
-                tokio::spawn(async move {
-                    save_to_disk(snapshot, &current_path).await;
-                });
+                tokio::spawn(async move { save_to_disk(snapshot, &current_path).await; });
             }
         }
     });
