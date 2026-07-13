@@ -280,7 +280,11 @@ impl Widget for TimerWidget {
         self.data.additional_total_formatted = format_timer(self.data.additional_time + self.data.seconds, &self.data.format);
         self.data.total_formatted = format_timer(self.data.total_time, &self.data.format);
 
-        (true, format!("RUNNING: {} [Stoppage: {}] [Additional: {}] [Total: {}]", self.data.formatted_time.clone(), self.data.paused_formatted.clone(), self.data.additional_formatted.clone(), self.data.total_formatted.clone()))
+        (true, format!("RUNNING: {} [Stoppage: {}] [Additional: {}] [Total: {}]", 
+                       self.data.formatted_time.clone(), 
+                       self.data.paused_formatted.clone(), 
+                       self.data.additional_formatted.clone(), 
+                       self.data.total_formatted.clone()))
     }
 
     fn is_visible(&self) -> bool { self.data.dashboard_ui }
