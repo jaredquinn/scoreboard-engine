@@ -421,6 +421,7 @@ pub struct TimerWidget {
 }
 
 impl Widget for TimerWidget {
+
     fn primary_value(&self) -> serde_json::Value {
         serde_json::Value::from((self.seconds as f64) / 1000.0)
     }
@@ -428,6 +429,7 @@ impl Widget for TimerWidget {
     fn update(&mut self, payload: UpdatePayload) -> (bool, String) {
         match payload {
             UpdatePayload::Action { action, value, .. } => {
+
                 match action.as_str() {
                     "start" => {
                         if self.reset_on_start {
@@ -450,31 +452,9 @@ impl Widget for TimerWidget {
                             self.is_down = val_str == "DOWN";
                         }
                     },
-                    "set_max" => {
-                        if let Some(val_str) = value.as_ref().and_then(|v| v.as_str()) {
-                            if let Some(parsed_ms) = parse_time_string(val_str) { self.max_value = parsed_ms; }
-                        } else if let Some(val_num) = value.as_ref().and_then(|v| v.as_f64()) {
-                            self.max_value = (val_num * 1000.0) as i64;
-                        }
-                    },
-                    "set_min" => {
-                        if let Some(val_str) = value.as_ref().and_then(|v| v.as_str()) {
-                            if let Some(parsed_ms) = parse_time_string(val_str) { self.min_value = parsed_ms; }
-                        } else if let Some(val_num) = value.as_ref().and_then(|v| v.as_f64()) {
-                            self.min_value = (val_num * 1000.0) as i64;
-                        }
-                    },
-                    "set_initial" => {
-                        if let Some(val_str) = value.as_ref().and_then(|v| v.as_str()) {
-                            if let Some(parsed_ms) = parse_time_string(val_str) { self.initial_seconds = parsed_ms; }
-                        } else if let Some(val_num) = value.as_ref().and_then(|v| v.as_f64()) {
-                            self.initial_seconds = (val_num * 1000.0) as i64;
-                        }
-                    },
-                    "stop" => {
-                        self.running = false;
-                        self.start_time = None;
-                    },
+                    "set_max" => { if let Some(parsed_ms) = parse_value_to_ms(&value) { self.max_value = parsed_ms; } },
+                    "set_min" => { if let Some(parsed_ms) = parse_value_to_ms(&value) { self.min_value = parsed_ms; } },
+                    "set_initial" => { if let Some(parsed_ms) = parse_value_to_ms(&value) { self.initial_seconds = parsed_ms; } },
                     "toggle" => {
                         self.running = !self.running;
                         self.start_time = if self.running { Some(chrono::Local::now()) } else { None };
@@ -499,14 +479,22 @@ impl Widget for TimerWidget {
                         self.last_system_time = None;
                     }
                     "set" | "set_time" => {
-                        if let Some(val_str) = value.as_ref().and_then(|v| v.as_str()) {
-                            if let Some(parsed_ms) = parse_time_string(val_str) {
-                                self.seconds = parsed_ms;
-                                self.formatted_time = format_timer(self.seconds, &self.format);
-                            }
-                        } else if let Some(val_num) = value.as_ref().and_then(|v| v.as_f64()) {
-                            self.seconds = (val_num * 1000.0) as i64;
+                        if let Some(parsed_ms) = parse_value_to_ms(&value) {
+                            self.seconds = parsed_ms;
                             self.formatted_time = format_timer(self.seconds, &self.format);
+                        }
+                    },
+                    "set_stoppage" => {
+                        if let Some(parsed_ms) = parse_value_to_ms(&value) {
+                            self.paused_time = parsed_ms;
+                            self.paused_formatted = format_timer(self.paused_time, &self.format);
+                        }
+                    },
+                    "set_additional" => {
+                        if let Some(parsed_ms) = parse_value_to_ms(&value) {
+                            self.additional_time = parsed_ms;
+                            self.additional_formatted = format_timer(self.additional_time, &self.format);
+                            self.additional_total_formatted = format_timer(self.additional_time + self.seconds, &self.format);
                         }
                     },
                     _ => return (false, String::new()),
@@ -1302,6 +1290,51 @@ fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String, Vec<Automa
     tokio::spawn(log_event("core".to_string(), "loadconfig".to_string(), path.to_string()));
     (data, save_file, automations)
 }
+
+
+/// Helper to extract and convert either a formatted string (mm:ss.ms / hh:mm:ss.ms)
+/// or a raw f64 number into milliseconds (i64) for timer fields.
+fn parse_value_to_ms(value: &Option<serde_json::Value>) -> Option<i64> {
+    let val_ref = value.as_ref()?;
+
+    if let Some(s) = val_ref.as_str() {
+        // Handle string parsing format mm:ss.ms or hh:mm:ss.ms
+        let parts: Vec<&str> = s.trim().split('.').collect();
+        if parts.is_empty() || parts.len() > 2 {
+            return None;
+        }
+
+        let ms: i64 = if parts.len() == 2 {
+            let ms_str = parts[1];
+            let padded = format!("{:0<3}", ms_str);
+            padded[..3].parse().ok()?
+        } else {
+            0
+        };
+
+        let time_blocks: Vec<&str> = parts[0].split(':').collect();
+        match time_blocks.len() {
+            2 => { // mm:ss
+                let mm: i64 = time_blocks[0].parse().ok()?;
+                let ss: i64 = time_blocks[1].parse().ok()?;
+                Some((mm * 60 * 1000) + (ss * 1000) + ms)
+            }
+            3 => { // hh:mm:ss
+                let hh: i64 = time_blocks[0].parse().ok()?;
+                let mm: i64 = time_blocks[1].parse().ok()?;
+                let ss: i64 = time_blocks[2].parse().ok()?;
+                Some((hh * 3600 * 1000) + (mm * 60 * 1000) + (ss * 1000) + ms)
+            }
+            _ => None,
+        }
+    } else if let Some(val_num) = val_ref.as_f64() {
+        // Fallback for backward compatibility if a raw numeric value is supplied
+        Some((val_num * 1000.0) as i64)
+    } else {
+        None
+    }
+}
+
 
 fn parse_time_string(input: &str) -> Option<i64> {
     if let Ok(raw_secs) = input.parse::<f64>() {

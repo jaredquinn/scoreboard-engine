@@ -225,6 +225,26 @@
             }
         }
 
+
+	function formatMsToTimeString(ms) {
+	    if (ms === undefined || ms === null || isNaN(ms)) return "00:00";
+
+	    const absoluteMs = Math.abs(ms);
+	    const totalSeconds = Math.floor(absoluteMs / 1000);
+	    const msRemainder = absoluteMs % 1000;
+
+	    const minutes = Math.floor(totalSeconds / 60);
+	    const seconds = totalSeconds % 60;
+
+	    const pad = (num) => String(num).padStart(2, '0');
+	    const sign = ms < 0 ? "-" : "";
+	    const msString = msRemainder > 0 ? `.${String(msRemainder).padStart(3, '0')}` : "";
+
+	    if (minutes > 0 || totalSeconds === 0) { return `${sign}${pad(minutes)}:${pad(seconds)}${msString}`; }
+	    return `${sign}${pad(seconds)}${msString}`;
+	}
+
+
         // --- API COMMUNICATIONS ---
         async function api(url, method = 'POST', body = null) {
             try {
@@ -325,31 +345,40 @@
                 else if (type === "Timer") {
                     structure += `
                         <div class="value timer-display field-formatted-time"></div>
-                        <div class="widget-label field-paused-time"></div>
-                        <div class="widget-label field-additional-time"></div>
+
+			<div class="widget-label" style="display:flex; align-items:center; gap:6px; justify-content:center; margin-bottom:4px;">
+                            Stoppage: <span class="field-paused-time"></span>
+                            <button class="btn-reset-card btn-edit-stoppage" style="margin-top:0; padding:2px 6px; font-size:0.6rem;" onclick="let v=prompt('Set Stoppage Time (mm:ss.ms):', this.getAttribute('data-val')); if(v) updateWidget('${id}', {action:'set_stoppage', value:v})">EDIT</button>
+                        </div>
+
+                        <div class="widget-label field-additional-container" style="display:flex; align-items:center; gap:6px; justify-content:center;">
+                            Additional: <span class="field-additional-time"></span>
+                            <button class="btn-reset-card btn-edit-additional" style="margin-top:0; padding:2px 6px; font-size:0.6rem;" onclick="let v=prompt('Set Additional Time (mm:ss.ms):', this.getAttribute('data-val')); if(v) updateWidget('${id}', {action:'set_additional', value:v})">EDIT</button>
+                        </div>
+
+
                         <div class="controls">
                             <button class="btn-toggle-running" onclick="updateWidget('${id}', {action: this.getAttribute('data-action')})"></button>
                             <button class="btn-toggle-paused" onclick="updateWidget('${id}', {action: 'pause'})"></button>
                             <button class="btn-reset-timer" onclick="if(confirm('Reset?')) updateWidget('${id}', {action:'reset'})">⟲</button>
-                            <button onclick="updateWidget('${id}', {action:'increment', value: 60})">+1m</button>
-                            <button onclick="updateWidget('${id}', {action:'decrement', value: 60})">-1m</button>
+			    <button class="btn-edit-clock" onclick="let v=prompt('Set Clock Time (mm:ss.ms):', this.getAttribute('data-val')); if(v) updateWidget('${id}', {action:'set_time', value:v})">EDIT</button>
                         </div>
                         <div class="admin-section">
                             <div class="bounds-grid">
                                 <div class="bound-item">
                                     <span>MIN</span>
                                     <strong class="field-min-value"></strong>
-                                    <button class="btn-reset-card btn-edit-min" onclick="let v=prompt('Min Seconds:', this.getAttribute('data-val')); if(v) updateWidget('${id}', {action:'set_min', value:v})">EDIT</button>
+                                    <button class="btn-reset-card btn-edit-min" onclick="let v=prompt('Min Time (mm:ss.ms):', this.getAttribute('data-val')); if(v) updateWidget('${id}', {action:'set_min', value:v})">EDIT</button>
                                 </div>
                                 <div class="bound-item">
                                     <span>INITIAL</span>
                                     <strong class="field-initial-seconds"></strong>
-                                    <button class="btn-reset-card btn-edit-initial" onclick="let v=prompt('Initial Seconds:', this.getAttribute('data-val')); if(v) updateWidget('${id}', {action:'set_initial', value:v})">EDIT</button>
+                                    <button class="btn-reset-card btn-edit-initial" onclick="let v=prompt('Initial Time (mm:ss.ms):', this.getAttribute('data-val')); if(v) updateWidget('${id}', {action:'set_initial', value:v})">EDIT</button>
                                 </div>
                                 <div class="bound-item">
                                     <span>MAX</span>
                                     <strong class="field-max-value"></strong>
-                                    <button class="btn-reset-card btn-edit-max" onclick="let v=prompt('Max Seconds:', this.getAttribute('data-val')); if(v) updateWidget('${id}', {action:'set_max', value:v})">EDIT</button>
+                                    <button class="btn-reset-card btn-edit-max" onclick="let v=prompt('Max Time (mm:ss.ms):', this.getAttribute('data-val')); if(v) updateWidget('${id}', {action:'set_max', value:v})">EDIT</button>
                                 </div>
                                 <div class="bound-item">
                                     <span>DIRECTION</span>
@@ -429,15 +458,28 @@
                 if (previewS && previewS.style.backgroundColor !== secondary_color) previewS.style.backgroundColor = secondary_color;
             }
             else if (type === "Timer") {
-                const { initial_seconds, value, paused, paused_formatted, formatted_time, additional_total_formatted, running, is_down, min_value, max_value } = data;
-                
-                updateTextIfChanged(card, '.field-formatted-time', formatted_time);
-                updateTextIfChanged(card, '.field-paused-time', `Stoppage: ${paused_formatted}`);
-                updateTextIfChanged(card, '.field-additional-time', `With Additional: : ${additional_total_formatted}`);
-                updateTextIfChanged(card, '.field-min-value', `${min_value}s`);
-                updateTextIfChanged(card, '.field-initial-seconds', `${initial_seconds}s`);
-                updateTextIfChanged(card, '.field-max-value', `${max_value}s`);
-                updateTextIfChanged(card, '.field-direction', is_down ? 'DOWN' : 'UP');
+                const { initial_seconds, value, paused, paused_formatted, formatted_time, additional_formatted, running, is_down, min_value, max_value } = data;
+
+		updateTextIfChanged(card, '.field-formatted-time', formatted_time);
+		updateTextIfChanged(card, '.field-paused-time', paused_formatted);
+
+		updateTextIfChanged(card, '.field-additional-time', additional_formatted);
+		    
+		updateTextIfChanged(card, '.field-min-value', formatMsToTimeString(min_value));
+		updateTextIfChanged(card, '.field-initial-seconds', formatMsToTimeString(initial_seconds));
+		updateTextIfChanged(card, '.field-max-value', formatMsToTimeString(max_value));
+		    
+		updateTextIfChanged(card, '.field-direction', is_down ? 'DOWN' : 'UP');
+
+	        const btnClock = card.querySelector('.btn-edit-clock');
+    	 	if (btnClock) btnClock.setAttribute('data-val', formatted_time);
+
+	        const btnStoppage = card.querySelector('.btn-edit-stoppage');
+		if (btnStoppage) btnStoppage.setAttribute('data-val', paused_formatted);
+
+                const btnAdditional = card.querySelector('.btn-edit-additional');
+	        if (btnAdditional) btnAdditional.setAttribute('data-val', additional_formatted);
+
 
                 // Dynamic Action and Button Labels
                 const runBtn = card.querySelector('.btn-toggle-running');
