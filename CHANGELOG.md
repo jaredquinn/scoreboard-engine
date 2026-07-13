@@ -1,6 +1,10 @@
 # Scoreboard Engine Change Log
 
-## [v0.13.0] -  2026-07-06 - Time Warp
+## [v0.13.1] -  2026-07-06 - Time Warp
+
+### Bug Fixes
+
+- Fix clock stop function missing in recent update
 
 ### Breaking Changes
 
