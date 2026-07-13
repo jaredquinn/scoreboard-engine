@@ -109,6 +109,12 @@ impl Widget for TimerWidget {
                         self.data.start_time = Some(chrono::Local::now());
                         self.data.last_system_time = Some(chrono::Local::now().timestamp_millis());
                     },
+                    "stop" => {
+                        self.data.running = false;
+                        self.data.paused = false;
+                        self.data.start_time = Some(chrono::Local::now());
+                        self.data.last_system_time = Some(chrono::Local::now().timestamp_millis());
+                    },
                     "set_direction" => {
                         if let Some(val_str) = value.and_then(|v| v.as_str().map(String::from)) {
                             self.data.is_down = val_str == "DOWN";
