@@ -23,7 +23,7 @@
   - move load\_config into the widgets module
 - Better logging everywhere!  Timers especially.
 
-## [v0.12.0] -  2026-07-06 More Than Just a Game
+## [v0.12.0] -  2026-07-06 - DNA (More Than a Game)
 
 ### New Features
 
