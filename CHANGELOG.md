@@ -2,6 +2,10 @@
 
 ## [v0.13.0] -  2026-07-06 - "Time Warp" Release
 
+### Breaking Changes
+
+- Persistence structure for timers has significantly changed.  Perform a "System Reset" before operating.
+
 ### New Features
 
 - Timers: now anchored to system clock, providing more accuracy.
@@ -10,10 +14,13 @@
 - Timers: fix dashboard inconsitency with the way clocks were set, universal input format is [hh:]mm:ss.ms
 - Timers: add missing ability to edit main, stoppage and additional clocks.
 
-### Breaking Changes
+### Other Changes
 
-- Persistence structure for timers has significantly changed.  Perform a "System Reset" before operating.
-
+- Major code refactor:
+  - separate each widget into a separate source file
+  - separate out the automations system
+  - move load\_config into the widgets module
+- Better logging everywhere!  Timers especially.
 
 ## [v0.12.0] -  2026-07-06 More Than Just a Game Release
 

@@ -218,7 +218,7 @@ impl Widget for TimerWidget {
 
             self.data.paused_formatted = format_timer(self.data.paused_time, &self.data.format);
             self.data.total_formatted = format_timer(self.data.total_time, &self.data.format);
-            return (true, format!("PAUSED {} ms [Formatted: {}]", self.data.paused_time, self.data.paused_formatted.clone()));
+            return (true, format!("PAUSED: {} [Stoppage: {}] [Additional: {}] [Total: {}]", self.data.formatted_time.clone(), self.data.paused_formatted.clone(), self.data.additional_formatted.clone(), self.data.total_formatted.clone()))
         }
 
         if self.data.is_down {
@@ -274,11 +274,7 @@ impl Widget for TimerWidget {
         self.data.additional_total_formatted = format_timer(self.data.additional_time + self.data.seconds, &self.data.format);
         self.data.total_formatted = format_timer(self.data.total_time, &self.data.format);
 
-        let current_secs = self.data.seconds / 1000;
-        if self.data.additional_active {
-            return (true, format!("RUNNING {}s [Raw: {}] [Formatted: {}] [Additional: {}]", self.data.seconds, current_secs, self.data.formatted_time.clone(), self.data.additional_total_formatted.clone()))
-        }
-        (true, format!("RUNNING {}s [Formatted: {}]", current_secs, self.data.formatted_time.clone()))
+        (true, format!("RUNNING: {} [Stoppage: {}] [Additional: {}] [Total: {}]", self.data.formatted_time.clone(), self.data.paused_formatted.clone(), self.data.additional_formatted.clone(), self.data.total_formatted.clone()))
     }
 
     fn is_visible(&self) -> bool { self.data.dashboard_ui }

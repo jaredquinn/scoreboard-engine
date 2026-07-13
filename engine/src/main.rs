@@ -31,41 +31,18 @@ use std::net::SocketAddr;
 use std::convert::Infallible;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-// Import decoupled widget system modules
+// Decoupled architecture modules
 pub mod widgets;
-use widgets::{WidgetValue, UpdatePayload, create_widget};
+pub mod automations;
+
+use widgets::{WidgetValue, UpdatePayload, create_widget, load_config};
+use automations::{AutomationTrigger, process_automations};
+
 
 type JsonValue = serde_json::Value;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const TICK_FREQ: u64 = 100;
-
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct TriggerCondition {
-    pub widget_id: String,
-    pub operator: String,
-    pub value: i64,
-}
-
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct TriggerAction {
-    pub target_id: String,
-    pub action: String,
-    pub value: Option<serde_json::Value>,
-}
-
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct AutomationTrigger {
-    pub condition: TriggerCondition,
-    pub actions: Vec<TriggerAction>,
-    #[serde(default = "default_true")]
-    pub active: bool,
-    #[serde(skip, default = "default_none_i64")]
-    pub last_value: Option<i64>,
-}
-
-fn default_true() -> bool { true }
-fn default_none_i64() -> Option<i64> { None }
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -84,92 +61,14 @@ pub struct ScoreboardState {
     pub automations: RwLock<Vec<AutomationTrigger>>,
 }
 
-fn process_automations(
-    data: &mut IndexMap<String, WidgetValue>,
-    automations: &mut Vec<AutomationTrigger>,
-) -> bool {
-    let fresh_flat_context = flatten_state(data);
-    let mut automation_triggered = false;
-    let mut needs_period_rearm = false;
-
-    for trigger in automations.iter_mut() {
-        if let Some(num) = fresh_flat_context.get(&trigger.condition.widget_id).and_then(|v| v.as_f64()) {
-            let current_val = (num * 1000.0).round() as i64;
-            let target_val = trigger.condition.value;
-            let is_first_sample = trigger.last_value.is_none();
-            let last_val_unwrapped = trigger.last_value.unwrap_or(0);
-
-            let condition_met = match trigger.condition.operator.as_str() {
-                "==" => current_val == target_val,
-                ">=" => current_val >= target_val,
-                "<=" => current_val <= target_val,
-                "++" => !is_first_sample && current_val == target_val && current_val > last_val_unwrapped,
-                "--" => !is_first_sample && current_val == target_val && current_val < last_val_unwrapped,
-                _ => false,
-            };
-
-            let value_changed = is_first_sample || current_val != last_val_unwrapped;
-
-            if condition_met && value_changed {
-                if !is_first_sample {
-                    let mut target_widgets_to_sync = std::collections::HashSet::new();
-
-                    for act in &trigger.actions {
-                        if let Some(val) = data.get_mut(&act.target_id) {
-                            let mut widget_obj = create_widget(val);
-                            let payload = UpdatePayload::Action {
-                                action: act.action.clone(),
-                                value: act.value.clone(),
-                            };
-                            let (success, log_val) = widget_obj.update(payload);
-                            if success {
-                                *val = widget_obj.to_value();
-                                automation_triggered = true;
-                                target_widgets_to_sync.insert(act.target_id.clone());
-
-                                let act_id = act.target_id.clone();
-                                let act_name = act.action.clone();
-                                tokio::spawn(log_event(act_id, format!("{}*", act_name), log_val));
-                            }
-                        }
-                    }
-
-                    for target_id in target_widgets_to_sync {
-                        if let Some(val) = data.get_mut(&target_id) {
-                            let mut widget_obj = create_widget(val);
-                            let _ = widget_obj.tick(&fresh_flat_context);
-                            *val = widget_obj.to_value();
-                        }
-                    }
-
-                    if trigger.condition.widget_id == "match_period_index" {
-                        needs_period_rearm = true;
-                    }
-                }
-            }
-            trigger.last_value = Some(current_val);
-        }
-    }
-
-    if needs_period_rearm {
-        for t in automations.iter_mut() {
-            if t.condition.widget_id == "match_clock" {
-                t.last_value = None; 
-            }
-        }
-    }
-
-    automation_triggered
-}
-
 // --- PERSISTENCE & LOGGING ---
 async fn log_event(widget_id: String, action: String, value: String) {
     let ts_ms = time_format::now_ms().unwrap();
     let timestamp = time_format::strftime_ms_local("%Y-%m-%d %H:%M:%S.{ms}", ts_ms).unwrap();
-    let con_line = format!("[{}] ID: {:<18} | {:<10} | Val: {}", timestamp, widget_id, action, value);
+    let con_line = format!("[{}] {:<18}|{:<14}| {}", timestamp, widget_id, action, value);
     eprintln!("{}", con_line);
 
-    let log_line = format!("[{}] ID: {:<18} | {:<10} | Val: {}\n", timestamp, widget_id, action, value);
+    let log_line = format!("[{}] {:<18}|{:<14}| {}\n", timestamp, widget_id, action, value);
     if let Ok(mut file) = OpenOptions::new().create(true).append(true).open("match_log.txt").await {
         let _ = file.write_all(log_line.as_bytes()).await;
     }
@@ -181,101 +80,7 @@ async fn save_to_disk(data: IndexMap<String, WidgetValue>, path: &str) {
     }
 }
 
-fn load_config(path: &str) -> (IndexMap<String, WidgetValue>, String, Vec<AutomationTrigger>) {
-    let mut data = IndexMap::new();
-    let mut automations = Vec::new();
 
-    eprintln!("📁 Reading Configuration file {}", path);
-    let xml_content = std::fs::read_to_string(path).unwrap_or_else(|_| {
-        eprintln!("⚠️ Warning: Could not read {}, using empty config.", path);
-        "<ScoreboardConfig></ScoreboardConfig>".to_string()
-    });
-
-    let doc = match roxmltree::Document::parse(&xml_content) {
-        Ok(d) => d,
-        Err(e) => {
-            eprintln!("Error parsing XML: {}. Returning defaults.", e);
-            return (data, "state_persistence.json".to_string(), Vec::new());
-        }
-    };
-
-    let root = doc.root_element();
-    let save_file = root.children()
-        .find(|n| n.has_tag_name("persistence_file"))
-        .and_then(|n| n.text())
-        .unwrap_or("state_persistence.json")
-        .to_string();
-
-    for node in root.descendants().filter(|n| n.has_tag_name("widget")) {
-        let id = node.children().find(|n| n.has_tag_name("id")).and_then(|n| n.text()).unwrap_or("unknown").to_string();
-        let w_type = node.children().find(|n| n.has_tag_name("type")).and_then(|n| n.text()).unwrap_or("");
-
-        let val = match w_type {
-            "Counter" => WidgetValue::Counter(widgets::counter::CounterWidget::from_xml(&node)),
-            "Timer" => WidgetValue::Timer(widgets::timer::TimerWidget::from_xml(&node)),
-            "Switch" => WidgetValue::Switch(widgets::switch::SwitchWidget::from_xml(&node)),
-            "List" => WidgetValue::List(widgets::list::ListWidget::from_xml(&node)),
-            "Team" => WidgetValue::Team(widgets::team::TeamWidget::from_xml(&node)),
-            "Text" => WidgetValue::Text(widgets::text::TextWidget::from_xml(&node)),
-            "Calculation" => WidgetValue::Calculation(widgets::calculation::CalculationWidget::from_xml(&node)),
-            "PenaltyShots" => WidgetValue::PenaltyShots(widgets::penalty_shots::PenaltyShotsWidget::from_xml(&node)),
-            _ => continue,
-        };
-        data.insert(id, val);
-    }
-
-    for node in root.descendants().filter(|n| n.has_tag_name("trigger")) {
-        let cond_node = match node.children().find(|n| n.has_tag_name("condition")) {
-            Some(c) => c,
-            None => continue,
-        };
-
-        let widget_id = cond_node.children().find(|n| n.has_tag_name("widget_id")).and_then(|n| n.text()).unwrap_or("unknown").to_string();
-        let operator = cond_node.children().find(|n| n.has_tag_name("operator")).and_then(|n| n.text()).unwrap_or("==").to_string();
-        let val_sec = cond_node.children().find(|n| n.has_tag_name("value")).and_then(|n| n.text()?.parse::<f64>().ok()).unwrap_or(0.0);
-        let value = (val_sec * 1000.0) as i64;
-
-        let mut actions = Vec::new();
-        if let Some(actions_node) = node.children().find(|n| n.has_tag_name("actions")) {
-            for act_node in actions_node.children().filter(|n| n.has_tag_name("action")) {
-                let target_id = match act_node.children().find(|n| n.has_tag_name("target_id")).and_then(|n| n.text()) {
-                    Some(t) => t.to_string(),
-                    None => continue,
-                };
-                let command = match act_node.children().find(|n| n.has_tag_name("action")).and_then(|n| n.text()) {
-                    Some(c) => c.to_string(),
-                    None => continue,
-                };
-
-                let val_text = act_node.children().find(|n| n.has_tag_name("value")).and_then(|n| n.text());
-                let val_json = val_text.map(|v| {
-                    if let Ok(num) = v.parse::<i64>() {
-                        serde_json::Value::Number(num.into())
-                    } else if let Ok(num_f) = v.parse::<f64>() {
-                        if let Some(n) = serde_json::Number::from_f64(num_f) {
-                            serde_json::Value::Number(n)
-                        } else {
-                            serde_json::Value::String(v.to_string())
-                        }
-                    } else {
-                        serde_json::Value::String(v.to_string())
-                    }
-                });
-                actions.push(TriggerAction { target_id, action: command, value: val_json });
-            }
-        }
-
-        automations.push(AutomationTrigger {
-            condition: TriggerCondition { widget_id, operator, value },
-            actions,
-            active: true,
-            last_value: None,
-        });
-    }
-
-    tokio::spawn(log_event("core".to_string(), "loadconfig".to_string(), path.to_string()));
-    (data, save_file, automations)
-}
 
 #[axum::debug_handler]
 async fn serve_index() -> Html<&'static str> { Html(include_str!("index.html")) }
@@ -322,29 +127,53 @@ async fn universal_update(
     State(state): State<Arc<ScoreboardState>>,
     Json(payload): Json<UpdatePayload>,
 ) -> Json<bool> {
-    let (success, log_val, current_data) = {
+    let (action_label, target_value) = match &payload {
+        UpdatePayload::Action { action, value } => {
+            let val_str = value
+                .as_ref()
+                .map(|v| match v {
+                    serde_json::Value::String(s) => s.clone(),
+                    other => other.to_string(),
+                })
+                .unwrap_or_else(|| "None".to_string());
+            (action.clone(), val_str)
+        }
+        UpdatePayload::Value(value) => {
+            let val_str = match value {
+                serde_json::Value::String(s) => s.clone(),
+                other => other.to_string(),
+            };
+            ("value_update".to_string(), val_str)
+        }
+    };
+
+    let (success, current_data) = {
         let mut data = state.data.write().unwrap();
         if let Some(val) = data.get_mut(&id) {
             let mut widget_obj = create_widget(val);
-            let (success, log_val) = widget_obj.update(payload.clone()); 
+            let (success, _log_val) = widget_obj.update(payload.clone()); 
 
             if success {
                 *val = widget_obj.to_value();
                 let mut automations = state.automations.write().unwrap();
-                process_automations(&mut data, &mut automations);
+                process_automations(
+                    &mut data, 
+                    &mut automations, 
+                    flatten_state, 
+                    |act_id, act_name, lv| { tokio::spawn(log_event(act_id, format!("{}*", act_name), lv)); }
+                );
                 let final_data_snapshot = data.clone();
-                (true, log_val, final_data_snapshot)
+                (true, final_data_snapshot)
             } else {
-                (false, String::new(), data.clone())
+                (false, data.clone())
             }
         } else {
-            (false, String::new(), data.clone())
+            (false, data.clone())
         }
     };
 
     if success {
         let id_c = id.clone();
-        let lv_c = log_val.clone();
         let dt_c = current_data.clone(); 
         let path_clone = state.save_path.read().unwrap().clone();
 
@@ -363,7 +192,7 @@ async fn universal_update(
         }
 
         tokio::spawn(async move {
-            log_event(id_c, "UPDATE".into(), lv_c).await;
+            log_event(id_c, action_label, target_value).await;
             save_to_disk(dt_c, &path_clone).await;
         });
         let _ = state.tx.send(current_data); 
@@ -372,7 +201,9 @@ async fn universal_update(
 }
 
 async fn reset_all(State(state): State<Arc<ScoreboardState>>) -> Json<bool> {
-    let (new_widgets, new_path, new_automations) = load_config(&state.config_path);
+    let (new_widgets, new_path, new_automations) = load_config(&state.config_path, |id, act, val| {
+        tokio::spawn(log_event(id, act, val));
+    });
     {
         let mut data = state.data.write().unwrap_or_else(|e| e.into_inner());
         *data = new_widgets.clone();
@@ -443,7 +274,7 @@ async fn main() {
     println!("");
 
     let args = Args::parse();
-    let (xml_widgets, persistence_path, xml_automations) = load_config(&args.config);
+    let (xml_widgets, persistence_path, xml_automations) = load_config(&args.config, |id, act, val| { tokio::spawn(log_event(id, act, val)); });
 
     let initial_data = if let Ok(content) = std::fs::read_to_string(&persistence_path) { 
         eprintln!("📁 Restoring persistence data from {}", persistence_path);
@@ -491,12 +322,17 @@ async fn main() {
                         *val = widget_obj.to_value();
                         changed = true;
                         let id_clone = id.clone();
-                        tokio::spawn(log_event(id_clone, "TICK".to_string(), display_val));
+                        tokio::spawn(log_event(id_clone, "tick".to_string(), display_val));
                     }
                 }
 
                 let mut automations = timer_state.automations.write().unwrap();
-                if process_automations(&mut data, &mut automations) {
+                if process_automations(
+                    &mut data, 
+                    &mut automations, 
+                    flatten_state, 
+                    |act_id, act_name, lv| { tokio::spawn(log_event(act_id, format!("{}*", act_name), lv)); }
+                ) {
                     changed = true;
                 }
 
