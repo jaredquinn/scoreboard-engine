@@ -8,11 +8,12 @@
 
 ### New Features
 
-- Timers: now anchored to system clock, providing more accuracy.
-- Timers: start time now persisted, clocks virtually tick when engine is not running.
-- Timers: new configuration option "frequency", determining minimum duration between ticks to register a "change"
-- Timers: fix dashboard inconsitency with the way clocks were set, universal input format is [hh:]mm:ss.ms
-- Timers: add missing ability to edit main, stoppage and additional clocks.
+- Timers
+  - Now anchored to system clock, providing more accuracy.
+  - Anchor is persisted, allowing clocks to run "offline" recalculated at engine startup.
+  - New configuration option "frequency", setting duration between ticks to register a "change"
+  - Fix inconsitencies with the way clocks were manually set, now universal [hh:]mm:ss.ms format.
+  - Add missing ability to edit main, stoppage and additional clocks.
 
 ### Other Changes
 
