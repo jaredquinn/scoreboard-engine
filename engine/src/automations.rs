@@ -64,6 +64,13 @@ pub fn process_automations(
                 if !is_first_sample {
                     let mut target_widgets_to_sync = std::collections::HashSet::new();
 
+                    let trigger_cause = format!(
+                        "[Trigger: {} {} {}]",
+                        trigger.condition.widget_id,
+                        trigger.condition.operator,
+                        (target_val as f64) / 1000.0
+                    );
+
                     for act in &trigger.actions {
                         if let Some(val) = data.get_mut(&act.target_id) {
                             let mut widget_obj = create_widget(val);
@@ -77,8 +84,11 @@ pub fn process_automations(
                                 automation_triggered = true;
                                 target_widgets_to_sync.insert(act.target_id.clone());
 
-                                // Fire off tracking log through the core function pointer pass
-                                log_event_fn(act.target_id.clone(), format!("{}*", act.action), log_val);
+                                log_event_fn(
+                                    act.target_id.clone(),
+                                    act.action.clone(),
+                                    format!("{} -> Val: {}", trigger_cause, log_val)
+                                );
                             }
                         }
                     }
