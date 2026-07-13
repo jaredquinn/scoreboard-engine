@@ -316,7 +316,7 @@
                         </div>`;
                 }
                 else if (type === "Team") {
-                    structure += `
+		    structure += `
                         <div class="value list-value field-short-name" style="font-size: 1.8rem; min-height: 1.2em; color: var(--accent);"></div>
                         <div class="widget-label field-name"></div>
                         <div class="admin-section">
@@ -331,16 +331,15 @@
                                 </div>
                                 <div class="bound-item" style="text-align: center;">
                                     <span>PRIMARY</span>
-                                    <button class="btn-reset-card btn-edit-primary" onclick="let v=prompt('Primary Color:', this.getAttribute('data-val')); if(v) updateWidget('${id}', {action:'set_primary', value:v})">EDIT</button>
-                                    <div class="preview-primary" style="width: 2em; height: 2em;"></div>
+                                    <input type="color" class="input-color-primary" style="width:100%; height:2.2rem; cursor:pointer; background:none; border:1px solid var(--border); border-radius:4px; box-sizing:border-box;" oninput="updateWidget('${id}', {action:'set_primary', value:this.value})">
                                 </div>
                                 <div class="bound-item" style="text-align: center;">
                                     <span>SECONDARY</span>
-                                    <button class="btn-reset-card btn-edit-secondary" onclick="let v=prompt('Secondary Color:', this.getAttribute('data-val')); if(v) updateWidget('${id}', {action:'set_secondary', value:v})">EDIT</button>
-                                    <div class="preview-secondary" style="width: 2em; height: 2em;"></div>
+                                    <input type="color" class="input-color-secondary" style="width:100%; height:2.2rem; cursor:pointer; background:none; border:1px solid var(--border); border-radius:4px; box-sizing:border-box;" oninput="updateWidget('${id}', {action:'set_secondary', value:this.value})">
                                 </div>
                             </div>
                         </div>`;
+
                 }
                 else if (type === "Timer") {
                     structure += `
@@ -456,6 +455,16 @@
                 const previewS = card.querySelector('.preview-secondary');
                 if (previewP && previewP.style.backgroundColor !== primary_color) previewP.style.backgroundColor = primary_color;
                 if (previewS && previewS.style.backgroundColor !== secondary_color) previewS.style.backgroundColor = secondary_color;
+
+		// Synchronize native picker values directly from live state payloads
+                const inputPrimary = card.querySelector('.input-color-primary');
+                const inputSecondary = card.querySelector('.input-color-secondary');
+                if (inputPrimary && inputPrimary.value !== primary_color) {
+                    inputPrimary.value = primary_color;
+                }
+                if (inputSecondary && inputSecondary.value !== secondary_color) {
+                    inputSecondary.value = secondary_color;
+                }
             }
             else if (type === "Timer") {
                 const { initial_seconds, value, paused, paused_formatted, formatted_time, additional_formatted, running, is_down, min_value, max_value } = data;
